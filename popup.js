@@ -6,6 +6,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveSettingsBtn = document.getElementById('saveSettings');
     const notificationStatus = document.getElementById('notificationStatus');
     const notificationMessage = document.getElementById('notificationMessage');
+    
+    // Panel navigation elements
+    const timerPanel = document.getElementById('timerPanel');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const backBtn = document.getElementById('backBtn');
+
+    // Panel navigation functions
+    function showTimerPanel() {
+        timerPanel.style.display = 'block';
+        settingsPanel.style.display = 'none';
+    }
+
+    function showSettingsPanel() {
+        timerPanel.style.display = 'none';
+        settingsPanel.style.display = 'block';
+    }
 
     // Check notification permissions on load
     function checkNotificationPermissions() {
@@ -61,7 +78,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const seconds = state.timeLeft % 60;
         timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         sessionCount.textContent = `Session: ${state.currentSession}`;
-        startBtn.textContent = state.isRunning ? '⏸️ Pause' : '▶️ Start';
+        
+        // Update button content properly to preserve HTML structure
+        const buttonSpan = startBtn.querySelector('span');
+        if (state.isRunning) {
+            buttonSpan.textContent = '⏸️';
+            // Update the text node (skip the span, get the text node)
+            startBtn.childNodes[1].textContent = ' Pause';
+        } else {
+            buttonSpan.textContent = '▶️';
+            startBtn.childNodes[1].textContent = ' Start';
+        }
     }
 
     function showNotificationStatus(permissionLevel) {
@@ -86,12 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
         } else {
-            notificationStatus.style.display = 'block';
-            notificationStatus.className = 'mt-4 p-3 rounded-lg text-sm bg-green-100 border border-green-400';
-            notificationMessage.innerHTML = `
-                <strong>✅ Notifications Enabled</strong><br>
-                You'll receive alerts when Pomodoro sessions end.
-            `;
+            notificationStatus.style.display = 'none';
         }
     }
 
@@ -124,8 +146,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         sendMessage('saveSettings', { settings }, (response) => {
             if (response) updateUI(response);
+            showTimerPanel(); // Return to timer panel after saving
         });
     });
+
+    // Panel navigation event listeners
+    settingsBtn.addEventListener('click', showSettingsPanel);
+    backBtn.addEventListener('click', showTimerPanel);
 
     // Listen for timer updates from background
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
