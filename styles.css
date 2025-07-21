@@ -1,0 +1,66 @@
+body {
+    width: 300px;
+    padding: 20px;
+    background: linear-gradient(135deg, #6b48ff, #00d2ff);
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    text-align: center;
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#timer {
+    display: inline-block;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #4a5568, #2d3748) !important;
+    border: 2px solid #4a5568 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #3c4251, #1a202c) !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    transform: translateY(-2px) !important;
+}
+
+.controls .btn, .settings .btn {
+    @apply btn-primary;
+}
+
+.settings {
+    backdrop-filter: blur(10px);
+}
+
+.settings .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md mt-1 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900;
+}
+
+#sessionCount {
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.drop-shadow-lg {
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.drop-shadow-xl {
+    filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.2));
+}
+
+.drop-shadow-md {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}

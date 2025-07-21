@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Background circle with gradient -->
+  <defs>
+    <radialGradient id="bgGradient" cx="0.3" cy="0.3">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </radialGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Main background circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#bgGradient)" stroke="#3730A3" stroke-width="3" filter="url(#shadow)"/>
+  
+  <!-- Clock face circle -->
+  <circle cx="64" cy="64" r="48" fill="none" stroke="#FFFFFF" stroke-width="4" opacity="0.9"/>
+  
+  <!-- Clock ticks (hour markers) -->
+  <circle cx="64" cy="20" r="2.5" fill="#FFFFFF"/>
+  <circle cx="108" cy="64" r="2.5" fill="#FFFFFF"/>
+  <circle cx="64" cy="108" r="2.5" fill="#FFFFFF"/>
+  <circle cx="20" cy="64" r="2.5" fill="#FFFFFF"/>
+  
+  <!-- Diagonal hour markers -->
+  <circle cx="86.87" cy="41.13" r="1.8" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="86.87" cy="86.87" r="1.8" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="41.13" cy="86.87" r="1.8" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="41.13" cy="41.13" r="1.8" fill="#FFFFFF" opacity="0.8"/>
+  
+  <!-- Clock hands pointing to 12:00 (Pomodoro start time) -->
+  <!-- Hour hand -->
+  <line x1="64" y1="64" x2="64" y2="40" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"/>
+  <!-- Minute hand -->
+  <line x1="64" y1="64" x2="64" y2="28" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="64" cy="64" r="4" fill="#FFFFFF"/>
+  
+  <!-- Pomodoro timer indicator (quarter circle arc to show 25 minutes) -->
+  <path d="M 64 16 A 48 48 0 0 1 112 64" fill="none" stroke="#EF4444" stroke-width="4" stroke-linecap="round" opacity="0.9"/>
+  
+  <!-- Small pomodoro accent -->
+  <circle cx="64" cy="20" r="3" fill="#EF4444" opacity="0.8"/>
+</svg>

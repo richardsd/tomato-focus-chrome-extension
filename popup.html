@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-white mb-4 drop-shadow-lg">Pomodoro Timer</h1>
+        <div id="timer" class="text-5xl font-semibold text-white bg-gray-800 bg-opacity-75 p-4 rounded-lg mb-6 drop-shadow-xl">25:00</div>
+        <div class="controls flex justify-center gap-4 mb-6">
+            <button id="startBtn" class="btn btn-primary flex items-center gap-2"><span>▶️</span> Start</button>
+            <button id="resetBtn" class="btn btn-primary flex items-center gap-2"><span>🔄</span> Reset</button>
+        </div>
+        <div class="settings bg-white bg-opacity-90 p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Settings</h2>
+            <label class="block mb-3">
+                Work Duration (min):
+                <input type="number" id="workDuration" min="1" max="60" value="25" class="input">
+            </label>
+            <label class="block mb-3">
+                Short Break (min):
+                <input type="number" id="shortBreak" min="1" max="30" value="5" class="input">
+            </label>
+            <label class="block mb-3">
+                Long Break (min):
+                <input type="number" id="longBreak" min="1" max="60" value="15" class="input">
+            </label>
+            <label class="block mb-3">
+                Sessions before Long Break:
+                <input type="number" id="longBreakInterval" min="1" max="10" value="4" class="input">
+            </label>
+            <button id="saveSettings" class="btn btn-primary w-full mt-4">Save Settings</button>
+        </div>
+        <div id="notificationStatus" class="mt-4 p-3 rounded-lg text-sm" style="display: none;">
+            <div id="notificationMessage"></div>
+        </div>
+        <div id="sessionCount" class="text-white mt-4 text-lg drop-shadow-md">Session: 1</div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
