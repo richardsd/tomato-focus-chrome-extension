@@ -29,15 +29,17 @@
                 <div id="timer" class="timer-display">25:00</div>
             </div>
             
-            <div class="controls flex justify-center gap-4 mb-4">
-                <button id="startBtn" class="btn btn-start">Start</button>
-                <button id="pauseBtn" class="btn btn-pause" style="display: none;">Pause</button>
-                <button id="resetBtn" class="btn btn-reset">Reset</button>
+            <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
+                <div class="controls flex justify-center gap-4 mb-4">
+                    <button id="startBtn" class="btn btn-start">Start</button>
+                    <button id="pauseBtn" class="btn btn-pause" style="display: none;">Pause</button>
+                    <button id="resetBtn" class="btn btn-reset">Reset</button>
+                </div>
+                
+                <button id="skipBreakBtn" class="btn btn-skip mb-3" style="display: none;">Skip Break</button>
+                
+                <div id="sessionCount" class="session-counter">Session: 0</div>
             </div>
-            
-            <button id="skipBreakBtn" class="btn btn-skip mb-3" style="display: none;">Skip Break</button>
-            
-            <div id="sessionCount" class="session-counter">Session: 0</div>
             
             <div id="notificationStatus" class="mt-4 p-3 rounded-lg text-sm" style="display: none;">
                 <div id="notificationMessage"></div>
