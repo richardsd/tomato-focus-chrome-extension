@@ -11,45 +11,54 @@ body {
 }
 
 .btn-skip {
-    background: rgba(255, 255, 255, 0.2);
+    background: #6b7280;
     color: white;
     width: 100%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: none;
+    padding: 10px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    min-width: 120px;
 }
 
 .btn-skip:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #4b5563;
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
 }
 
 .break-mode .btn-pause {
-    background: #065f46;
+    background: #16a34a;
     color: white;
 }
 
 .break-mode .btn-pause:hover {
-    background: #047857;
+    background: #15803d;
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 .break-mode .btn-start {
-    background: #065f46;
+    background: #16a34a;
     color: white;
 }
 
 .break-mode .btn-start:hover {
-    background: #047857;
+    background: #15803d;
     transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 .break-mode .btn-skip {
-    background: rgba(255, 255, 255, 0.15);
+    background: #16a34a;
     color: white;
-    border: 2px solid rgba(255, 255, 255, 0.25);
+    border: none;
 }
 
 .break-mode .btn-skip:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 body.break-mode {
@@ -60,6 +69,7 @@ body.break-mode {
     text-align: center;
     animation: fadeIn 0.5s ease-in;
     width: 100%;
+    position: relative;
 }
 
 @keyframes fadeIn {
@@ -159,35 +169,37 @@ body.break-mode {
 }
 
 .btn {
-    padding: 8px 16px;
+    padding: 10px 32px;
     border: none;
-    border-radius: 5px;
+    border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 0.85rem;
-    min-width: 70px;
+    font-size: 0.9rem;
+    min-width: 120px;
     display: inline-block;
 }
 
 .btn-start {
-    background: #22c55e;
+    background: #16a34a;
     color: white;
 }
 
 .btn-start:hover {
-    background: #16a34a;
-    transform: none;
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 .btn-pause {
-    background: #fbbf24;
+    background: #f59e0b;
     color: white;
 }
 
 .btn-pause:hover {
-    background: #f59e0b;
-    transform: none;
+    background: #d97706;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
 }
 
 .btn-reset {
@@ -197,7 +209,8 @@ body.break-mode {
 
 .btn-reset:hover {
     background: #dc2626;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .btn-skip {
@@ -225,34 +238,62 @@ body.break-mode {
     background: #dc2f02;
     border: none;
     box-shadow: none;
-    padding: 14px 24px;
-    font-weight: 500;
+    padding: 12px 32px;
+    font-weight: 600;
     transition: all 0.3s ease;
     color: white;
     border-radius: 8px;
     font-size: 0.9rem;
     width: 100%;
+    min-width: 120px;
 }
 
 .btn-primary:hover {
-    background: #9d0208;
-    transform: none;
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 47, 2, 0.3);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.15);
+    background: #6b7280;
     border: none;
     color: white;
-    padding: 12px 20px;
+    padding: 8px 16px;
     font-weight: 500;
     transition: all 0.3s ease;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    min-width: auto;
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.25);
-    transform: none;
+    background: #4b5563;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+}
+
+.btn-back {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    min-width: auto;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.btn-back:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .settings {
@@ -266,38 +307,41 @@ body.break-mode {
 
 .controls-container {
     backdrop-filter: blur(10px);
-    padding: 1rem 1.25rem;
-    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
 }
 
 /* Controls container specific styles */
 .controls-container .btn {
     box-shadow: none;
     border: none;
-    padding: 14px 24px;
+    padding: 12px 32px;
     font-size: 0.9rem;
-    font-weight: 500;
-    min-width: 90px;
+    font-weight: 600;
+    min-width: 120px;
     border-radius: 8px;
 }
 
 .controls-container .controls {
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .controls-container .btn-skip {
     background: #6b7280;
     color: white;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 32px;
     margin-bottom: 0.75rem;
     width: 100%;
+    font-weight: 600;
+    border-radius: 8px;
 }
 
 .controls-container .btn-skip:hover {
     background: #4b5563;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
 }
 
 /* Break mode styles for controls container */
@@ -309,7 +353,8 @@ body.break-mode {
 
 .break-mode .controls-container .btn-skip:hover {
     background: #15803d;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 .settings-header {
@@ -526,17 +571,19 @@ body.break-mode {
 
 .light-theme .btn:hover {
     background: #f3f4f6;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(31, 41, 55, 0.1);
 }
 
 .light-theme .btn-start {
-    background: #10b981;
+    background: #16a34a;
     color: white;
 }
 
 .light-theme .btn-start:hover {
-    background: #059669;
-    transform: none;
+    background: #15803d;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
 
 .light-theme .btn-pause {
@@ -546,7 +593,8 @@ body.break-mode {
 
 .light-theme .btn-pause:hover {
     background: #d97706;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
 }
 
 .light-theme .btn-reset {
@@ -556,7 +604,8 @@ body.break-mode {
 
 .light-theme .btn-reset:hover {
     background: #dc2626;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .light-theme .btn-skip {
@@ -566,7 +615,8 @@ body.break-mode {
 
 .light-theme .btn-skip:hover {
     background: #4b5563;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
 }
 
 .light-theme .session-counter {
@@ -617,21 +667,36 @@ body.break-mode {
 }
 
 .light-theme .btn-primary {
-    background: #10b981;
+    background: #dc2f02;
     color: white;
 }
 
 .light-theme .btn-primary:hover {
-    background: #059669;
+    background: #b91c1c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 47, 2, 0.3);
 }
 
 .light-theme .btn-secondary {
-    background: #e5e7eb;
-    color: #374151;
+    background: #6b7280;
+    color: white;
 }
 
 .light-theme .btn-secondary:hover {
-    background: #d1d5db;
+    background: #4b5563;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+}
+
+.light-theme .btn-back {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1f2937;
+}
+
+.light-theme .btn-back:hover {
+    background: rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Light theme break mode adjustments */
@@ -657,5 +722,6 @@ body.break-mode {
 .light-theme.break-mode .btn-start:hover,
 .light-theme.break-mode .btn-pause:hover {
     background: #15803d;
-    transform: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
