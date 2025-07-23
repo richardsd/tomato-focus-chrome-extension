@@ -7,7 +7,9 @@ let settings = {
     workDuration: 25,
     shortBreak: 5,
     longBreak: 15,
-    longBreakInterval: 4
+    longBreakInterval: 4,
+    autoStart: false,
+    lightTheme: false
 };
 
 function saveState() {
@@ -61,11 +63,24 @@ function startTimer() {
                 handleSessionEnd();
             }
         }, 1000);
-    } else {
+        updateTimerDisplay();
+    }
+}
+
+function pauseTimer() {
+    if (isRunning) {
         clearInterval(interval);
         isRunning = false;
+        updateTimerDisplay();
     }
-    updateTimerDisplay();
+}
+
+function toggleTimer() {
+    if (isRunning) {
+        pauseTimer();
+    } else {
+        startTimer();
+    }
 }
 
 function resetTimer() {
@@ -136,15 +151,28 @@ function showNotification(title, message) {
     });
 }
 
+function skipBreak() {
+    if (!isWorkSession) {
+        clearInterval(interval);
+        isRunning = false;
+        timeLeft = settings.workDuration * 60;
+        isWorkSession = true;
+        updateTimerDisplay();
+    }
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     try {
         if (request.action === 'getState') {
             sendResponse({ isRunning, timeLeft, currentSession, isWorkSession, settings });
         } else if (request.action === 'toggleTimer') {
-            startTimer();
+            toggleTimer();
             sendResponse({ isRunning, timeLeft, currentSession, isWorkSession, settings });
         } else if (request.action === 'resetTimer') {
             resetTimer();
+            sendResponse({ isRunning, timeLeft, currentSession, isWorkSession, settings });
+        } else if (request.action === 'skipBreak') {
+            skipBreak();
             sendResponse({ isRunning, timeLeft, currentSession, isWorkSession, settings });
         } else if (request.action === 'saveSettings') {
             settings = request.settings;

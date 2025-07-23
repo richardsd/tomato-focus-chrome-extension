@@ -1,16 +1,65 @@
 body {
-    width: 300px;
-    padding: 20px;
-    background: linear-gradient(135deg, #6b48ff, #00d2ff);
-    min-height: 400px;
+    width: 280px;
+    padding: 12px;
+    background: linear-gradient(135deg, #e85d04, #dc2f02);
+    min-height: 420px;
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: 'Poppins', sans-serif;
+    transition: background 0.5s ease;
+}
+
+.btn-skip {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 100%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-skip:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.break-mode .btn-pause {
+    background: #065f46;
+    color: white;
+}
+
+.break-mode .btn-pause:hover {
+    background: #047857;
+    transform: translateY(-2px);
+}
+
+.break-mode .btn-start {
+    background: #065f46;
+    color: white;
+}
+
+.break-mode .btn-start:hover {
+    background: #047857;
+    transform: translateY(-2px);
+}
+
+.break-mode .btn-skip {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+.break-mode .btn-skip:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+body.break-mode {
+    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
 }
 
 .container {
     text-align: center;
     animation: fadeIn 0.5s ease-in;
+    width: 100%;
 }
 
 @keyframes fadeIn {
@@ -18,39 +67,273 @@ body {
     to { opacity: 1; }
 }
 
-#timer {
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.tomato-icon {
+    font-size: 1.6rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.session-icon {
+    font-size: 1.6rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+}
+
+.settings-icon {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: transform 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.settings-icon:hover {
+    transform: scale(1.1);
+}
+
+.settings-icon img {
+    display: block;
+    filter: brightness(0) saturate(100%) invert(100%); /* Makes it white */
+}
+
+.timer-circle {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.2rem;
+    position: relative;
+}
+
+.progress-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    z-index: 1;
+}
+
+.progress-ring-progress {
+    transition: stroke-dashoffset 1s ease-in-out;
+    filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
+}
+
+.progress-ring-background {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
+.break-mode .progress-ring-progress {
+    stroke: #22c55e;
+    filter: drop-shadow(0 0 3px rgba(34, 197, 94, 0.6));
+}
+
+.break-mode .progress-ring-background {
+    stroke: rgba(34, 197, 94, 0.2);
+}
+
+.timer-display {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 2;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    min-width: 70px;
     display: inline-block;
 }
 
+.btn-start {
+    background: #22c55e;
+    color: white;
+}
+
+.btn-start:hover {
+    background: #16a34a;
+    transform: translateY(-2px);
+}
+
+.btn-pause {
+    background: #fbbf24;
+    color: #92400e;
+}
+
+.btn-pause:hover {
+    background: #f59e0b;
+    transform: translateY(-2px);
+}
+
+.btn-reset {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-reset:hover {
+    background: #dc2626;
+    transform: translateY(-2px);
+}
+
+.btn-skip {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 100%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-skip:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.session-counter {
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 .btn-primary {
-    background: linear-gradient(45deg, #4a5568, #2d3748) !important;
-    border: 2px solid #4a5568 !important;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-    padding: 8px 16px !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
+    background: linear-gradient(45deg, #dc2f02, #9d0208);
+    border: 2px solid #dc2f02;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 10px 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(45deg, #3c4251, #1a202c) !important;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-    transform: translateY(-2px) !important;
+    background: linear-gradient(45deg, #9d0208, #6a040f);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(-2px);
 }
 
-.controls .btn, .settings .btn {
-    @apply btn-primary;
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 6px 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
 }
 
 .settings {
     backdrop-filter: blur(10px);
 }
 
-.settings .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md mt-1 focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-900;
+.settings-container {
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.25rem;
 }
 
-#sessionCount {
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+.settings-header {
+    margin-bottom: 0.75rem;
+}
+
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.settings-label {
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+    flex: 1;
+    text-align: left;
+    line-height: 1.2;
+}
+
+.settings-input {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    color: #333;
+    font-size: 14px;
+    text-align: center;
+}
+
+.settings-input:focus {
+    border-color: #dc2f02;
+    box-shadow: 0 0 0 2px rgba(220, 47, 2, 0.15);
+}
+
+.settings-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #dc2f02;
+    cursor: pointer;
+}
+
+.settings .input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    margin-top: 4px;
+    outline: none;
+    transition: border-color 0.3s ease;
+    color: #333;
+    font-size: 14px;
+}
+
+.settings .input:focus {
+    border-color: #dc2f02;
+    box-shadow: 0 0 0 2px rgba(220, 47, 2, 0.2);
+}
+
+.settings label {
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#notificationStatus {
+    background: rgba(255, 243, 205, 0.9);
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    color: #92400e;
 }
 
 .drop-shadow-lg {
@@ -63,4 +346,242 @@ body {
 
 .drop-shadow-md {
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.flex {
+    display: flex;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.mb-3 {
+    margin-bottom: 0.6rem;
+}
+
+.mb-4 {
+    margin-bottom: 0.8rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.2rem;
+}
+
+.mt-4 {
+    margin-top: 0.75rem;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.w-16 {
+    width: 4rem;
+}
+
+.block {
+    display: block;
+}
+
+.text-2xl {
+    font-size: 1.35rem;
+    line-height: 1.75rem;
+}
+
+.text-3xl {
+    font-size: 1.75rem;
+    line-height: 2rem;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+.text-white {
+    color: white;
+}
+
+.bg-white {
+    background-color: white;
+}
+
+.bg-opacity-90 {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.p-6 {
+    padding: 1.5rem;
+}
+
+.rounded-lg {
+    border-radius: 0.5rem;
+}
+
+.shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Light Theme Styles */
+.light-theme {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
+    color: #1f2937;
+}
+
+.light-theme .panel {
+    background: rgba(255, 255, 255, 0.95);
+    color: #1f2937;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.light-theme h1 {
+    color: #1f2937 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .progress-ring-progress {
+    stroke: #dc2626;
+    filter: drop-shadow(0 0 3px rgba(220, 38, 38, 0.4));
+}
+
+.light-theme .progress-ring-background {
+    stroke: rgba(220, 38, 38, 0.2);
+}
+
+.light-theme .timer-display {
+    color: #1f2937;
+}
+
+.light-theme .btn {
+    color: #1f2937;
+    border: 2px solid #d1d5db;
+    background: #ffffff;
+}
+
+.light-theme .btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.light-theme .btn-start {
+    background: #10b981;
+    color: white;
+    border-color: #059669;
+}
+
+.light-theme .btn-start:hover {
+    background: #059669;
+}
+
+.light-theme .btn-pause {
+    background: #f59e0b;
+    color: white;
+    border-color: #d97706;
+}
+
+.light-theme .btn-pause:hover {
+    background: #d97706;
+}
+
+.light-theme .btn-reset {
+    background: #ef4444;
+    color: white;
+    border-color: #dc2626;
+}
+
+.light-theme .btn-reset:hover {
+    background: #dc2626;
+}
+
+.light-theme .btn-skip {
+    background: #6b7280;
+    color: white;
+    border-color: #4b5563;
+}
+
+.light-theme .btn-skip:hover {
+    background: #4b5563;
+}
+
+.light-theme .session-counter {
+    color: #4b5563;
+}
+
+.light-theme .settings-icon {
+    background: rgba(75, 85, 99, 0.1);
+    color: #4b5563;
+}
+
+.light-theme .settings-icon:hover {
+    background: rgba(75, 85, 99, 0.2);
+}
+
+.light-theme .settings-icon img {
+    filter: brightness(0) saturate(100%) invert(0%); /* Makes it black */
+}
+
+.light-theme .settings-container {
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid #e5e7eb;
+}
+
+.light-theme .settings-label {
+    color: #374151;
+}
+
+.light-theme .settings-input {
+    border: 2px solid #d1d5db;
+    background: #ffffff;
+    color: #1f2937;
+}
+
+.light-theme .settings-input:focus {
+    border-color: #10b981;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.light-theme .settings-checkbox {
+    accent-color: #10b981;
+}
+
+/* Light theme break mode adjustments */
+.light-theme.break-mode {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+}
+
+.light-theme.break-mode .progress-ring-progress {
+    stroke: #16a34a;
+    filter: drop-shadow(0 0 3px rgba(22, 163, 74, 0.4));
+}
+
+.light-theme.break-mode .progress-ring-background {
+    stroke: rgba(22, 163, 74, 0.2);
+}
+
+.light-theme.break-mode .btn-start,
+.light-theme.break-mode .btn-pause {
+    background: #16a34a;
+    border-color: #15803d;
+}
+
+.light-theme.break-mode .btn-start:hover,
+.light-theme.break-mode .btn-pause:hover {
+    background: #15803d;
 }

@@ -5,25 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pomodoro Timer</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Main Timer Panel -->
         <div id="timerPanel" class="panel">
-            <h1 class="text-3xl font-bold text-white mb-4 drop-shadow-lg">Pomodoro Timer</h1>
-            <div id="timer" class="text-5xl font-semibold text-white bg-gray-800 bg-opacity-75 p-4 rounded-lg mb-6 drop-shadow-xl">25:00</div>
-            <div class="controls flex justify-center gap-4 mb-6">
-                <button id="startBtn" class="btn btn-primary flex items-center gap-2"><span>▶️</span> Start</button>
-                <button id="resetBtn" class="btn btn-primary flex items-center gap-2"><span>🔄</span> Reset</button>
-            </div>
-            <div class="bg-white bg-opacity-90 p-4 rounded-lg shadow-lg mb-4">
-                <div id="sessionCount" class="text-gray-800 text-lg font-semibold text-center mb-3">Session: 1</div>
-                <button id="settingsBtn" class="btn btn-secondary w-full flex items-center justify-center gap-2">
-                    <span>⚙️</span> Settings
+            <div class="header flex items-center justify-between mb-4">
+                <div id="sessionIcon" class="session-icon">
+                    <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
+                </div>
+                <h1 id="sessionTitle" class="text-3xl font-bold text-white drop-shadow-lg">Pomodoro Timer</h1>
+                <button id="settingsBtn" class="settings-icon">
+                    <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
                 </button>
             </div>
+            
+            <div class="timer-circle">
+                <svg class="progress-ring" width="200" height="200">
+                    <circle class="progress-ring-background" cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+                    <circle class="progress-ring-progress" cx="100" cy="100" r="90" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dasharray="565.49" stroke-dashoffset="0"/>
+                </svg>
+                <div id="timer" class="timer-display">25:00</div>
+            </div>
+            
+            <div class="controls flex justify-center gap-4 mb-4">
+                <button id="startBtn" class="btn btn-start">Start</button>
+                <button id="pauseBtn" class="btn btn-pause" style="display: none;">Pause</button>
+                <button id="resetBtn" class="btn btn-reset">Reset</button>
+            </div>
+            
+            <button id="skipBreakBtn" class="btn btn-skip mb-3" style="display: none;">Skip Break</button>
+            
+            <div id="sessionCount" class="session-counter">Session: 0</div>
+            
             <div id="notificationStatus" class="mt-4 p-3 rounded-lg text-sm" style="display: none;">
                 <div id="notificationMessage"></div>
             </div>
@@ -31,30 +46,38 @@
 
         <!-- Settings Panel -->
         <div id="settingsPanel" class="panel" style="display: none;">
-            <div class="flex items-center justify-between mb-6">
+            <div class="settings-header flex items-center justify-between mb-4">
                 <button id="backBtn" class="btn btn-secondary flex items-center gap-2">
                     <span>←</span> Back
                 </button>
                 <h1 class="text-2xl font-bold text-white drop-shadow-lg">Settings</h1>
                 <div class="w-16"></div> <!-- Spacer for centering -->
             </div>
-            <div class="settings bg-white bg-opacity-90 p-6 rounded-lg shadow-lg">
-                <label class="block mb-3">
-                    Work Duration (min):
-                    <input type="number" id="workDuration" min="1" max="60" value="25" class="input">
-                </label>
-                <label class="block mb-3">
-                    Short Break (min):
-                    <input type="number" id="shortBreak" min="1" max="30" value="5" class="input">
-                </label>
-                <label class="block mb-3">
-                    Long Break (min):
-                    <input type="number" id="longBreak" min="1" max="60" value="15" class="input">
-                </label>
-                <label class="block mb-3">
-                    Sessions before Long Break:
-                    <input type="number" id="longBreakInterval" min="1" max="10" value="4" class="input">
-                </label>
+            <div class="settings-container bg-white bg-opacity-90 rounded-lg shadow-lg">
+                <div class="settings-row">
+                    <label class="settings-label">Work Duration (min):</label>
+                    <input type="number" id="workDuration" min="1" max="60" value="25" class="settings-input">
+                </div>
+                <div class="settings-row">
+                    <label class="settings-label">Short Break (min):</label>
+                    <input type="number" id="shortBreak" min="1" max="30" value="5" class="settings-input">
+                </div>
+                <div class="settings-row">
+                    <label class="settings-label">Long Break (min):</label>
+                    <input type="number" id="longBreak" min="1" max="60" value="15" class="settings-input">
+                </div>
+                <div class="settings-row">
+                    <label class="settings-label">Sessions before Long Break:</label>
+                    <input type="number" id="longBreakInterval" min="1" max="10" value="4" class="settings-input">
+                </div>
+                <div class="settings-row">
+                    <label class="settings-label">Auto-start next period:</label>
+                    <input type="checkbox" id="autoStart" class="settings-checkbox">
+                </div>
+                <div class="settings-row">
+                    <label class="settings-label">Light Theme:</label>
+                    <input type="checkbox" id="lightTheme" class="settings-checkbox">
+                </div>
                 <button id="saveSettings" class="btn btn-primary w-full mt-4">Save Settings</button>
             </div>
         </div>

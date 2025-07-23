@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer');
     const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const skipBreakBtn = document.getElementById('skipBreakBtn');
     const sessionCount = document.getElementById('sessionCount');
     const saveSettingsBtn = document.getElementById('saveSettings');
     const notificationStatus = document.getElementById('notificationStatus');
@@ -53,7 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                         workDuration: 25,
                                         shortBreak: 5,
                                         longBreak: 15,
-                                        longBreakInterval: 4
+                                        longBreakInterval: 4,
+                                        autoStart: false,
+                                        lightTheme: false
                                     }
                                 });
                             }
@@ -68,26 +72,110 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateProgressRing(state) {
+        const progressRing = document.querySelector('.progress-ring-progress');
+        if (!progressRing) return;
+        
+        // Calculate total duration for current session type
+        const totalDuration = state.isWorkSession ? 
+            state.settings.workDuration * 60 : 
+            (state.currentSession % state.settings.longBreakInterval === 0 ? 
+             state.settings.longBreak * 60 : 
+             state.settings.shortBreak * 60);
+        
+        // Calculate progress (0 to 1, where 0 is full and 1 is empty)
+        const progress = state.timeLeft / totalDuration;
+        
+        // Calculate circumference (2 * π * radius, where radius = 90)
+        const circumference = 2 * Math.PI * 90; // 565.49
+        
+        // Calculate offset (progress of 1 means no offset, progress of 0 means full offset)
+        const offset = circumference * (1 - progress);
+        
+        // Apply the offset to create the countdown effect
+        progressRing.style.strokeDashoffset = offset;
+    }
+
     function updateUI(state) {
         document.getElementById('workDuration').value = state.settings.workDuration;
         document.getElementById('shortBreak').value = state.settings.shortBreak;
         document.getElementById('longBreak').value = state.settings.longBreak;
         document.getElementById('longBreakInterval').value = state.settings.longBreakInterval;
+        
+        // Update checkbox settings if they exist
+        if (state.settings.autoStart !== undefined) {
+            document.getElementById('autoStart').checked = state.settings.autoStart;
+        }
+        if (state.settings.lightTheme !== undefined) {
+            document.getElementById('lightTheme').checked = state.settings.lightTheme;
+            // Apply light theme to body
+            if (state.settings.lightTheme) {
+                document.body.classList.add('light-theme');
+            } else {
+                document.body.classList.remove('light-theme');
+            }
+        }
 
         const minutes = Math.floor(state.timeLeft / 60);
         const seconds = state.timeLeft % 60;
         timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         sessionCount.textContent = `Session: ${state.currentSession}`;
         
-        // Update button content properly to preserve HTML structure
-        const buttonSpan = startBtn.querySelector('span');
-        if (state.isRunning) {
-            buttonSpan.textContent = '⏸️';
-            // Update the text node (skip the span, get the text node)
-            startBtn.childNodes[1].textContent = ' Pause';
+        // Update progress ring animation
+        updateProgressRing(state);
+        
+        // Update theme and UI based on session type
+        const body = document.body;
+        const sessionIcon = document.getElementById('sessionIcon');
+        const sessionIconImg = sessionIcon.querySelector('img');
+        const sessionTitle = document.getElementById('sessionTitle');
+        
+        if (!state.isWorkSession) {
+            // Break mode
+            body.classList.add('break-mode');
+            if (sessionIconImg) {
+                sessionIconImg.src = 'icons/green-icon.svg';
+                sessionIconImg.alt = 'Green Tomato Break';
+            }
+            
+            // Determine break type
+            const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
+            sessionTitle.textContent = isLongBreak ? 'Long Break' : 'Short Break';
         } else {
-            buttonSpan.textContent = '▶️';
-            startBtn.childNodes[1].textContent = ' Start';
+            // Work mode
+            body.classList.remove('break-mode');
+            if (sessionIconImg) {
+                sessionIconImg.src = 'icons/icon.svg';
+                sessionIconImg.alt = 'Tomato';
+            }
+            sessionTitle.textContent = 'Pomodoro Timer';
+        }
+        
+        // Update button visibility and text based on timer state
+        if (state.isRunning) {
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+        } else {
+            pauseBtn.style.display = 'none';
+            startBtn.style.display = 'inline-block';
+            
+            // Show "Resume" if timer has been started but is paused (timeLeft is not at full duration)
+            const fullDuration = state.isWorkSession ? state.settings.workDuration * 60 : 
+                (state.currentSession % state.settings.longBreakInterval === 0 ? 
+                 state.settings.longBreak * 60 : state.settings.shortBreak * 60);
+            
+            if (state.timeLeft < fullDuration && state.timeLeft > 0) {
+                startBtn.textContent = 'Resume';
+            } else {
+                startBtn.textContent = 'Start';
+            }
+        }
+        
+        // Show skip break button only during break sessions
+        if (!state.isWorkSession && state.timeLeft > 0) {
+            skipBreakBtn.style.display = 'block';
+        } else {
+            skipBreakBtn.style.display = 'none';
         }
     }
 
@@ -131,6 +219,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    pauseBtn.addEventListener('click', () => {
+        sendMessage('toggleTimer', {}, (response) => {
+            if (response) updateUI(response);
+        });
+    });
+
+    skipBreakBtn.addEventListener('click', () => {
+        sendMessage('skipBreak', {}, (response) => {
+            if (response) updateUI(response);
+        });
+    });
+
     resetBtn.addEventListener('click', () => {
         sendMessage('resetTimer', {}, (response) => {
             if (response) updateUI(response);
@@ -142,7 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
             workDuration: parseInt(document.getElementById('workDuration').value),
             shortBreak: parseInt(document.getElementById('shortBreak').value),
             longBreak: parseInt(document.getElementById('longBreak').value),
-            longBreakInterval: parseInt(document.getElementById('longBreakInterval').value)
+            longBreakInterval: parseInt(document.getElementById('longBreakInterval').value),
+            autoStart: document.getElementById('autoStart').checked,
+            lightTheme: document.getElementById('lightTheme').checked
         };
         sendMessage('saveSettings', { settings }, (response) => {
             if (response) updateUI(response);
