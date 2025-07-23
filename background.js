@@ -109,7 +109,11 @@ function handleSessionEnd() {
         showNotification('Pomodoro Timer', 'Time to work!');
     }
     updateTimerDisplay();
-    startTimer();
+    
+    // Only auto-start next period if the setting is enabled
+    if (settings.autoStart) {
+        startTimer();
+    }
 }
 
 function showNotification(title, message) {
