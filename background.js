@@ -37,8 +37,39 @@ function loadState(callback) {
     });
 }
 
+function updateBadge() {
+    if (timeLeft <= 0 || !isRunning) {
+        // Clear badge when timer is not running or finished
+        chrome.action.setBadgeText({ text: '' });
+        chrome.action.setBadgeBackgroundColor({ color: '#ff4444' });
+        return;
+    }
+    
+    const minutes = Math.floor(timeLeft / 60);
+    
+    // Format time for badge (show only minutes for better readability)
+    let badgeText = '';
+    if (minutes >= 60) {
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        badgeText = `${hours}h${remainingMinutes > 0 ? remainingMinutes : ''}`;
+    } else {
+        badgeText = `${minutes}m`;
+    }
+    
+    // Set badge text
+    chrome.action.setBadgeText({ text: badgeText });
+    
+    // Set badge color based on session type
+    const badgeColor = isWorkSession ? '#ff4444' : '#44ff44'; // Red for work, green for break
+    chrome.action.setBadgeBackgroundColor({ color: badgeColor });
+}
+
 function updateTimerDisplay() {
     const state = { isRunning, timeLeft, currentSession, isWorkSession, settings };
+    
+    // Update badge with current time
+    updateBadge();
     
     // Only try to send messages if there are active listeners
     chrome.runtime.sendMessage({ action: 'updateTimer', state }).catch((error) => {
