@@ -32,22 +32,22 @@
             <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
                 <div class="controls flex justify-center gap-4 mb-4">
                     <button id="startBtn" class="btn btn-start">Start</button>
-                    <button id="pauseBtn" class="btn btn-pause" style="display: none;">Pause</button>
+                    <button id="pauseBtn" class="btn btn-pause hidden">Pause</button>
                     <button id="resetBtn" class="btn btn-reset">Reset</button>
                 </div>
                 
-                <button id="skipBreakBtn" class="btn btn-skip mb-3" style="display: none;">Skip Break</button>
+                <button id="skipBreakBtn" class="btn btn-skip mb-3 hidden">Skip Break</button>
                 
                 <div id="sessionCount" class="session-counter">Session: 0</div>
             </div>
             
-            <div id="notificationStatus" class="mt-4 p-3 rounded-lg text-sm" style="display: none;">
+            <div id="notificationStatus" class="notification-status hidden">
                 <div id="notificationMessage"></div>
             </div>
         </div>
 
         <!-- Settings Panel -->
-        <div id="settingsPanel" class="panel" style="display: none;">
+        <div id="settingsPanel" class="panel hidden">
             <div class="settings-header flex items-center justify-between mb-4">
                 <button id="backBtn" class="btn-back">
                     ←

@@ -725,3 +725,23 @@ body.break-mode {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
+
+/* Utility classes for display states */
+.hidden {
+    display: none;
+}
+
+.notification-status {
+    margin-top: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.p-3 {
+    padding: 0.75rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
