@@ -3,7 +3,7 @@
   "name": "Pomodoro Timer",
   "version": "1.0.4",
   "description": "A configurable Pomodoro timer to boost productivity",
-  "permissions": ["notifications", "storage", "alarms"],
+  "permissions": ["notifications", "storage", "alarms", "contextMenus"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

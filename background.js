@@ -71,6 +71,9 @@ function updateTimerDisplay() {
     // Update badge with current time
     updateBadge();
     
+    // Update context menus
+    updateContextMenus();
+    
     // Only try to send messages if there are active listeners
     chrome.runtime.sendMessage({ action: 'updateTimer', state }).catch((error) => {
         // Ignore connection errors when no popup is open
@@ -236,6 +239,9 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.runtime.onInstalled.addListener(() => {
     console.log('Extension installed/updated');
     
+    // Create context menus
+    createContextMenus();
+    
     // Check notification permissions
     chrome.notifications.getPermissionLevel((level) => {
         console.log('Notification permission level:', level);
@@ -245,7 +251,138 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
+function createContextMenus() {
+    // Clear existing menus first
+    chrome.contextMenus.removeAll(() => {
+        // Main action items
+        chrome.contextMenus.create({
+            id: 'start-pause',
+            title: 'Start Timer',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'reset',
+            title: 'Reset Timer',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'skip-break',
+            title: 'Skip Break',
+            contexts: ['action'],
+            enabled: false // Will be enabled during breaks
+        });
+        
+        // Separator
+        chrome.contextMenus.create({
+            id: 'separator1',
+            type: 'separator',
+            contexts: ['action']
+        });
+        
+        // Quick time settings
+        chrome.contextMenus.create({
+            id: 'quick-times',
+            title: 'Quick Start',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'quick-5',
+            parentId: 'quick-times',
+            title: '5 minutes',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'quick-15',
+            parentId: 'quick-times',
+            title: '15 minutes',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'quick-25',
+            parentId: 'quick-times',
+            title: '25 minutes (Pomodoro)',
+            contexts: ['action']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'quick-45',
+            parentId: 'quick-times',
+            title: '45 minutes',
+            contexts: ['action']
+        }, () => {
+            // After all menus are created, update them with current state
+            if (!chrome.runtime.lastError) {
+                updateContextMenus();
+            }
+        });
+    });
+}
+
+function updateContextMenus() {
+    // Update the start/pause menu item based on current state
+    const startPauseTitle = isRunning ? 'Pause Timer' : 'Start Timer';
+    chrome.contextMenus.update('start-pause', { title: startPauseTitle }, () => {
+        if (chrome.runtime.lastError) {
+            // Ignore error if menu doesn't exist yet
+            console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
+        }
+    });
+    
+    // Enable/disable skip break based on current session type
+    chrome.contextMenus.update('skip-break', { enabled: !isWorkSession && timeLeft > 0 }, () => {
+        if (chrome.runtime.lastError) {
+            // Ignore error if menu doesn't exist yet
+            console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
+        }
+    });
+}
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    switch (info.menuItemId) {
+        case 'start-pause':
+            toggleTimer();
+            break;
+        case 'reset':
+            resetTimer();
+            break;
+        case 'skip-break':
+            skipBreak();
+            break;
+        case 'quick-5':
+            startQuickTimer(5);
+            break;
+        case 'quick-15':
+            startQuickTimer(15);
+            break;
+        case 'quick-25':
+            startQuickTimer(25);
+            break;
+        case 'quick-45':
+            startQuickTimer(45);
+            break;
+    }
+});
+
+function startQuickTimer(minutes) {
+    clearInterval(interval);
+    isRunning = false;
+    timeLeft = minutes * 60;
+    isWorkSession = true; // Quick timers are work sessions
+    updateTimerDisplay();
+    updateContextMenus();
+    startTimer();
+}
+
 // Load initial state
 loadState(() => {
-    updateTimerDisplay();
+    // Delay initial update to allow context menus to be created first
+    setTimeout(() => {
+        updateTimerDisplay();
+    }, 100);
 });
