@@ -131,16 +131,16 @@ function handleSessionEnd() {
         currentSession++;
         if (currentSession % settings.longBreakInterval === 0) {
             timeLeft = settings.longBreak * 60;
-            showNotification('Pomodoro Timer', 'Time for a long break!');
+            showNotification('Tomato Focus', 'Time for a long break!');
         } else {
             timeLeft = settings.shortBreak * 60;
-            showNotification('Pomodoro Timer', 'Time for a short break!');
+            showNotification('Tomato Focus', 'Time for a short break!');
         }
         isWorkSession = false;
     } else {
         timeLeft = settings.workDuration * 60;
         isWorkSession = true;
-        showNotification('Pomodoro Timer', 'Time to work!');
+        showNotification('Tomato Focus', 'Time to work!');
     }
     updateTimerDisplay();
     

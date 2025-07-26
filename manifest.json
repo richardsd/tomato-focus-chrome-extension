@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Pomodoro Timer",
+  "name": "Tomato Focus",
   "version": "1.0.4",
-  "description": "A configurable Pomodoro timer to boost productivity",
+  "description": "A configurable Tomato Focus to boost productivity",
   "permissions": ["notifications", "storage", "alarms", "contextMenus"],
   "action": {
     "default_popup": "popup.html",

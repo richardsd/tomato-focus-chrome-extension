@@ -1,10 +1,13 @@
-# 🍅 Focus Timer – A Chrome Extension for Productivity
+<div align="center" style="display: flex; align-items: center; justify-content: left; gap: 20px;">
+  <img src="docs/logo.png" alt="Tomato Focus Logo" width="80"/>
+  <h1 style="margin:0; white-space: nowrap;">🍅 Tomato Focus – A Chrome Extension for Productivity</h1>
+</div>
 
 A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
 
 <p align="center">
   <img src="docs/timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
-  <img src="docs/settings_screen.png" alt="Settings" width="45%" style="display:inline-block;"/>
+  <img src="docs/settings_screen.png" alt="Settings" width="43%" style="display:inline-block;"/>
 </p>
 
 > **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.  

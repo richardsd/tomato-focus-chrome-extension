@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 sessionIconImg.src = 'icons/icon.svg';
                 sessionIconImg.alt = 'Tomato';
             }
-            sessionTitle.textContent = 'Pomodoro Timer';
+            sessionTitle.textContent = 'Tomato Focus';
         }
         
         // Update button visibility and text based on timer state
