@@ -1,138 +1,105 @@
-# Pomodoro Timer Chrome Extension
+# 🍅 Focus Timer – A Chrome Extension for Productivity
 
-A configurable Pomodoro timer extension for Chrome that helps boost productivity by implementing the Pomodoro Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
+A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
+
+> **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.  
+> Learn more at [https://www.pomodorotechnique.com](https://www.pomodorotechnique.com)
+
+Stay focused and take healthy breaks! 🍅⏰
 
 ## Features
 
-### 🍅 Core Timer Functionality
+### 🧭 Core Timer Functionality
 - **Work Sessions**: Default 25-minute focused work periods
-- **Short Breaks**: 5-minute breaks between work sessions
-- **Long Breaks**: 15-minute extended breaks after a set number of sessions
+- **Short Breaks**: 5-minute breaks between sessions
+- **Long Breaks**: 15-minute extended breaks after a configurable number of sessions
 - **Visual Progress**: Circular progress ring with smooth countdown animation
-- **Session Counter**: Track your completed Pomodoro sessions
+- **Session Counter**: Track your completed focus sessions
 
 ### ⚙️ Customizable Settings
-- **Flexible Durations**: Adjust work, short break, and long break durations (1-60 minutes)
-- **Break Intervals**: Configure how many sessions before a long break (1-10 sessions)
-- **Auto-Start**: Option to automatically start the next period
-- **Theme Options**: Light and dark theme support
-- **Persistent Settings**: All preferences saved and restored between sessions
+- **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)
+- **Break Intervals**: Configure how many sessions before a long break (1–10)
+- **Auto-Start**: Automatically start the next period
+- **Theme Options**: Light and dark mode
+- **Persistent Settings**: Preferences are saved and restored between sessions
 
 ### 🔔 Smart Notifications
-- **Browser Notifications**: Get notified when sessions end, even when the popup is closed
-- **Cross-Platform Support**: Works on Windows, macOS, and Linux
-- **Permission Guidance**: Built-in help for enabling notifications on different systems
+- **Browser Alerts**: Notifications when sessions end
+- **Cross-Platform Support**: macOS, Windows, Linux
+- **Permission Hints**: Built-in help for enabling notifications
 
-### 🎯 Advanced Features
-- **Badge Display**: See remaining time directly on the extension icon
-- **Context Menu Actions**: Right-click the extension for quick controls
-- **Quick Timers**: Start preset timers (5, 15, 25, 45 minutes) from context menu
-- **Skip Break**: Option to skip break periods when needed
-- **Session Persistence**: Timer state maintained across browser restarts
+### 🚀 Advanced Features
+- **Badge Display**: See time remaining on the extension icon
+- **Context Menu Actions**: Quick access through right-click
+- **Quick Timers**: Launch 5/15/25/45 min timers instantly
+- **Skip Break**: Flexibility when needed
+- **Session Persistence**: Survives browser restarts
 
-### 🎨 Beautiful Interface
-- **Modern Design**: Clean, minimalist interface with smooth animations
-- **Responsive Layout**: Optimized for the Chrome extension popup
-- **Visual Feedback**: Different colors and icons for work vs. break modes
-- **Tomato Icons**: Themed icons that change based on session type
+### 🎨 Modern Interface
+- **Clean Design**: Minimalist UI with smooth transitions
+- **Responsive Layout**: Optimized for popup use
+- **Visual Feedback**: Different colors for focus vs. break
+- **Custom Icons**: Tomato-inspired visuals that change with session type
 
 ## Installation
 
-### From Chrome Web Store (Recommended)
-*Note: This extension is currently in development. Installation from the Chrome Web Store will be available upon publication.*
+### From Chrome Web Store (coming soon)
+_Not yet published._
 
 ### Manual Installation (Development)
 1. Clone or download this repository
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top right corner
-4. Click "Load unpacked" and select the extension directory
-5. The Pomodoro Timer icon should appear in your Chrome toolbar
+2. Open `chrome://extensions/` in Chrome
+3. Enable "Developer mode"
+4. Click **Load unpacked** and select the extension folder
 
 ## Usage
 
 ### Basic Operation
-1. **Start Timer**: Click the extension icon and press "Start" to begin a 25-minute work session
-2. **Pause/Resume**: Click "Pause" to pause the timer, or "Resume" to continue
-3. **Reset**: Click "Reset" to restart the current session
-4. **Break Management**: When a break starts, you can skip it or let it complete naturally
+1. **Start Timer**: Click the extension icon and press "Start"
+2. **Pause/Resume**: Use the pause or resume controls
+3. **Reset**: Restart the current session
+4. **Break Management**: Skip or complete breaks as needed
 
 ### Settings Configuration
-1. Click the gear icon in the extension popup
-2. Adjust the following settings:
-   - **Work Duration**: Length of work sessions (default: 25 minutes)
-   - **Short Break**: Length of short breaks (default: 5 minutes)  
-   - **Long Break**: Length of long breaks (default: 15 minutes)
-   - **Sessions before Long Break**: Number of work sessions before a long break (default: 4)
-   - **Auto-start next period**: Automatically begin the next timer when one ends
-   - **Light Theme**: Switch between dark and light visual themes
-3. Click "Save Settings" to apply changes
+1. Click the gear icon in the popup
+2. Adjust:
+   - Work, short break, and long break durations
+   - Sessions before a long break
+   - Auto-start toggle
+   - Theme preference
+3. Click "Save Settings" to apply
 
 ### Context Menu Features
-Right-click the extension icon to access:
-- **Start/Pause Timer**: Quick timer control
-- **Reset Timer**: Restart current session
-- **Skip Break**: Available during break periods
-- **Quick Start Timers**: Start preset timers without opening the popup
-  - 5 minutes
-  - 15 minutes
-  - 25 minutes (Standard Pomodoro)
-  - 45 minutes
+Right-click the extension icon to:
+- Start/Pause
+- Reset
+- Skip Break
+- Quick Start (5/15/25/45 min)
 
 ### Notifications Setup
-For the best experience, ensure notifications are enabled:
 
-**On macOS:**
-1. Open System Preferences → Notifications & Focus
-2. Find Google Chrome in the list
-3. Enable "Allow Notifications"
+#### macOS
+- Go to System Preferences → Notifications
+- Enable notifications for Google Chrome
 
-**On Windows/Linux:**
-1. Check your system notification settings
-2. Ensure Chrome is allowed to send notifications
+#### Windows/Linux
+- Check your system notification settings
+- Allow Chrome notifications
 
 ## Technical Details
 
-### Browser Compatibility
-- **Chrome**: Version 88+ (Manifest V3 compatible)
-- **Edge**: Version 88+ (Chromium-based)
-- **Other Chromium browsers**: Should work with Manifest V3 support
-
-### Permissions
-The extension requests the following permissions:
-- **notifications**: To alert you when sessions end
-- **storage**: To save your settings and timer state
-- **alarms**: For accurate timing (currently unused, reserved for future features)
-- **contextMenus**: For right-click menu functionality
-
-### Architecture
-- **Manifest V3**: Uses the latest Chrome extension architecture
-- **Service Worker**: Background script for timer logic and persistence
-- **Popup Interface**: HTML/CSS/JavaScript for the main UI
-- **Local Storage**: Settings and state persistence using Chrome storage API
+- **Browser Compatibility**: Chrome, Edge, and other Chromium-based browsers
+- **Permissions**:
+  - `notifications`: For timer alerts
+  - `storage`: To persist user settings
+  - `contextMenus`: For right-click controls
+- **Architecture**:
+  - Manifest V3
+  - Service Worker
+  - Popup UI
+  - Chrome Storage API
 
 ## Development
-
-### Project Structure
-```
-pomodoro-chrome-extension/
-├── manifest.json          # Extension configuration
-├── popup.html            # Main UI interface  
-├── popup.js              # Frontend logic and UI handling
-├── background.js         # Service worker with timer logic
-├── styles.css            # Visual styling and themes
-├── icons/                # Extension icons and graphics
-│   ├── icon16.png
-│   ├── icon48.png
-│   ├── icon128.png
-│   ├── icon.svg
-│   ├── green-icon.svg
-│   └── settings-icon.svg
-├── docs/                 # Documentation screenshots
-│   ├── timer_screen.png
-│   └── settings_screen.png
-├── LICENSE               # GPL v3 license
-└── README.md            # This file
-```
 
 ### Building and Testing
 1. Make changes to the source files
@@ -148,29 +115,12 @@ pomodoro-chrome-extension/
 4. Commit with descriptive messages
 5. Push to your fork and submit a pull request
 
-### Code Style
-- Use modern JavaScript (ES6+)
-- Follow consistent indentation (4 spaces)
-- Include comments for complex logic
-- Test across different Chrome versions
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
-
-- Based on the Pomodoro Technique developed by Francesco Cirillo
-- Icons and design inspired by the traditional tomato timer
-- Built with modern web technologies and Chrome Extension APIs
+- Inspired by the timeboxing method popularized as the Pomodoro® Technique
+- Icons inspired by traditional tomato timers
 
 ## Support
+Please report issues or suggestions via [Github Issues](https://github.com/richardsd/pomodoro-chrome-extension/issues).
 
-If you encounter any issues or have suggestions for improvements:
-1. Check the [Issues](../../issues) page for existing reports
-2. Create a new issue with detailed information about the problem
-3. Include your Chrome version and operating system details
-
----
-
-**Happy Productivity!** 🍅⏰
+## License
+This project is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
