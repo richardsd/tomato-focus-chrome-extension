@@ -2,6 +2,11 @@
 
 A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
 
+<p align="center">
+  <img src="docs/timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
+  <img src="docs/settings_screen.png" alt="Settings" width="45%" style="display:inline-block;"/>
+</p>
+
 > **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.  
 > Learn more at [https://www.pomodorotechnique.com](https://www.pomodorotechnique.com)
 
