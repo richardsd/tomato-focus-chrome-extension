@@ -20,7 +20,7 @@ const POPUP_CONSTANTS = {
         settingsPanel: '#settingsPanel',
         settingsBtn: '#settingsBtn',
         backBtn: '#backBtn',
-        progressRing: '.progress-ring-progress',
+        progressRing: '.timer__progress-ring-progress',
         sessionIcon: '#sessionIcon',
         sessionTitle: '#sessionTitle'
     },
