@@ -211,6 +211,8 @@ class ThemeManager {
 
         if (sessionTitle) {
             if (!state.isWorkSession) {
+                // During break, determine if it's long or short based on current session count
+                // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
                 const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
                 sessionTitle.textContent = isLongBreak ? 'Long Break' : 'Short Break';
             } else {
@@ -351,6 +353,8 @@ class UIManager {
             return state.settings.workDuration * 60;
         }
         
+        // During break, determine duration based on current session count
+        // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
         const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
         return isLongBreak ? state.settings.longBreak * 60 : state.settings.shortBreak * 60;
     }
