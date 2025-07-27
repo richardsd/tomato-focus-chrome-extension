@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tomato Focus",
-  "version": "1.0.4",
+  "version": "1.0.0",
   "description": "A configurable Tomato Focus to boost productivity",
   "permissions": ["notifications", "storage", "alarms", "contextMenus"],
   "action": {

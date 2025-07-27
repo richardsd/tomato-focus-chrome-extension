@@ -397,6 +397,10 @@ class TimerController {
         this.pause();
         this.state.startWork();
         this.updateUI();
+
+        if (this.state.settings.autoStart) {
+            this.start();
+        }
     }
 
     startQuickTimer(minutes) {
