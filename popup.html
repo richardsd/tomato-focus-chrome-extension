@@ -12,31 +12,33 @@
         <!-- Main Timer Panel -->
         <div id="timerPanel" class="panel">
             <div class="header flex items-center justify-between mb-4">
-                <div id="sessionIcon" class="session-icon">
+                <div id="sessionIcon" class="header__icon">
                     <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
                 </div>
-                <h1 id="sessionTitle" class="text-3xl font-bold text-white drop-shadow-lg">Tomato Focus</h1>
-                <button id="settingsBtn" class="settings-icon">
+                <h1 id="sessionTitle" class="header__title">Tomato Focus</h1>
+                <button id="settingsBtn" class="header__settings">
                     <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
                 </button>
             </div>
             
-            <div class="timer-circle">
-                <svg class="progress-ring" width="200" height="200">
-                    <circle class="progress-ring-background" cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
-                    <circle class="progress-ring-progress" cx="100" cy="100" r="90" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dasharray="565.49" stroke-dashoffset="0"/>
-                </svg>
-                <div id="timer" class="timer-display">25:00</div>
+            <div class="timer">
+                <div class="timer__circle">
+                    <svg class="timer__progress-ring" width="200" height="200">
+                        <circle class="timer__progress-ring-background" cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+                        <circle class="timer__progress-ring-progress" cx="100" cy="100" r="90" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dasharray="565.49" stroke-dashoffset="0"/>
+                    </svg>
+                    <div id="timer" class="timer__display">25:00</div>
+                </div>
             </div>
             
             <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
                 <div class="controls flex justify-center gap-4 mb-4">
-                    <button id="startBtn" class="btn btn-start">Start</button>
-                    <button id="pauseBtn" class="btn btn-pause hidden">Pause</button>
-                    <button id="resetBtn" class="btn btn-reset">Reset</button>
+                    <button id="startBtn" class="btn btn--success">Start</button>
+                    <button id="pauseBtn" class="btn btn--warning hidden">Pause</button>
+                    <button id="resetBtn" class="btn btn--danger">Reset</button>
                 </div>
                 
-                <button id="skipBreakBtn" class="btn btn-skip mb-3 hidden">Skip Break</button>
+                <button id="skipBreakBtn" class="btn btn--skip hidden">Skip Break</button>
                 
                 <div id="sessionCount" class="session-counter">Session: 0</div>
             </div>
@@ -49,13 +51,13 @@
         <!-- Settings Panel -->
         <div id="settingsPanel" class="panel hidden">
             <div class="settings-header flex items-center justify-between mb-4">
-                <button id="backBtn" class="btn-back">
+                <button id="backBtn" class="btn--back">
                     ←
                 </button>
-                <h1 class="text-2xl font-bold text-white drop-shadow-lg">Settings</h1>
+                <h1 class="header__title">Settings</h1>
                 <div class="w-16"></div> <!-- Spacer for centering -->
             </div>
-            <div class="settings-container bg-white bg-opacity-90 rounded-lg shadow-lg">
+            <div class="settings-container">
                 <div class="settings-row">
                     <label class="settings-label">Work Duration (min):</label>
                     <input type="number" id="workDuration" min="1" max="60" value="25" class="settings-input">
@@ -80,7 +82,7 @@
                     <label class="settings-label">Light Theme:</label>
                     <input type="checkbox" id="lightTheme" class="settings-checkbox">
                 </div>
-                <button id="saveSettings" class="btn btn-primary w-full mt-4">Save Settings</button>
+                <button id="saveSettings" class="btn btn--primary btn--full mt-4">Save Settings</button>
             </div>
         </div>
     </div>
