@@ -90,6 +90,7 @@ class TimerState {
     }
 
     shouldTakeLongBreak() {
+        // Check if the current session count indicates it's time for a long break
         return this.currentSession % this.settings.longBreakInterval === 0;
     }
 }
@@ -395,6 +396,9 @@ class TimerController {
         if (this.state.isWorkSession) return;
 
         this.pause();
+        
+        // When break is skipped, increment session (since break cycle is considered complete)
+        this.state.incrementSession();
         this.state.startWork();
         this.updateUI();
 
@@ -415,9 +419,11 @@ class TimerController {
         this.state.isRunning = false;
         
         if (this.state.isWorkSession) {
-            this.state.incrementSession();
+            // When work session ends, determine break type
+            // Check if current session number is a multiple of longBreakInterval
+            const isLongBreakTime = this.state.currentSession % this.state.settings.longBreakInterval === 0;
             
-            if (this.state.shouldTakeLongBreak()) {
+            if (isLongBreakTime) {
                 this.state.startLongBreak();
                 await NotificationManager.show('Tomato Focus', 'Time for a long break!');
             } else {
@@ -425,6 +431,8 @@ class TimerController {
                 await NotificationManager.show('Tomato Focus', 'Time for a short break!');
             }
         } else {
+            // When break ends, increment session and start work
+            this.state.incrementSession();
             this.state.startWork();
             await NotificationManager.show('Tomato Focus', 'Time to work!');
         }
