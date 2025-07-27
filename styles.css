@@ -414,6 +414,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 40px; /* Ensure consistent height */
+}
+
+.settings-header__spacer {
+  width: 40px; /* Match back button width exactly */
+  height: 40px;
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .settings-row {
