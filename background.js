@@ -596,3 +596,7 @@ self.addEventListener('beforeunload', () => {
     timerController.stopBadgeUpdater();
     chrome.alarms.clearAll();
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CONSTANTS, TimerState, TimerController };
+}
