@@ -21,6 +21,7 @@ const POPUP_CONSTANTS = {
         settingsBtn: '#settingsBtn',
         backBtn: '#backBtn',
         progressRing: '.timer__progress-ring-progress',
+        progressRingBackground: '.timer__progress-ring-background',
         sessionIcon: '#sessionIcon',
         sessionTitle: '#sessionTitle'
     },
@@ -228,7 +229,22 @@ class ThemeManager {
 class UIManager {
     constructor() {
         this.elements = this.cacheElements();
+        this.circumference = utils.getCircumference();
+        this.setProgressRingDasharray();
         this.debouncedUpdate = utils.debounce(this.updateProgressRing.bind(this), POPUP_CONSTANTS.UPDATE_DEBOUNCE);
+    }
+
+    /**
+     * Set strokeDasharray for progress ring elements based on radius
+     */
+    setProgressRingDasharray() {
+        const { progressRing, progressRingBackground } = this.elements;
+        if (progressRing) {
+            progressRing.style.strokeDasharray = this.circumference;
+        }
+        if (progressRingBackground) {
+            progressRingBackground.style.strokeDasharray = this.circumference;
+        }
     }
 
     /**
@@ -339,8 +355,7 @@ class UIManager {
 
         const totalDuration = this.calculateFullDuration(state);
         const progress = state.timeLeft / totalDuration;
-        const circumference = utils.getCircumference();
-        const offset = circumference * (1 - progress);
+        const offset = this.circumference * (1 - progress);
 
         progressRing.style.strokeDashoffset = offset;
     }
