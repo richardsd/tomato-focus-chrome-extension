@@ -6,6 +6,7 @@ const POPUP_CONSTANTS = {
     ANIMATION_DURATION: 300,
     UPDATE_DEBOUNCE: 50,
     PROGRESS_RING_RADIUS: 90,
+    TOAST_DURATION: 3000,
     SELECTORS: {
         timer: '#timer',
         startBtn: '#startBtn',
@@ -22,7 +23,8 @@ const POPUP_CONSTANTS = {
         backBtn: '#backBtn',
         progressRing: '.timer__progress-ring-progress',
         sessionIcon: '#sessionIcon',
-        sessionTitle: '#sessionTitle'
+        sessionTitle: '#sessionTitle',
+        toast: '#toast'
     },
     THEMES: {
         WORK: {
@@ -447,6 +449,37 @@ class NotificationController {
 }
 
 /**
+ * Displays transient toast messages
+ */
+class ToastManager {
+    constructor() {
+        this.toastElement = utils.getElement(POPUP_CONSTANTS.SELECTORS.toast);
+        this.hideTimeout = null;
+    }
+
+    /**
+     * Show toast with auto hide
+     */
+    show(message, duration = POPUP_CONSTANTS.TOAST_DURATION) {
+        if (!this.toastElement) return;
+        this.toastElement.textContent = message;
+        this.toastElement.classList.remove('hidden');
+        clearTimeout(this.hideTimeout);
+        this.hideTimeout = setTimeout(() => this.hide(), duration);
+    }
+
+    /**
+     * Hide toast element
+     */
+    hide() {
+        if (this.toastElement) {
+            this.toastElement.classList.add('hidden');
+            this.toastElement.textContent = '';
+        }
+    }
+}
+
+/**
  * Manages settings form and validation
  */
 class SettingsManager {
@@ -545,6 +578,7 @@ class PopupController {
         this.uiManager = new UIManager();
         this.themeManager = new ThemeManager();
         this.notificationController = new NotificationController();
+        this.toastManager = new ToastManager();
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
         
@@ -693,16 +727,17 @@ class PopupController {
                     const validation = this.settingsManager.validateSettings(settings);
 
                     if (!validation.isValid) {
-                        alert('Settings validation failed:\n' + validation.errors.join('\n'));
+                        this.toastManager.show('Settings validation failed:\n' + validation.errors.join('\n'));
                         return;
                     }
 
                     const state = await this.messageHandler.sendMessage('saveSettings', { settings });
                     this.updateState(state);
                     this.navigationManager.showTimerPanel();
+                    this.toastManager.show('Settings saved');
                 } catch (error) {
                     console.error('Failed to save settings:', error);
-                    alert('Failed to save settings. Please try again.');
+                    this.toastManager.show('Failed to save settings. Please try again.');
                 }
             });
         }

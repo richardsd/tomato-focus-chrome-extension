@@ -602,6 +602,20 @@ body {
   color: #92400e;
 }
 
+.toast {
+  position: fixed;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--color-neutral-dark);
+  color: var(--color-white);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-overlay);
+}
+
 /* ===========================================
    UTILITY CLASSES
    =========================================== */
