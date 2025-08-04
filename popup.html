@@ -10,13 +10,13 @@
 <body>
     <div class="container">
         <!-- Main Timer Panel -->
-        <div id="timerPanel" class="panel">
+        <div id="timerPanel" class="panel" role="main" aria-labelledby="sessionTitle">
             <div class="header flex items-center justify-between mb-4">
                 <div id="sessionIcon" class="header__icon">
                     <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
                 </div>
                 <h1 id="sessionTitle" class="header__title">Tomato Focus</h1>
-                <button id="settingsBtn" class="header__settings">
+                <button id="settingsBtn" class="header__settings" aria-label="Open settings">
                     <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
                 </button>
             </div>
@@ -33,9 +33,9 @@
             
             <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
                 <div class="controls flex justify-center gap-4 mb-4">
-                    <button id="startBtn" class="btn btn--success">Start</button>
-                    <button id="pauseBtn" class="btn btn--warning hidden">Pause</button>
-                    <button id="resetBtn" class="btn btn--danger">Reset</button>
+                    <button id="startBtn" class="btn btn--success" aria-label="Start timer">Start</button>
+                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer">Pause</button>
+                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer">Reset</button>
                 </div>
                 
                 <button id="skipBreakBtn" class="btn btn--skip hidden">Skip Break</button>
@@ -49,9 +49,9 @@
         </div>
 
         <!-- Settings Panel -->
-        <div id="settingsPanel" class="panel hidden">
+        <div id="settingsPanel" class="panel hidden" role="region" aria-label="Settings panel">
             <div class="settings-header flex items-center justify-between mb-4">
-                <button id="backBtn" class="btn--back">
+                <button id="backBtn" class="btn--back" aria-label="Back to timer">
                     ←
                 </button>
                 <h1 class="header__title">Settings</h1>
