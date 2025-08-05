@@ -12,7 +12,8 @@ const CONSTANTS = {
         longBreak: 15,
         longBreakInterval: 4,
         autoStart: false,
-        theme: 'system'
+        theme: 'system',
+        pauseOnIdle: true
     }
 };
 
@@ -294,6 +295,7 @@ class TimerController {
         this.state = new TimerState();
         this.alarmName = CONSTANTS.ALARM_NAME;
         this.isInitialized = false;
+        this.wasPausedForIdle = false;
 
         this.init();
     }
@@ -302,6 +304,7 @@ class TimerController {
         await this.loadState();
         this.setupAlarmListener();
         this.setupMessageListener();
+        this.setupIdleListener();
         this.isInitialized = true;
         this.updateUI();
     }
@@ -486,6 +489,33 @@ class TimerController {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             this.handleMessage(request, sendResponse);
             return true; // Keep alive for async response
+        });
+    }
+
+    setupIdleListener() {
+        // Set default detection interval (60 seconds)
+        if (chrome.idle && chrome.idle.setDetectionInterval) {
+            chrome.idle.setDetectionInterval(60);
+        }
+
+        chrome.idle.onStateChanged.addListener((newState) => {
+            if (!this.state.settings.pauseOnIdle) return;
+
+            if (newState === 'idle' || newState === 'locked') {
+                if (this.state.isRunning) {
+                    this.pause();
+                    this.wasPausedForIdle = true;
+                }
+            } else if (newState === 'active') {
+                if (this.wasPausedForIdle) {
+                    if (this.state.settings.autoStart) {
+                        this.start();
+                    } else {
+                        NotificationManager.show('Tomato Focus', 'Timer paused while you were away');
+                    }
+                    this.wasPausedForIdle = false;
+                }
+            }
         });
     }
 

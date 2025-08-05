@@ -50,7 +50,8 @@ const POPUP_CONSTANTS = {
             longBreak: 15,
             longBreakInterval: 4,
             autoStart: false,
-            theme: 'system'
+            theme: 'system',
+            pauseOnIdle: true
         }
     }
 };
@@ -333,7 +334,8 @@ class UIManager {
             longBreak: state.settings.longBreak,
             longBreakInterval: state.settings.longBreakInterval,
             autoStart: state.settings.autoStart,
-            theme: state.settings.theme || 'system'
+            theme: state.settings.theme || 'system',
+            pauseOnIdle: state.settings.pauseOnIdle
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {
@@ -481,7 +483,8 @@ class SettingsManager {
             longBreak: document.getElementById('longBreak'),
             longBreakInterval: document.getElementById('longBreakInterval'),
             autoStart: document.getElementById('autoStart'),
-            theme: document.getElementById('theme')
+            theme: document.getElementById('theme'),
+            pauseOnIdle: document.getElementById('pauseOnIdle')
         };
 
         return { inputs };
@@ -499,7 +502,8 @@ class SettingsManager {
             longBreak: parseInt(inputs.longBreak?.value) || 15,
             longBreakInterval: parseInt(inputs.longBreakInterval?.value) || 4,
             autoStart: inputs.autoStart?.checked || false,
-            theme: inputs.theme?.value || 'system'
+            theme: inputs.theme?.value || 'system',
+            pauseOnIdle: inputs.pauseOnIdle ? inputs.pauseOnIdle.checked : true
         };
     }
 
