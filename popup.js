@@ -50,7 +50,7 @@ const POPUP_CONSTANTS = {
             longBreak: 15,
             longBreakInterval: 4,
             autoStart: false,
-            lightTheme: false
+            theme: 'system'
         }
     }
 };
@@ -186,10 +186,12 @@ class ThemeManager {
             this.body.classList.add(theme.className);
         }
 
-        // Handle light theme setting
-        if (state.settings.lightTheme) {
-            this.body.classList.add('light-theme');
+        // Apply user-selected or system theme
+        let selectedTheme = state.settings.theme;
+        if (!selectedTheme || selectedTheme === 'system') {
+            selectedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
+        this.body.classList.add(`${selectedTheme}-theme`);
 
         // Update session icon and title
         this.updateSessionDisplay(state, theme);
@@ -331,7 +333,7 @@ class UIManager {
             longBreak: state.settings.longBreak,
             longBreakInterval: state.settings.longBreakInterval,
             autoStart: state.settings.autoStart,
-            lightTheme: state.settings.lightTheme
+            theme: state.settings.theme
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {
@@ -479,7 +481,7 @@ class SettingsManager {
             longBreak: document.getElementById('longBreak'),
             longBreakInterval: document.getElementById('longBreakInterval'),
             autoStart: document.getElementById('autoStart'),
-            lightTheme: document.getElementById('lightTheme')
+            theme: document.getElementById('theme')
         };
 
         return { inputs };
@@ -497,7 +499,7 @@ class SettingsManager {
             longBreak: parseInt(inputs.longBreak?.value) || 15,
             longBreakInterval: parseInt(inputs.longBreakInterval?.value) || 4,
             autoStart: inputs.autoStart?.checked || false,
-            lightTheme: inputs.lightTheme?.checked || false
+            theme: inputs.theme?.value || 'system'
         };
     }
 

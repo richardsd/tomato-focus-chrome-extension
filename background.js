@@ -12,7 +12,7 @@ const CONSTANTS = {
         longBreak: 15,
         longBreakInterval: 4,
         autoStart: false,
-        lightTheme: false
+        theme: 'system'
     }
 };
 

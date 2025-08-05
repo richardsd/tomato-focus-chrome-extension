@@ -21,9 +21,19 @@
   --color-neutral: #6b7280;
   --color-neutral-dark: #4b5563;
   --color-neutral-light: #9ca3af;
-  
+
   --color-white: #ffffff;
   --color-black: #000000;
+
+  /* Theme Variables */
+  --theme-primary-dark: var(--color-bg-dark);
+  --theme-primary-light: var(--color-bg-light);
+  --theme-primary-dark-break: var(--color-bg-dark-break);
+  --theme-primary-light-break: var(--color-bg-light-break);
+  --theme-secondary-dark: var(--color-text-dark);
+  --theme-secondary-light: var(--color-text-light);
+  --theme-surface-dark: var(--color-surface-dark);
+  --theme-surface-light: var(--color-surface-light);
   
   /* Dark Theme Colors */
   --color-bg-dark: linear-gradient(135deg, #e85d04, #dc2f02);
@@ -93,17 +103,26 @@
    =========================================== */
 
 body {
+  --theme-primary: var(--theme-primary-dark);
+  --theme-secondary: var(--theme-secondary-dark);
+  --theme-surface: var(--theme-surface-dark);
+  --theme-primary-break: var(--theme-primary-dark-break);
   width: 280px;
   padding: var(--space-3);
-  background: var(--color-bg-dark);
+  background: var(--theme-primary);
   min-height: 420px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-family: var(--font-family);
   font-size: var(--font-size-base);
-  color: var(--color-text-dark);
+  color: var(--theme-secondary);
   transition: background var(--transition-slow);
+}
+
+.dark-theme {
+  background: var(--theme-primary) !important;
+  color: var(--theme-secondary);
 }
 
 /* ===========================================
@@ -137,7 +156,7 @@ body {
 .header__title {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text-dark);
+  color: var(--theme-secondary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   margin: 0;
   white-space: nowrap; /* Prevent line breaking */
@@ -163,7 +182,7 @@ body {
 .header__settings {
   background: none;
   border: none;
-  color: var(--color-text-dark);
+  color: var(--theme-secondary);
   cursor: pointer;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
   transition: transform var(--transition-fast);
@@ -227,7 +246,7 @@ body {
 .timer__display {
   font-size: var(--font-size-4xl);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-dark);
+  color: var(--theme-secondary);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: var(--z-elevated);
@@ -246,7 +265,7 @@ body {
 
 .controls-container {
   backdrop-filter: blur(10px);
-  background: var(--color-surface-dark);
+  background: var(--theme-surface);
   padding: var(--space-3) var(--space-4);
   margin-top: var(--space-3);
   border-radius: var(--radius-lg);
@@ -403,7 +422,7 @@ body {
 
 .settings-container {
   backdrop-filter: blur(10px);
-  background: var(--color-surface-dark);
+  background: var(--theme-surface);
   padding: var(--space-4) var(--space-5);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -470,7 +489,7 @@ body {
 
 /* Break Mode */
 .break-mode {
-  background: var(--color-bg-dark-break) !important;
+  background: var(--theme-primary-break) !important;
 }
 
 .break-mode .timer__progress-ring-progress {
@@ -495,17 +514,21 @@ body {
 
 /* Light Theme */
 .light-theme {
-  background: var(--color-bg-light) !important;
-  color: var(--color-text-light);
+  --theme-primary: var(--theme-primary-light);
+  --theme-secondary: var(--theme-secondary-light);
+  --theme-surface: var(--theme-surface-light);
+  --theme-primary-break: var(--theme-primary-light-break);
+  background: var(--theme-primary) !important;
+  color: var(--theme-secondary);
 }
 
 .light-theme .header__title {
-  color: var(--color-text-light) !important;
+  color: var(--theme-secondary) !important;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .light-theme .timer__display {
-  color: var(--color-text-light);
+  color: var(--theme-secondary);
 }
 
 .light-theme .timer__progress-ring-progress {
@@ -519,7 +542,7 @@ body {
 
 .light-theme .controls-container,
 .light-theme .settings-container {
-  background: var(--color-surface-light);
+  background: var(--theme-surface);
   border: 1px solid #e5e7eb;
 }
 
@@ -547,7 +570,7 @@ body {
 .light-theme .settings-input {
   border: 2px solid #d1d5db;
   background: var(--color-white);
-  color: var(--color-text-light);
+  color: var(--theme-secondary);
 }
 
 .light-theme .settings-input:focus {
@@ -562,7 +585,7 @@ body {
 .light-theme .btn--back {
   background: rgba(0, 0, 0, 0.1);
   border: none; /* Explicitly remove border in light theme */
-  color: var(--color-text-light);
+  color: var(--theme-secondary);
 }
 
 .light-theme .btn--back:hover {
@@ -576,7 +599,7 @@ body {
 
 /* Light theme break mode */
 .light-theme.break-mode {
-  background: var(--color-bg-light-break) !important;
+  background: var(--theme-primary-break) !important;
 }
 
 .light-theme.break-mode .timer__progress-ring-progress {
