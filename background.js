@@ -12,7 +12,8 @@ const CONSTANTS = {
         longBreak: 15,
         longBreakInterval: 4,
         autoStart: false,
-        theme: 'system'
+        theme: 'system',
+        pauseOnIdle: true
     }
 };
 
@@ -54,6 +55,7 @@ class TimerState {
         this.currentSession = 1;
         this.isWorkSession = true;
         this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
+        this.wasPausedForIdle = false;
     }
 
     getState() {
@@ -62,7 +64,8 @@ class TimerState {
             timeLeft: this.timeLeft,
             currentSession: this.currentSession,
             isWorkSession: this.isWorkSession,
-            settings: { ...this.settings }
+            settings: { ...this.settings },
+            wasPausedForIdle: this.wasPausedForIdle
         };
     }
 
@@ -302,7 +305,9 @@ class TimerController {
         await this.loadState();
         this.setupAlarmListener();
         this.setupMessageListener();
+        this.setupIdleListener();
         this.isInitialized = true;
+        this.checkIdleResume();
         this.updateUI();
     }
 
@@ -486,6 +491,56 @@ class TimerController {
         chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             this.handleMessage(request, sendResponse);
             return true; // Keep alive for async response
+        });
+    }
+
+    setupIdleListener() {
+        // Set default detection interval (60 seconds)
+        if (chrome.idle && chrome.idle.setDetectionInterval) {
+            chrome.idle.setDetectionInterval(60);
+        }
+
+        chrome.idle.onStateChanged.addListener((newState) => {
+            if (!this.state.settings.pauseOnIdle) {
+                return;
+            }
+
+            if (newState === 'idle' || newState === 'locked') {
+                if (this.state.isRunning) {
+                    this.state.wasPausedForIdle = true;
+                    this.pause();
+                }
+            } else if (newState === 'active') {
+                if (this.state.wasPausedForIdle) {
+                    this.state.wasPausedForIdle = false;
+                    if (this.state.settings.autoStart) {
+                        this.start();
+                    } else {
+                        NotificationManager.show('Tomato Focus', 'Timer paused while you were away');
+                        this.updateUI();
+                    }
+                }
+            }
+        });
+    }
+
+    checkIdleResume() {
+        if (!chrome.idle || !chrome.idle.queryState) {
+            return;
+        }
+
+        chrome.idle.queryState(60, (state) => {
+            if (state !== 'active' || !this.state.wasPausedForIdle) {
+                return;
+            }
+
+            this.state.wasPausedForIdle = false;
+            if (this.state.settings.autoStart) {
+                this.start();
+            } else {
+                NotificationManager.show('Tomato Focus', 'Timer paused while you were away');
+                this.updateUI();
+            }
         });
     }
 
