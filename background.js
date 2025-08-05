@@ -127,7 +127,7 @@ class NotificationManager {
     static async show(title, message) {
         try {
             const permissionLevel = await chromePromise.notifications.getPermissionLevel();
-            
+
             if (permissionLevel !== 'granted') {
                 console.warn('Notifications not permitted. Permission level:', permissionLevel);
                 return;
@@ -192,7 +192,7 @@ class BadgeManager {
         }
 
         chrome.action.setBadgeText({ text: badgeText });
-        
+
         const badgeColor = isWorkSession ? '#ff4444' : '#44ff44';
         chrome.action.setBadgeBackgroundColor({ color: badgeColor });
     }
@@ -269,15 +269,15 @@ class ContextMenuManager {
 
     static update(isRunning, isWorkSession, timeLeft) {
         const startPauseTitle = isRunning ? 'Pause Timer' : 'Start Timer';
-        
+
         chrome.contextMenus.update('start-pause', { title: startPauseTitle }, () => {
             if (chrome.runtime.lastError) {
                 console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
             }
         });
 
-        chrome.contextMenus.update('skip-break', { 
-            enabled: !isWorkSession && timeLeft > 0 
+        chrome.contextMenus.update('skip-break', {
+            enabled: !isWorkSession && timeLeft > 0
         }, () => {
             if (chrome.runtime.lastError) {
                 console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
@@ -294,7 +294,7 @@ class TimerController {
         this.state = new TimerState();
         this.alarmName = CONSTANTS.ALARM_NAME;
         this.isInitialized = false;
-        
+
         this.init();
     }
 
@@ -320,8 +320,8 @@ class TimerController {
     }
 
     async saveState() {
-        if (!this.isInitialized) return;
-        
+        if (!this.isInitialized) {return;}
+
         try {
             await StorageManager.saveState(this.state.getState());
         } catch (error) {
@@ -331,13 +331,13 @@ class TimerController {
 
     updateUI() {
         const { timeLeft, isRunning, isWorkSession } = this.state;
-        
+
         BadgeManager.update(timeLeft, isRunning, isWorkSession);
         ContextMenuManager.update(isRunning, isWorkSession, timeLeft);
-        
+
         // Send message to popup if it's open
         this.sendMessageToPopup('updateTimer', this.state.getState());
-        
+
         this.saveState();
     }
 
@@ -351,24 +351,24 @@ class TimerController {
     }
 
     start() {
-        if (this.state.isRunning) return;
+        if (this.state.isRunning) {return;}
 
         this.state.isRunning = true;
-        
+
         // Clear any existing alarms
         chrome.alarms.clear(this.alarmName);
-        
+
         // Create alarm for when timer should end
         const alarmTime = Date.now() + (this.state.timeLeft * 1000);
         chrome.alarms.create(this.alarmName, { when: alarmTime });
-        
+
         // Update badge every second
         this.startBadgeUpdater();
         this.updateUI();
     }
 
     pause() {
-        if (!this.state.isRunning) return;
+        if (!this.state.isRunning) {return;}
 
         this.state.isRunning = false;
         chrome.alarms.clear(this.alarmName);
@@ -393,10 +393,10 @@ class TimerController {
     }
 
     skipBreak() {
-        if (this.state.isWorkSession) return;
+        if (this.state.isWorkSession) {return;}
 
         this.pause();
-        
+
         // When break is skipped, increment session (since break cycle is considered complete)
         this.state.incrementSession();
         this.state.startWork();
@@ -417,12 +417,12 @@ class TimerController {
 
     async handleSessionEnd() {
         this.state.isRunning = false;
-        
+
         if (this.state.isWorkSession) {
             // When work session ends, determine break type
             // Check if current session number is a multiple of longBreakInterval
             const isLongBreakTime = this.state.currentSession % this.state.settings.longBreakInterval === 0;
-            
+
             if (isLongBreakTime) {
                 this.state.startLongBreak();
                 await NotificationManager.show('Tomato Focus', 'Time for a long break!');
@@ -456,7 +456,7 @@ class TimerController {
                 this.state.timeLeft--;
                 BadgeManager.update(this.state.timeLeft, this.state.isRunning, this.state.isWorkSession);
                 this.sendMessageToPopup('updateTimer', this.state.getState());
-                
+
                 // Save state periodically (every 10 seconds)
                 if (this.state.timeLeft % 10 === 0) {
                     this.saveState();
@@ -490,39 +490,40 @@ class TimerController {
     async handleMessage(request, sendResponse) {
         try {
             const { action } = request;
-            
+
             switch (action) {
-                case 'getState':
-                    sendResponse(this.state.getState());
-                    break;
+            case 'getState':
+                sendResponse(this.state.getState());
+                break;
 
-                case 'toggleTimer':
-                    this.toggle();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'toggleTimer':
+                this.toggle();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'resetTimer':
-                    this.reset();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'resetTimer':
+                this.reset();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'skipBreak':
-                    this.skipBreak();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'skipBreak':
+                this.skipBreak();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'saveSettings':
-                    this.updateSettings(request.settings);
-                    sendResponse(this.state.getState());
-                    break;
+            case 'saveSettings':
+                this.updateSettings(request.settings);
+                sendResponse(this.state.getState());
+                break;
 
-                case 'checkNotifications':
-                    const permissionLevel = await NotificationManager.checkPermissions();
-                    sendResponse({ permissionLevel });
-                    break;
+            case 'checkNotifications': {
+                const permissionLevel = await NotificationManager.checkPermissions();
+                sendResponse({ permissionLevel });
+                break;
+            }
 
-                default:
-                    sendResponse({ error: 'Unknown action' });
+            default:
+                sendResponse({ error: 'Unknown action' });
             }
         } catch (error) {
             console.error('Error handling message:', error);
@@ -535,33 +536,33 @@ class TimerController {
 const timerController = new TimerController();
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener((info) => {
     const { menuItemId } = info;
-    
+
     switch (menuItemId) {
-        case 'start-pause':
-            timerController.toggle();
-            break;
-        case 'reset':
-            timerController.reset();
-            break;
-        case 'skip-break':
-            timerController.skipBreak();
-            break;
-        case 'quick-5':
-            timerController.startQuickTimer(5);
-            break;
-        case 'quick-15':
-            timerController.startQuickTimer(15);
-            break;
-        case 'quick-25':
-            timerController.startQuickTimer(25);
-            break;
-        case 'quick-45':
-            timerController.startQuickTimer(45);
-            break;
-        default:
-            console.warn('Unknown context menu item:', menuItemId);
+    case 'start-pause':
+        timerController.toggle();
+        break;
+    case 'reset':
+        timerController.reset();
+        break;
+    case 'skip-break':
+        timerController.skipBreak();
+        break;
+    case 'quick-5':
+        timerController.startQuickTimer(5);
+        break;
+    case 'quick-15':
+        timerController.startQuickTimer(15);
+        break;
+    case 'quick-25':
+        timerController.startQuickTimer(25);
+        break;
+    case 'quick-45':
+        timerController.startQuickTimer(45);
+        break;
+    default:
+        console.warn('Unknown context menu item:', menuItemId);
     }
 });
 
@@ -572,10 +573,10 @@ chrome.runtime.onStartup.addListener(() => {
 
 chrome.runtime.onInstalled.addListener((details) => {
     console.log('Extension installed/updated:', details.reason);
-    
+
     // Create context menus
     ContextMenuManager.create();
-    
+
     // Check notification permissions on install
     NotificationManager.checkPermissions().then(level => {
         console.log('Notification permission level:', level);
