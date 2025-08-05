@@ -320,7 +320,7 @@ class TimerController {
     }
 
     async saveState() {
-        if (!this.isInitialized) return;
+        if (!this.isInitialized) {return;}
         
         try {
             await StorageManager.saveState(this.state.getState());
@@ -351,7 +351,7 @@ class TimerController {
     }
 
     start() {
-        if (this.state.isRunning) return;
+        if (this.state.isRunning) {return;}
 
         this.state.isRunning = true;
         
@@ -368,7 +368,7 @@ class TimerController {
     }
 
     pause() {
-        if (!this.state.isRunning) return;
+        if (!this.state.isRunning) {return;}
 
         this.state.isRunning = false;
         chrome.alarms.clear(this.alarmName);
@@ -393,7 +393,7 @@ class TimerController {
     }
 
     skipBreak() {
-        if (this.state.isWorkSession) return;
+        if (this.state.isWorkSession) {return;}
 
         this.pause();
         
@@ -492,37 +492,38 @@ class TimerController {
             const { action } = request;
             
             switch (action) {
-                case 'getState':
-                    sendResponse(this.state.getState());
-                    break;
+            case 'getState':
+                sendResponse(this.state.getState());
+                break;
 
-                case 'toggleTimer':
-                    this.toggle();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'toggleTimer':
+                this.toggle();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'resetTimer':
-                    this.reset();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'resetTimer':
+                this.reset();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'skipBreak':
-                    this.skipBreak();
-                    sendResponse(this.state.getState());
-                    break;
+            case 'skipBreak':
+                this.skipBreak();
+                sendResponse(this.state.getState());
+                break;
 
-                case 'saveSettings':
-                    this.updateSettings(request.settings);
-                    sendResponse(this.state.getState());
-                    break;
+            case 'saveSettings':
+                this.updateSettings(request.settings);
+                sendResponse(this.state.getState());
+                break;
 
-                case 'checkNotifications':
-                    const permissionLevel = await NotificationManager.checkPermissions();
-                    sendResponse({ permissionLevel });
-                    break;
+            case 'checkNotifications': {
+                const permissionLevel = await NotificationManager.checkPermissions();
+                sendResponse({ permissionLevel });
+                break;
+            }
 
-                default:
-                    sendResponse({ error: 'Unknown action' });
+            default:
+                sendResponse({ error: 'Unknown action' });
             }
         } catch (error) {
             console.error('Error handling message:', error);
@@ -535,33 +536,33 @@ class TimerController {
 const timerController = new TimerController();
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener((info) => {
     const { menuItemId } = info;
     
     switch (menuItemId) {
-        case 'start-pause':
-            timerController.toggle();
-            break;
-        case 'reset':
-            timerController.reset();
-            break;
-        case 'skip-break':
-            timerController.skipBreak();
-            break;
-        case 'quick-5':
-            timerController.startQuickTimer(5);
-            break;
-        case 'quick-15':
-            timerController.startQuickTimer(15);
-            break;
-        case 'quick-25':
-            timerController.startQuickTimer(25);
-            break;
-        case 'quick-45':
-            timerController.startQuickTimer(45);
-            break;
-        default:
-            console.warn('Unknown context menu item:', menuItemId);
+    case 'start-pause':
+        timerController.toggle();
+        break;
+    case 'reset':
+        timerController.reset();
+        break;
+    case 'skip-break':
+        timerController.skipBreak();
+        break;
+    case 'quick-5':
+        timerController.startQuickTimer(5);
+        break;
+    case 'quick-15':
+        timerController.startQuickTimer(15);
+        break;
+    case 'quick-25':
+        timerController.startQuickTimer(25);
+        break;
+    case 'quick-45':
+        timerController.startQuickTimer(45);
+        break;
+    default:
+        console.warn('Unknown context menu item:', menuItemId);
     }
 });
 

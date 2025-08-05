@@ -152,7 +152,7 @@ class MessageHandler {
      * Setup listener for background script messages
      */
     setupMessageListener() {
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        chrome.runtime.onMessage.addListener((request) => {
             if (request.action === 'updateTimer' && request.state) {
                 // Emit custom event for state updates
                 document.dispatchEvent(new CustomEvent('timerUpdate', { 
@@ -351,7 +351,7 @@ class UIManager {
      */
     updateProgressRing(state) {
         const progressRing = this.elements.progressRing;
-        if (!progressRing) return;
+        if (!progressRing) {return;}
 
         const totalDuration = this.calculateFullDuration(state);
         const progress = state.timeLeft / totalDuration;
@@ -422,7 +422,7 @@ class NotificationController {
      * Display notification permission status to user
      */
     showNotificationStatus(permissionLevel) {
-        if (!this.statusElement || !this.messageElement) return;
+        if (!this.statusElement || !this.messageElement) {return;}
 
         if (permissionLevel !== 'granted') {
             this.statusElement.style.display = 'block';
@@ -539,16 +539,16 @@ class NavigationManager {
      * Show timer panel
      */
     showTimerPanel() {
-        if (this.panels.timer) this.panels.timer.style.display = 'block';
-        if (this.panels.settings) this.panels.settings.style.display = 'none';
+        if (this.panels.timer) {this.panels.timer.style.display = 'block';}
+        if (this.panels.settings) {this.panels.settings.style.display = 'none';}
     }
 
     /**
      * Show settings panel
      */
     showSettingsPanel() {
-        if (this.panels.timer) this.panels.timer.style.display = 'none';
-        if (this.panels.settings) this.panels.settings.style.display = 'block';
+        if (this.panels.timer) {this.panels.timer.style.display = 'none';}
+        if (this.panels.settings) {this.panels.settings.style.display = 'block';}
     }
 }
 /**

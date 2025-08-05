@@ -7,7 +7,7 @@ A configurable **time-management Chrome extension** that helps boost productivit
   <img src="docs/settings_screen.png" alt="Settings" width="43%" style="display:inline-block;"/>
 </p>
 
-> **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.  
+> **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.
 > Learn more at [https://www.pomodorotechnique.com](https://www.pomodorotechnique.com)
 
 Stay focused and take healthy breaks! 🍅⏰
@@ -105,6 +105,26 @@ Right-click the extension icon to:
   - Chrome Storage API
 
 ## Development
+
+### Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Enable developer mode in Chrome at `chrome://extensions/`
+4. Load the unpacked extension
+
+### Code Quality
+This project uses ESLint for code quality and consistency:
+- **Configuration**: `.eslintrc.json` with `eslint:recommended` base
+- **Run linting**: `npm run lint`
+- **Auto-fix issues**: `npm run lint:fix`
+- **IDE Integration**: Install the ESLint extension for real-time feedback
+
+### Coding Standards
+- **Indentation**: 4 spaces (enforced by EditorConfig and ESLint)
+- **Line endings**: LF (Unix-style)
+- **Quotes**: Single quotes for JavaScript
+- **Semicolons**: Required
+- **Chrome APIs**: `chrome` global is pre-configured
 
 ### Building and Testing
 1. Make changes to the source files
