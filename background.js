@@ -501,7 +501,9 @@ class TimerController {
         }
 
         chrome.idle.onStateChanged.addListener((newState) => {
-            if (!this.state.settings.pauseOnIdle) return;
+            if (!this.state.settings.pauseOnIdle) {
+                return;
+            }
 
             if (newState === 'idle' || newState === 'locked') {
                 if (this.state.isRunning) {
@@ -523,10 +525,14 @@ class TimerController {
     }
 
     checkIdleResume() {
-        if (!chrome.idle || !chrome.idle.queryState) return;
+        if (!chrome.idle || !chrome.idle.queryState) {
+            return;
+        }
 
         chrome.idle.queryState(60, (state) => {
-            if (state !== 'active' || !this.state.wasPausedForIdle) return;
+            if (state !== 'active' || !this.state.wasPausedForIdle) {
+                return;
+            }
 
             this.state.wasPausedForIdle = false;
             if (this.state.settings.autoStart) {
