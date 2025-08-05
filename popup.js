@@ -333,7 +333,7 @@ class UIManager {
             longBreak: state.settings.longBreak,
             longBreakInterval: state.settings.longBreakInterval,
             autoStart: state.settings.autoStart,
-            theme: state.settings.theme
+            theme: state.settings.theme || 'system'
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {

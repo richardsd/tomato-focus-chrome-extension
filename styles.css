@@ -460,7 +460,6 @@ body {
 }
 
 .settings-input {
-  width: 70px;
   padding: var(--space-2);
   border: 1px solid #ddd;
   border-radius: var(--radius-md);
@@ -468,7 +467,16 @@ body {
   transition: border-color var(--transition-fast);
   color: #333;
   font-size: var(--font-size-sm);
+}
+
+input.settings-input {
+  width: 70px;
   text-align: center;
+}
+
+select.settings-input {
+  width: auto;
+  min-width: 100px;
 }
 
 .settings-input:focus {

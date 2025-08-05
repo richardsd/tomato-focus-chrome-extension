@@ -311,6 +311,8 @@ class TimerController {
             const savedState = await StorageManager.loadState();
             if (savedState) {
                 Object.assign(this.state, savedState);
+                // Ensure defaults for any missing settings
+                this.state.settings = { ...CONSTANTS.DEFAULT_SETTINGS, ...this.state.settings };
                 // Don't restore running state on service worker restart
                 this.state.isRunning = false;
             }
