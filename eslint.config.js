@@ -30,7 +30,7 @@ export default [
             'quotes': ['error', 'single'],
             'semi': ['error', 'always'],
             'no-unused-vars': ['warn'],
-            'no-console': ['warn'],
+            'no-console': 'off',
             'eqeqeq': ['error', 'always'],
             'curly': ['error', 'all']
         }
