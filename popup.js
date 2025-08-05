@@ -101,7 +101,7 @@ const utils = {
      * Validate timer state object
      */
     validateState(state) {
-        return state && 
+        return state &&
                typeof state.isRunning === 'boolean' &&
                typeof state.timeLeft === 'number' &&
                typeof state.currentSession === 'number' &&
@@ -155,8 +155,8 @@ class MessageHandler {
         chrome.runtime.onMessage.addListener((request) => {
             if (request.action === 'updateTimer' && request.state) {
                 // Emit custom event for state updates
-                document.dispatchEvent(new CustomEvent('timerUpdate', { 
-                    detail: request.state 
+                document.dispatchEvent(new CustomEvent('timerUpdate', {
+                    detail: request.state
                 }));
             }
         });
@@ -176,8 +176,8 @@ class ThemeManager {
      */
     applyTheme(state) {
         // Handle work/break mode
-        const theme = state.isWorkSession ? 
-            POPUP_CONSTANTS.THEMES.WORK : 
+        const theme = state.isWorkSession ?
+            POPUP_CONSTANTS.THEMES.WORK :
             POPUP_CONSTANTS.THEMES.BREAK;
 
         // Update body class
@@ -303,7 +303,7 @@ class UIManager {
         } else {
             this.hideElement(this.elements.pauseBtn);
             this.showElement(this.elements.startBtn);
-            
+
             // Update start button text (Start/Resume)
             if (this.elements.startBtn) {
                 const fullDuration = this.calculateFullDuration(state);
@@ -367,7 +367,7 @@ class UIManager {
         if (state.isWorkSession) {
             return state.settings.workDuration * 60;
         }
-        
+
         // During break, determine duration based on current session count
         // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
         const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
@@ -427,7 +427,7 @@ class NotificationController {
         if (permissionLevel !== 'granted') {
             this.statusElement.style.display = 'block';
             this.statusElement.className = 'mt-4 p-3 rounded-lg text-sm bg-yellow-100 border border-yellow-400';
-            
+
             const isMac = navigator.platform.includes('Mac');
             this.messageElement.innerHTML = isMac ? this.getMacInstructions() : this.getGeneralInstructions();
         } else {
@@ -490,7 +490,7 @@ class SettingsManager {
      */
     getSettings() {
         const { inputs } = this.form;
-        
+
         return {
             workDuration: parseInt(inputs.workDuration?.value) || 25,
             shortBreak: parseInt(inputs.shortBreak?.value) || 5,
@@ -562,7 +562,7 @@ class PopupController {
         this.notificationController = new NotificationController();
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
-        
+
         this.init();
     }
 
@@ -747,12 +747,12 @@ class PopupController {
             event.preventDefault();
             this.uiManager.elements.startBtn?.click() || this.uiManager.elements.pauseBtn?.click();
         }
-        
+
         // Escape to go back to timer panel
         if (event.code === 'Escape') {
             this.navigationManager.showTimerPanel();
         }
-        
+
         // R to reset timer
         if (event.code === 'KeyR' && event.ctrlKey) {
             event.preventDefault();
