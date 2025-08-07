@@ -1,6 +1,7 @@
 /**
  * Constants for the Pomodoro timer
  */
+/* global Audio */
 const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
     STORAGE_KEY: 'pomodoroState',
@@ -13,7 +14,9 @@ const CONSTANTS = {
         longBreakInterval: 4,
         autoStart: false,
         theme: 'system',
-        pauseOnIdle: true
+        pauseOnIdle: true,
+        playSound: true,
+        volume: 1
     }
 };
 
@@ -127,7 +130,7 @@ class StorageManager {
  * Manages notifications
  */
 class NotificationManager {
-    static async show(title, message) {
+    static async show(title, message, settings = {}) {
         try {
             const permissionLevel = await chromePromise.notifications.getPermissionLevel();
 
@@ -159,6 +162,16 @@ class NotificationManager {
                 });
             } catch (fallbackError) {
                 console.error('Fallback notification also failed:', fallbackError);
+            }
+        } finally {
+            if (settings.playSound) {
+                try {
+                    const audio = new Audio(chrome.runtime.getURL('sounds/ding.mp3'));
+                    audio.volume = typeof settings.volume === 'number' ? settings.volume : 1;
+                    await audio.play();
+                } catch (audioError) {
+                    console.error('Failed to play sound:', audioError);
+                }
             }
         }
     }
@@ -432,16 +445,16 @@ class TimerController {
 
             if (isLongBreakTime) {
                 this.state.startLongBreak();
-                await NotificationManager.show('Tomato Focus', 'Time for a long break!');
+                await NotificationManager.show('Tomato Focus', 'Time for a long break!', this.state.settings);
             } else {
                 this.state.startShortBreak();
-                await NotificationManager.show('Tomato Focus', 'Time for a short break!');
+                await NotificationManager.show('Tomato Focus', 'Time for a short break!', this.state.settings);
             }
         } else {
             // When break ends, increment session and start work
             this.state.incrementSession();
             this.state.startWork();
-            await NotificationManager.show('Tomato Focus', 'Time to work!');
+            await NotificationManager.show('Tomato Focus', 'Time to work!', this.state.settings);
         }
 
         this.updateUI();
@@ -516,7 +529,7 @@ class TimerController {
                     if (this.state.settings.autoStart) {
                         this.start();
                     } else {
-                        NotificationManager.show('Tomato Focus', 'Timer paused while you were away');
+                        NotificationManager.show('Tomato Focus', 'Timer paused while you were away', this.state.settings);
                         this.updateUI();
                     }
                 }
@@ -538,7 +551,7 @@ class TimerController {
             if (this.state.settings.autoStart) {
                 this.start();
             } else {
-                NotificationManager.show('Tomato Focus', 'Timer paused while you were away');
+                NotificationManager.show('Tomato Focus', 'Timer paused while you were away', this.state.settings);
                 this.updateUI();
             }
         });

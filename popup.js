@@ -51,7 +51,9 @@ const POPUP_CONSTANTS = {
             longBreakInterval: 4,
             autoStart: false,
             theme: 'system',
-            pauseOnIdle: true
+            pauseOnIdle: true,
+            playSound: true,
+            volume: 1
         }
     }
 };
@@ -335,7 +337,9 @@ class UIManager {
             longBreakInterval: state.settings.longBreakInterval,
             autoStart: state.settings.autoStart,
             theme: state.settings.theme || 'system',
-            pauseOnIdle: state.settings.pauseOnIdle
+            pauseOnIdle: state.settings.pauseOnIdle,
+            playSound: state.settings.playSound,
+            volume: state.settings.volume
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {
@@ -484,7 +488,9 @@ class SettingsManager {
             longBreakInterval: document.getElementById('longBreakInterval'),
             autoStart: document.getElementById('autoStart'),
             theme: document.getElementById('theme'),
-            pauseOnIdle: document.getElementById('pauseOnIdle')
+            pauseOnIdle: document.getElementById('pauseOnIdle'),
+            playSound: document.getElementById('playSound'),
+            volume: document.getElementById('volume')
         };
 
         return { inputs };
@@ -503,7 +509,9 @@ class SettingsManager {
             longBreakInterval: parseInt(inputs.longBreakInterval?.value) || 4,
             autoStart: inputs.autoStart?.checked || false,
             theme: inputs.theme?.value || 'system',
-            pauseOnIdle: inputs.pauseOnIdle ? inputs.pauseOnIdle.checked : true
+            pauseOnIdle: inputs.pauseOnIdle ? inputs.pauseOnIdle.checked : true,
+            playSound: inputs.playSound ? inputs.playSound.checked : true,
+            volume: parseFloat(inputs.volume?.value) || 1
         };
     }
 
@@ -524,6 +532,10 @@ class SettingsManager {
         }
         if (settings.longBreakInterval < 1 || settings.longBreakInterval > 10) {
             errors.push('Sessions before long break must be between 1 and 10');
+        }
+
+        if (settings.volume < 0 || settings.volume > 1) {
+            errors.push('Volume must be between 0 and 1');
         }
 
         return { isValid: errors.length === 0, errors };
