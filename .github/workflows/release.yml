@@ -27,7 +27,7 @@ jobs:
 
       - name: Extract version
         id: package-version
-        run: echo "version=$(node -p \"require('./manifest.json').version\")" >> "$GITHUB_OUTPUT"
+        run: echo 'version=$(node -p "require(\"./manifest.json\").version")' >> "$GITHUB_OUTPUT"
 
       - name: Determine RC tag
         id: rc
