@@ -27,13 +27,15 @@ jobs:
 
       - name: Extract version
         id: package-version
-        run: echo 'version=$(node -p "require(\"./manifest.json\").version")' >> "$GITHUB_OUTPUT"
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Determine RC tag
         id: rc
-        run: echo "tag=v${VERSION}-rc.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
-        env:
-          VERSION: ${{ steps.package-version.outputs.version }}
+        run: |
+          TAG="v${{ steps.package-version.outputs.version }}-rc.${{ github.run_number }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Zip extension
         run: |
