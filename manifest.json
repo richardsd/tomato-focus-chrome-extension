@@ -3,7 +3,7 @@
   "name": "Tomato Focus",
   "version": "1.0.0",
   "description": "A configurable Tomato Focus to boost productivity",
-  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle"],
+  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

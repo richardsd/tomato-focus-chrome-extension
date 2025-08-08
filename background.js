@@ -1,7 +1,6 @@
 /**
  * Constants for the Pomodoro timer
  */
-/* global Audio */
 const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
     STORAGE_KEY: 'pomodoroState',
@@ -16,7 +15,7 @@ const CONSTANTS = {
         theme: 'system',
         pauseOnIdle: true,
         playSound: true,
-        volume: 1
+        volume: 0.7
     }
 };
 
@@ -144,12 +143,21 @@ class NotificationManager {
                 iconUrl: 'icons/icon48.png',
                 title,
                 message,
-                silent: false,
+                silent: true, // Always silent - we'll play our custom sound
                 requireInteraction: false
             };
 
             await chromePromise.notifications.create(CONSTANTS.NOTIFICATION_ID, options);
             console.log('Notification created successfully');
+
+            // Play custom sound if enabled
+            if (settings.playSound) {
+                try {
+                    await NotificationManager.playSound(settings.volume);
+                } catch (audioError) {
+                    console.error('Failed to play sound:', audioError);
+                }
+            }
         } catch (error) {
             console.error('Failed to create notification:', error);
             // Fallback notification without icon
@@ -158,20 +166,64 @@ class NotificationManager {
                     type: 'basic',
                     title,
                     message,
-                    silent: false
+                    silent: true
                 });
+
+                // Still try to play sound on fallback
+                if (settings.playSound) {
+                    try {
+                        await NotificationManager.playSound(settings.volume);
+                    } catch (audioError) {
+                        console.error('Failed to play sound on fallback:', audioError);
+                    }
+                }
             } catch (fallbackError) {
                 console.error('Fallback notification also failed:', fallbackError);
             }
-        } finally {
-            if (settings.playSound) {
-                try {
-                    const audio = new Audio(chrome.runtime.getURL('sounds/ding.mp3'));
-                    audio.volume = typeof settings.volume === 'number' ? settings.volume : 1;
-                    await audio.play();
-                } catch (audioError) {
-                    console.error('Failed to play sound:', audioError);
-                }
+        }
+    }
+
+    static async playSound(volume = 0.7) {
+        try {
+            // Check if offscreen document already exists
+            const existingContexts = await chrome.runtime.getContexts({
+                contextTypes: ['OFFSCREEN_DOCUMENT']
+            });
+
+            if (existingContexts.length === 0) {
+                // Create an offscreen document to play the sound
+                // Since service workers don't have access to Audio API
+                await chrome.offscreen.createDocument({
+                    url: 'offscreen.html',
+                    reasons: ['AUDIO_PLAYBACK'],
+                    justification: 'Play notification sound'
+                });
+            }
+
+            // Send message to offscreen document to play sound
+            const response = await chrome.runtime.sendMessage({
+                action: 'playSound',
+                soundUrl: chrome.runtime.getURL('sounds/notification.mp3'),
+                volume: typeof volume === 'number' ? Math.max(0, Math.min(1, volume)) : 0.7
+            });
+
+            if (response && !response.success) {
+                throw new Error(response.error || 'Unknown error playing sound');
+            }
+        } catch (error) {
+            console.error('Failed to play sound via offscreen document:', error);
+            // Fallback: try using system notification sound
+            try {
+                await chromePromise.notifications.create('fallback-sound', {
+                    type: 'basic',
+                    title: 'Tomato Focus',
+                    message: '',
+                    silent: false
+                });
+                // Clear the fallback notification immediately
+                setTimeout(() => chrome.notifications.clear('fallback-sound'), 100);
+            } catch (fallbackError) {
+                console.error('Fallback sound notification also failed:', fallbackError);
             }
         }
     }
