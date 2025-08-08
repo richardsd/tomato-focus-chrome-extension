@@ -1,0 +1,52 @@
+name: Release Candidate
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release-candidate:
+    name: Create Release Candidate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Extract version
+        id: package-version
+        run: echo "version=$(node -p \"require('./manifest.json').version\")" >> "$GITHUB_OUTPUT"
+
+      - name: Determine RC tag
+        id: rc
+        run: echo "tag=v${VERSION}-rc.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+        env:
+          VERSION: ${{ steps.package-version.outputs.version }}
+
+      - name: Zip extension
+        run: |
+          zip -r tomato-focus-chrome-extension-${TAG}.zip manifest.json background.js popup.html popup.js styles.css icons
+        env:
+          TAG: ${{ steps.rc.outputs.tag }}
+
+      - name: Create GitHub Release Candidate
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.rc.outputs.tag }}
+          name: Release Candidate ${{ steps.rc.outputs.tag }}
+          prerelease: true
+          files: tomato-focus-chrome-extension-${{ steps.rc.outputs.tag }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
