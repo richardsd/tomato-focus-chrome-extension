@@ -42,7 +42,16 @@ jobs:
 
       - name: Zip extension
         run: |
-          zip -r tomato-focus-chrome-extension-${TAG}.zip manifest.json background.js popup.html popup.js styles.css icons
+          zip -r tomato-focus-chrome-extension-${TAG}.zip \
+            manifest.json \
+            background.js \
+            popup.html \
+            popup.js \
+            offscreen.html \
+            offscreen.js \
+            styles.css \
+            icons \
+            sounds
         env:
           TAG: ${{ steps.rc.outputs.tag }}
 
