@@ -50,7 +50,16 @@ jobs:
 
       - name: Zip extension
         run: |
-          zip -r tomato-focus-chrome-extension-v${VERSION}.zip manifest.json background.js popup.html popup.js styles.css icons
+          zip -r tomato-focus-chrome-extension-v${VERSION}.zip \
+            manifest.json \
+            background.js \
+            popup.html \
+            popup.js \
+            offscreen.html \
+            offscreen.js \
+            styles.css \
+            icons \
+            sounds
         env:
           VERSION: ${{ github.event.inputs.version }}
 
