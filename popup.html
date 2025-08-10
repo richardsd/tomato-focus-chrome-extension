@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tomato Focus</title>
+    <title data-i18n="appName">Tomato Focus</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -15,7 +15,7 @@
                 <div id="sessionIcon" class="header__icon">
                     <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
                 </div>
-                <h1 id="sessionTitle" class="header__title">Tomato Focus</h1>
+                <h1 id="sessionTitle" class="header__title" data-i18n="appName">Tomato Focus</h1>
                 <button id="settingsBtn" class="header__settings" aria-label="Open settings">
                     <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
                 </button>
@@ -33,12 +33,12 @@
 
             <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
                 <div class="controls flex justify-center gap-4 mb-4">
-                    <button id="startBtn" class="btn btn--success" aria-label="Start timer">Start</button>
-                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer">Pause</button>
-                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer">Reset</button>
+                    <button id="startBtn" class="btn btn--success" aria-label="Start timer" data-i18n="start">Start</button>
+                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer" data-i18n="pause">Pause</button>
+                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer" data-i18n="reset">Reset</button>
                 </div>
 
-                <button id="skipBreakBtn" class="btn btn--skip hidden">Skip Break</button>
+                <button id="skipBreakBtn" class="btn btn--skip hidden" data-i18n="skipBreak">Skip Break</button>
 
                 <div id="sessionCount" class="session-counter">Session: 0</div>
             </div>
@@ -54,54 +54,62 @@
                 <button id="backBtn" class="btn--back" aria-label="Back to timer">
                     ←
                 </button>
-                <h1 class="header__title">Settings</h1>
+                <h1 class="header__title" data-i18n="settings">Settings</h1>
                 <div class="settings-header__spacer"></div> <!-- Spacer matching back button width -->
             </div>
             <div class="settings-container">
                 <div class="settings-row">
-                    <label class="settings-label">Work Duration (min):</label>
+                    <label class="settings-label" data-i18n="workDurationLabel">Work Duration (min):</label>
                     <input type="number" id="workDuration" min="1" max="60" value="25" class="settings-input">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Short Break (min):</label>
+                    <label class="settings-label" data-i18n="shortBreakLabel">Short Break (min):</label>
                     <input type="number" id="shortBreak" min="1" max="30" value="5" class="settings-input">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Long Break (min):</label>
+                    <label class="settings-label" data-i18n="longBreakLabel">Long Break (min):</label>
                     <input type="number" id="longBreak" min="1" max="60" value="15" class="settings-input">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Sessions before Long Break:</label>
+                    <label class="settings-label" data-i18n="longBreakIntervalLabel">Sessions before Long Break:</label>
                     <input type="number" id="longBreakInterval" min="1" max="10" value="4" class="settings-input">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Auto-start next period:</label>
+                    <label class="settings-label" data-i18n="autoStartLabel">Auto-start next period:</label>
                     <input type="checkbox" id="autoStart" class="settings-checkbox">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Pause timer when idle:</label>
+                    <label class="settings-label" data-i18n="pauseOnIdleLabel">Pause timer when idle:</label>
                     <input type="checkbox" id="pauseOnIdle" class="settings-checkbox">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Play sound:</label>
+                    <label class="settings-label" data-i18n="playSoundLabel">Play sound:</label>
                     <input type="checkbox" id="playSound" class="settings-checkbox">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Volume:</label>
+                    <label class="settings-label" data-i18n="volumeLabel">Volume:</label>
                     <input type="range" id="volume" min="0" max="1" step="0.1" value="1" class="settings-input">
                 </div>
                 <div class="settings-row">
-                    <label class="settings-label">Theme:</label>
+                    <label class="settings-label" data-i18n="themeLabel">Theme:</label>
                     <select id="theme" class="settings-input">
-                        <option value="system">System</option>
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
+                        <option value="system" data-i18n="themeSystem">System</option>
+                        <option value="light" data-i18n="themeLight">Light</option>
+                        <option value="dark" data-i18n="themeDark">Dark</option>
                     </select>
                 </div>
-                <button id="saveSettings" class="btn btn--primary btn--full mt-4">Save Settings</button>
+                <div class="settings-row">
+                    <label class="settings-label" data-i18n="languageLabel">Language:</label>
+                    <select id="language" class="settings-input">
+                        <option value="auto" data-i18n="languageAuto">Browser Default</option>
+                        <option value="en" data-i18n="languageEn">English</option>
+                        <option value="es" data-i18n="languageEs">Spanish</option>
+                    </select>
+                </div>
+                <button id="saveSettings" class="btn btn--primary btn--full mt-4" data-i18n="saveSettings">Save Settings</button>
             </div>
         </div>
     </div>
-    <script src="popup.js"></script>
+    <script type="module" src="popup.js"></script>
 </body>
 </html>

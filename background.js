@@ -1,3 +1,6 @@
+import { i18n } from './i18n.js';
+await i18n.init();
+
 /**
  * Constants for the Pomodoro timer
  */
@@ -216,7 +219,7 @@ class NotificationManager {
             try {
                 await chromePromise.notifications.create('fallback-sound', {
                     type: 'basic',
-                    title: 'Tomato Focus',
+                    title: i18n.t('appName'),
                     message: '',
                     silent: false
                 });
@@ -275,17 +278,17 @@ class ContextMenuManager {
             const menuItems = [
                 {
                     id: 'start-pause',
-                    title: 'Start Timer',
+                    title: i18n.t('contextStart'),
                     contexts: ['action']
                 },
                 {
                     id: 'reset',
-                    title: 'Reset Timer',
+                    title: i18n.t('contextReset'),
                     contexts: ['action']
                 },
                 {
                     id: 'skip-break',
-                    title: 'Skip Break',
+                    title: i18n.t('contextSkip'),
                     contexts: ['action'],
                     enabled: false
                 },
@@ -296,31 +299,31 @@ class ContextMenuManager {
                 },
                 {
                     id: 'quick-times',
-                    title: 'Quick Start',
+                    title: i18n.t('contextQuickStart'),
                     contexts: ['action']
                 },
                 {
                     id: 'quick-5',
                     parentId: 'quick-times',
-                    title: '5 minutes',
+                    title: i18n.t('contextQuick5'),
                     contexts: ['action']
                 },
                 {
                     id: 'quick-15',
                     parentId: 'quick-times',
-                    title: '15 minutes',
+                    title: i18n.t('contextQuick15'),
                     contexts: ['action']
                 },
                 {
                     id: 'quick-25',
                     parentId: 'quick-times',
-                    title: '25 minutes (Pomodoro)',
+                    title: i18n.t('contextQuick25'),
                     contexts: ['action']
                 },
                 {
                     id: 'quick-45',
                     parentId: 'quick-times',
-                    title: '45 minutes',
+                    title: i18n.t('contextQuick45'),
                     contexts: ['action']
                 }
             ];
@@ -336,7 +339,7 @@ class ContextMenuManager {
     }
 
     static update(isRunning, isWorkSession, timeLeft) {
-        const startPauseTitle = isRunning ? 'Pause Timer' : 'Start Timer';
+        const startPauseTitle = isRunning ? i18n.t('contextPause') : i18n.t('contextStart');
 
         chrome.contextMenus.update('start-pause', { title: startPauseTitle }, () => {
             if (chrome.runtime.lastError) {
@@ -497,16 +500,16 @@ class TimerController {
 
             if (isLongBreakTime) {
                 this.state.startLongBreak();
-                await NotificationManager.show('Tomato Focus', 'Time for a long break!', this.state.settings);
+                await NotificationManager.show(i18n.t('appName'), i18n.t('longBreakNotification'), this.state.settings);
             } else {
                 this.state.startShortBreak();
-                await NotificationManager.show('Tomato Focus', 'Time for a short break!', this.state.settings);
+                await NotificationManager.show(i18n.t('appName'), i18n.t('shortBreakNotification'), this.state.settings);
             }
         } else {
             // When break ends, increment session and start work
             this.state.incrementSession();
             this.state.startWork();
-            await NotificationManager.show('Tomato Focus', 'Time to work!', this.state.settings);
+            await NotificationManager.show(i18n.t('appName'), i18n.t('workNotification'), this.state.settings);
         }
 
         this.updateUI();
@@ -581,7 +584,7 @@ class TimerController {
                     if (this.state.settings.autoStart) {
                         this.start();
                     } else {
-                        NotificationManager.show('Tomato Focus', 'Timer paused while you were away', this.state.settings);
+                        NotificationManager.show(i18n.t('appName'), i18n.t('pausedAwayNotification'), this.state.settings);
                         this.updateUI();
                     }
                 }
@@ -603,7 +606,7 @@ class TimerController {
             if (this.state.settings.autoStart) {
                 this.start();
             } else {
-                NotificationManager.show('Tomato Focus', 'Timer paused while you were away', this.state.settings);
+                NotificationManager.show(i18n.t('appName'), i18n.t('pausedAwayNotification'), this.state.settings);
                 this.updateUI();
             }
         });
@@ -643,6 +646,12 @@ class TimerController {
                 sendResponse({ permissionLevel });
                 break;
             }
+
+            case 'localeChanged':
+                await i18n.init();
+                ContextMenuManager.create();
+                sendResponse({ success: true });
+                break;
 
             default:
                 sendResponse({ error: 'Unknown action' });

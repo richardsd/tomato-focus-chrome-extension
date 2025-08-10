@@ -1,3 +1,5 @@
+import { i18n } from './i18n.js';
+
 /**
  * Constants and configuration for the popup
  */
@@ -217,12 +219,10 @@ class ThemeManager {
 
         if (sessionTitle) {
             if (!state.isWorkSession) {
-                // During break, determine if it's long or short based on current session count
-                // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
                 const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
-                sessionTitle.textContent = isLongBreak ? 'Long Break' : 'Short Break';
+                sessionTitle.textContent = isLongBreak ? i18n.t('longBreakTitle') : i18n.t('shortBreakTitle');
             } else {
-                sessionTitle.textContent = theme.title;
+                sessionTitle.textContent = i18n.t('appName');
             }
         }
     }
@@ -293,7 +293,7 @@ class UIManager {
      */
     updateSessionCount(state) {
         if (this.elements.sessionCount) {
-            this.elements.sessionCount.textContent = `Session: ${state.currentSession}`;
+            this.elements.sessionCount.textContent = `${i18n.t('session')}: ${state.currentSession}`;
         }
     }
 
@@ -313,7 +313,7 @@ class UIManager {
             if (this.elements.startBtn) {
                 const fullDuration = this.calculateFullDuration(state);
                 const isResuming = state.timeLeft < fullDuration && state.timeLeft > 0;
-                this.elements.startBtn.textContent = isResuming ? 'Resume' : 'Start';
+                this.elements.startBtn.textContent = isResuming ? i18n.t('resume') : i18n.t('start');
             }
         }
 
@@ -718,6 +718,7 @@ class PopupController {
      */
     setupSettingsEvents() {
         const saveBtn = this.uiManager.elements.saveSettingsBtn;
+        const languageSelect = document.getElementById('language');
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -732,6 +733,14 @@ class PopupController {
 
                     const state = await this.messageHandler.sendMessage('saveSettings', { settings });
                     this.updateState(state);
+
+                    if (languageSelect) {
+                        await i18n.setLocale(languageSelect.value);
+                        await this.messageHandler.sendMessage('localeChanged');
+                        i18n.applyTranslations();
+                        this.updateState(state);
+                    }
+
                     this.navigationManager.showTimerPanel();
                 } catch (error) {
                     console.error('Failed to save settings:', error);
@@ -780,6 +789,8 @@ class PopupController {
 }
 
 // Initialize the popup when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    await i18n.init();
+    i18n.applyTranslations();
     new PopupController();
 });

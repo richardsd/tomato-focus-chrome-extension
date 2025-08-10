@@ -9,7 +9,7 @@ export default [
         files: ['*.js'],
         languageOptions: {
             ecmaVersion: 2022,
-            sourceType: 'script',
+            sourceType: 'module',
             globals: {
                 chrome: 'readonly',
                 console: 'readonly',
@@ -22,7 +22,8 @@ export default [
                 clearInterval: 'readonly',
                 alert: 'readonly',
                 CustomEvent: 'readonly',
-                self: 'readonly'
+                self: 'readonly',
+                fetch: 'readonly'
             }
         },
         rules: {
