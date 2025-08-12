@@ -13,6 +13,8 @@ const POPUP_CONSTANTS = {
         resetBtn: '#resetBtn',
         skipBreakBtn: '#skipBreakBtn',
         sessionCount: '#sessionCount',
+        completedToday: '#completedToday',
+        focusTime: '#focusTime',
         saveSettingsBtn: '#saveSettings',
         notificationStatus: '#notificationStatus',
         notificationMessage: '#notificationMessage',
@@ -72,6 +74,19 @@ const utils = {
     },
 
     /**
+     * Format focus time for statistics display
+     */
+    formatFocusTime(minutes) {
+        if (minutes < 60) {
+            return `${minutes}m`;
+        } else {
+            const hours = Math.floor(minutes / 60);
+            const remainingMinutes = minutes % 60;
+            return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+        }
+    },
+
+    /**
      * Calculate progress ring circumference
      */
     getCircumference(radius = POPUP_CONSTANTS.PROGRESS_RING_RADIUS) {
@@ -110,6 +125,7 @@ const utils = {
                typeof state.currentSession === 'number' &&
                typeof state.isWorkSession === 'boolean' &&
                state.settings && typeof state.settings === 'object';
+        // Note: statistics is optional and may be null during initialization
     }
 };
 
@@ -274,6 +290,7 @@ class UIManager {
 
         this.updateTimer(state);
         this.updateSessionCount(state);
+        this.updateStatistics(state);
         this.updateButtons(state);
         this.updateSettings(state);
         this.debouncedUpdate(state);
@@ -294,6 +311,21 @@ class UIManager {
     updateSessionCount(state) {
         if (this.elements.sessionCount) {
             this.elements.sessionCount.textContent = `Session: ${state.currentSession}`;
+        }
+    }
+
+    /**
+     * Update statistics display
+     */
+    updateStatistics(state) {
+        if (state.statistics) {
+            if (this.elements.completedToday) {
+                this.elements.completedToday.textContent = state.statistics.completedToday || 0;
+            }
+            if (this.elements.focusTime) {
+                const focusTimeMinutes = state.statistics.focusTimeToday || 0;
+                this.elements.focusTime.textContent = utils.formatFocusTime(focusTimeMinutes);
+            }
         }
     }
 

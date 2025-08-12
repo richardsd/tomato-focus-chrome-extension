@@ -4,6 +4,7 @@
 const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
     STORAGE_KEY: 'pomodoroState',
+    STATISTICS_KEY: 'pomodoroStatistics',
     NOTIFICATION_ID: 'pomodoroNotification',
     BADGE_UPDATE_INTERVAL: 1000,
     DEFAULT_SETTINGS: {
@@ -58,6 +59,7 @@ class TimerState {
         this.isWorkSession = true;
         this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
         this.wasPausedForIdle = false;
+        this.statistics = null; // Will be loaded async
     }
 
     getState() {
@@ -67,7 +69,8 @@ class TimerState {
             currentSession: this.currentSession,
             isWorkSession: this.isWorkSession,
             settings: { ...this.settings },
-            wasPausedForIdle: this.wasPausedForIdle
+            wasPausedForIdle: this.wasPausedForIdle,
+            statistics: this.statistics
         };
     }
 
@@ -122,6 +125,77 @@ class StorageManager {
             console.error('Failed to load state:', error);
             return null;
         }
+    }
+}
+
+/**
+ * Manages daily statistics tracking
+ */
+class StatisticsManager {
+    static getTodayKey() {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }
+
+    static async getStatistics() {
+        try {
+            const result = await chromePromise.storage.local.get([CONSTANTS.STATISTICS_KEY]);
+            const allStats = result[CONSTANTS.STATISTICS_KEY] || {};
+            const todayKey = this.getTodayKey();
+
+            // Return today's statistics, initializing if needed
+            return allStats[todayKey] || {
+                completedToday: 0,
+                focusTimeToday: 0
+            };
+        } catch (error) {
+            console.error('Failed to load statistics:', error);
+            return {
+                completedToday: 0,
+                focusTimeToday: 0
+            };
+        }
+    }
+
+    static async saveStatistics(todayStats) {
+        try {
+            const result = await chromePromise.storage.local.get([CONSTANTS.STATISTICS_KEY]);
+            const allStats = result[CONSTANTS.STATISTICS_KEY] || {};
+            const todayKey = this.getTodayKey();
+
+            allStats[todayKey] = todayStats;
+
+            // Clean up old statistics (keep only last 30 days)
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+
+            Object.keys(allStats).forEach(dateKey => {
+                const statDate = new Date(dateKey);
+                if (statDate < cutoffDate) {
+                    delete allStats[dateKey];
+                }
+            });
+
+            await chromePromise.storage.local.set({
+                [CONSTANTS.STATISTICS_KEY]: allStats
+            });
+        } catch (error) {
+            console.error('Failed to save statistics:', error);
+        }
+    }
+
+    static async incrementCompleted() {
+        const stats = await this.getStatistics();
+        stats.completedToday++;
+        await this.saveStatistics(stats);
+        return stats;
+    }
+
+    static async addFocusTime(minutes) {
+        const stats = await this.getStatistics();
+        stats.focusTimeToday += minutes;
+        await this.saveStatistics(stats);
+        return stats;
     }
 }
 
@@ -368,6 +442,7 @@ class TimerController {
 
     async init() {
         await this.loadState();
+        await this.loadStatistics();
         this.setupAlarmListener();
         this.setupMessageListener();
         this.setupIdleListener();
@@ -388,6 +463,15 @@ class TimerController {
             }
         } catch (error) {
             console.error('Failed to load state:', error);
+        }
+    }
+
+    async loadStatistics() {
+        try {
+            this.state.statistics = await StatisticsManager.getStatistics();
+        } catch (error) {
+            console.error('Failed to load statistics:', error);
+            this.state.statistics = { completedToday: 0, focusTimeToday: 0 };
         }
     }
 
@@ -491,8 +575,16 @@ class TimerController {
         this.state.isRunning = false;
 
         if (this.state.isWorkSession) {
-            // When work session ends, determine break type
-            // Check if current session number is a multiple of longBreakInterval
+            // When work session ends, track the completed session and focus time
+            try {
+                const focusTimeMinutes = this.state.settings.workDuration;
+                this.state.statistics = await StatisticsManager.incrementCompleted();
+                this.state.statistics = await StatisticsManager.addFocusTime(focusTimeMinutes);
+            } catch (error) {
+                console.error('Failed to update statistics:', error);
+            }
+
+            // Determine break type
             const isLongBreakTime = this.state.currentSession % this.state.settings.longBreakInterval === 0;
 
             if (isLongBreakTime) {
@@ -615,6 +707,8 @@ class TimerController {
 
             switch (action) {
             case 'getState':
+                // Refresh statistics before sending state
+                await this.loadStatistics();
                 sendResponse(this.state.getState());
                 break;
 
