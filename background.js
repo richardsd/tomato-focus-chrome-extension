@@ -323,14 +323,18 @@ class BadgeManager {
         }
 
         const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
         let badgeText = '';
 
         if (minutes >= 60) {
             const hours = Math.floor(minutes / 60);
             const remainingMinutes = minutes % 60;
             badgeText = `${hours}h${remainingMinutes > 0 ? remainingMinutes : ''}`;
-        } else {
+        } else if (minutes >= 1) {
             badgeText = `${minutes}m`;
+        } else {
+            // Show seconds when less than 1 minute remains
+            badgeText = `${seconds}s`;
         }
 
         chrome.action.setBadgeText({ text: badgeText });
