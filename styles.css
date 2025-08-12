@@ -420,12 +420,45 @@ body {
    SETTINGS COMPONENT
    =========================================== */
 
-.settings-container {
+.settings-content {
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+  margin-bottom: var(--space-4);
+  /* Remove scrollbar styling to prevent double scrollbars */
+}
+
+/* Remove custom scrollbar styling that was causing double scrollbars */
+
+.settings-group-container {
   backdrop-filter: blur(10px);
   background: var(--theme-surface);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
+  margin-bottom: var(--space-4);
+}
+
+.settings-group-container:last-child {
+  margin-bottom: 0;
+}
+
+.settings-group {
+  margin-bottom: 0;
+}
+
+.settings-group:last-child {
+  margin-bottom: 0;
+}
+
+.settings-group-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: #374151;
+  margin: 0 0 var(--space-3) 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+  text-shadow: none;
 }
 
 .settings-header {
@@ -442,31 +475,87 @@ body {
   flex-shrink: 0; /* Prevent shrinking */
 }
 
+.settings-footer {
+  position: sticky;
+  bottom: 0;
+  padding: var(--space-3) 0;
+  margin-top: var(--space-2);
+}
+
+.settings-footer .btn {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  text-shadow: none;
+  transition: all var(--transition-base);
+}
+
+.settings-footer .btn:hover {
+  background: var(--color-white);
+  color: var(--color-primary-dark);
+  border-color: var(--color-white);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
 .settings-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--space-3);
-  padding: var(--space-1) 0;
+  padding: var(--space-2) 0;
+  border-radius: var(--radius-sm);
 }
 
 .settings-label {
-  color: #333;
+  color: #374151;
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
   flex: 1;
   text-align: left;
-  line-height: 1.2;
+  line-height: 1.4;
+  margin-right: var(--space-3);
 }
 
 .settings-input {
   padding: var(--space-2);
-  border: 1px solid #ddd;
+  border: 2px solid #d1d5db;
   border-radius: var(--radius-md);
   outline: none;
-  transition: border-color var(--transition-fast);
-  color: #333;
+  transition: all var(--transition-fast);
+  color: #374151;
   font-size: var(--font-size-sm);
+  background: var(--color-white);
+}
+
+.settings-slider {
+  min-width: 100px;
+}
+
+input.settings-input {
+  width: 70px;
+  text-align: center;
+}
+
+select.settings-input {
+  width: auto;
+  min-width: 100px;
+  cursor: pointer;
+}
+
+.settings-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(220, 47, 2, 0.1);
+  transform: translateY(-1px);
+}
+
+.settings-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+  transform: scale(1.1);
 }
 
 input.settings-input {
@@ -549,26 +638,26 @@ select.settings-input {
 }
 
 .light-theme .controls-container,
-.light-theme .settings-container {
+.light-theme .settings-group-container {
   background: var(--theme-surface);
   border: 1px solid #e5e7eb;
 }
 
-.light-theme .session-counter {
-  color: #4b5563;
+.light-theme .settings-group-title {
+  color: #374151;
+  border-bottom-color: rgba(107, 114, 128, 0.3);
 }
 
-.light-theme .header__settings {
-  background: rgba(75, 85, 99, 0.1);
-  color: #4b5563;
+.light-theme .settings-footer .btn {
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--color-success);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
-.light-theme .header__settings:hover {
-  background: rgba(75, 85, 99, 0.2);
-}
-
-.light-theme .header__settings img {
-  filter: brightness(0) saturate(100%) invert(0%);
+.light-theme .settings-footer .btn:hover {
+  background: var(--color-white);
+  color: var(--color-success-dark);
+  border-color: var(--color-white);
 }
 
 .light-theme .settings-label {
@@ -578,7 +667,7 @@ select.settings-input {
 .light-theme .settings-input {
   border: 2px solid #d1d5db;
   background: var(--color-white);
-  color: var(--theme-secondary);
+  color: #374151;
 }
 
 .light-theme .settings-input:focus {
