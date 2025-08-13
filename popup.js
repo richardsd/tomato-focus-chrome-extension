@@ -16,6 +16,7 @@ const POPUP_CONSTANTS = {
         completedToday: '#completedToday',
         focusTime: '#focusTime',
         saveSettingsBtn: '#saveSettings',
+        clearDataBtn: '#clearDataBtn',
         notificationStatus: '#notificationStatus',
         notificationMessage: '#notificationMessage',
         timerPanel: '#timerPanel',
@@ -1292,6 +1293,35 @@ class PopupController {
                 } catch (error) {
                     console.error('Failed to save settings:', error);
                     alert('Failed to save settings. Please try again.');
+                }
+            });
+        }
+
+        // Clear data button
+        const clearDataBtn = this.uiManager.elements.clearDataBtn;
+        if (clearDataBtn) {
+            clearDataBtn.addEventListener('click', async () => {
+                const confirmed = window.confirm(
+                    'Are you sure you want to clear all statistics data?\n\n' +
+                    'This will permanently delete:\n' +
+                    '• All completed session counts\n' +
+                    '• All focus time records\n' +
+                    '• Historical data for all dates\n\n' +
+                    'This action cannot be undone.'
+                );
+
+                if (confirmed) {
+                    try {
+                        await this.messageHandler.sendMessage('clearStatistics');
+                        alert('All statistics data has been cleared successfully.');
+
+                        // Refresh the UI to show updated statistics
+                        const state = await this.messageHandler.sendMessage('getState');
+                        this.updateState(state);
+                    } catch (error) {
+                        console.error('Failed to clear statistics data:', error);
+                        alert('Failed to clear statistics data. Please try again.');
+                    }
                 }
             });
         }

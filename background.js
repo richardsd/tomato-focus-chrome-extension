@@ -202,6 +202,18 @@ class StatisticsManager {
         await this.saveStatistics(stats);
         return stats;
     }
+
+    static async clearAll() {
+        try {
+            await chromePromise.storage.local.set({
+                [CONSTANTS.STATISTICS_KEY]: {}
+            });
+            console.log('All statistics data cleared');
+        } catch (error) {
+            console.error('Failed to clear statistics data:', error);
+            throw error;
+        }
+    }
 }
 
 /**
@@ -906,6 +918,14 @@ class TimerController {
             case 'getTasks': {
                 await this.loadTasks();
                 sendResponse({ tasks: this.state.tasks });
+                break;
+            }
+
+            case 'clearStatistics': {
+                await StatisticsManager.clearAll();
+                // Refresh statistics in state
+                await this.loadStatistics();
+                sendResponse({ success: true, state: this.state.getState() });
                 break;
             }
 

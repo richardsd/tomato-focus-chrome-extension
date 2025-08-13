@@ -518,6 +518,17 @@ body {
   margin-right: var(--space-3);
 }
 
+.settings-description {
+  color: #6b7280;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  margin-bottom: var(--space-2);
+}
+
+.settings-description p {
+  margin: 0;
+}
+
 .settings-input {
   padding: var(--space-2);
   border: 2px solid #d1d5db;
