@@ -173,7 +173,7 @@ class TaskUIManager {
                 <div class="tasks-empty">
                     <div class="tasks-empty__icon">📋</div>
                     <div class="tasks-empty__text">No tasks yet</div>
-                    <div class="tasks-empty__subtext">Add a task to start tracking your Pomodoros</div>
+                    <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
                 </div>
             `;
             return;

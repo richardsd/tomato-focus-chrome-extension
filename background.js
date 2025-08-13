@@ -507,7 +507,7 @@ class ContextMenuManager {
                 {
                     id: 'quick-25',
                     parentId: 'quick-times',
-                    title: '25 minutes (Pomodoro)',
+                    title: '25 minutes (Focus)',
                     contexts: ['action']
                 },
                 {
