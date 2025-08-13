@@ -684,17 +684,21 @@ class UIManager {
                 const fullDuration = this.calculateFullDuration(state);
                 const isResuming = state.timeLeft < fullDuration && state.timeLeft > 0;
                 const buttonText = isResuming ? 'Resume' : 'Start';
-                this.elements.startBtn.textContent = buttonText;
+                const buttonTextElement = this.elements.startBtn.querySelector('.btn-text');
+                if (buttonTextElement) {
+                    buttonTextElement.textContent = buttonText;
+                } else {
+                    this.elements.startBtn.textContent = buttonText;
+                }
                 console.log('Updated start button text to:', buttonText);
             }
         }
 
-        // Update skip break button visibility
-        const shouldShowSkipBreak = !state.isWorkSession && state.timeLeft > 0;
-        if (shouldShowSkipBreak) {
-            this.showElement(this.elements.skipBreakBtn);
-        } else {
-            this.hideElement(this.elements.skipBreakBtn);
+        // Update skip break button state (always visible, but disabled during work sessions)
+        const isBreakSession = !state.isWorkSession && state.timeLeft > 0;
+        if (this.elements.skipBreakBtn) {
+            this.elements.skipBreakBtn.disabled = !isBreakSession;
+            console.log('Skip break button disabled:', !isBreakSession);
         }
     }
 

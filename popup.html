@@ -47,13 +47,24 @@
             </div>
 
             <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
-                <div class="controls flex justify-center gap-4 mb-4">
-                    <button id="startBtn" class="btn btn--success" aria-label="Start timer">Start</button>
-                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer">Pause</button>
-                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer">Reset</button>
+                <div class="controls flex justify-center gap-2 mb-4">
+                    <button id="startBtn" class="btn btn--success" aria-label="Start timer">
+                        <span class="btn-icon">▶</span>
+                        <span class="btn-text">Start</span>
+                    </button>
+                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer">
+                        <span class="btn-icon">⏸</span>
+                        <span class="btn-text">Pause</span>
+                    </button>
+                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer">
+                        <span class="btn-icon">🔄</span>
+                        <span class="btn-text">Reset</span>
+                    </button>
+                    <button id="skipBreakBtn" class="btn btn--neutral" aria-label="Skip break" disabled>
+                        <span class="btn-icon">⏭</span>
+                        <span class="btn-text">Skip</span>
+                    </button>
                 </div>
-
-                <button id="skipBreakBtn" class="btn btn--skip hidden">Skip Break</button>
 
                 <div id="cycleProgress" class="cycle-progress">Focus 1 of 4</div>
             </div>

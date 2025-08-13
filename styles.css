@@ -256,9 +256,10 @@ body {
 
 .controls {
   display: flex;
-  justify-content: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  gap: var(--space-1);
   margin-bottom: var(--space-3);
+  width: 100%;
 }
 
 .controls-container {
@@ -283,17 +284,22 @@ body {
    =========================================== */
 
 .btn {
-  padding: var(--space-3) var(--space-8);
+  padding: var(--space-2) var(--space-4);
   border: none;
   border-radius: var(--radius-lg);
   font-weight: var(--font-weight-semibold);
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-base);
-  min-width: 120px;
-  display: inline-block;
-  text-align: center;
+  flex: 1;
+  min-height: 42px;
+  min-width: 85px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn:hover {
@@ -302,6 +308,49 @@ body {
 
 .btn:active {
   transform: translateY(0);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: inherit;
+  opacity: 0.5;
+}
+
+.btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  background: inherit;
+}
+
+.btn-icon {
+  font-size: var(--font-size-base);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.btn-text {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+/* Ensure consistent width for action buttons */
+#startBtn,
+#pauseBtn {
+  min-width: 95px;
 }
 
 .btn--primary {
@@ -354,6 +403,18 @@ body {
   box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
 }
 
+.btn--neutral:disabled {
+  background: var(--color-neutral);
+  opacity: 0.6;
+}
+
+.btn--neutral:disabled:hover {
+  background: var(--color-neutral);
+  box-shadow: none;
+  transform: none;
+  opacity: 0.6;
+}
+
 .btn--secondary {
   background: var(--color-neutral);
   color: var(--color-white);
@@ -397,17 +458,6 @@ body {
 .btn--back:focus {
   outline: none; /* Remove focus outline */
   background: rgba(255, 255, 255, 0.2);
-}
-
-.btn--skip {
-  background: var(--color-neutral);
-  color: var(--color-white);
-  width: 100%;
-  margin-bottom: var(--space-3);
-}
-
-.btn--skip:hover {
-  background: var(--color-neutral-dark);
 }
 
 .btn--full {
@@ -607,12 +657,12 @@ select.settings-input {
 }
 
 .break-mode .btn--success,
-.break-mode .btn--skip {
+.break-mode .btn--neutral:not(:disabled) {
   background: var(--color-success);
 }
 
 .break-mode .btn--success:hover,
-.break-mode .btn--skip:hover {
+.break-mode .btn--neutral:not(:disabled):hover {
   background: var(--color-success-dark);
   box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
 }
@@ -808,7 +858,7 @@ select.settings-input {
    =========================================== */
 
 /* Display */
-.hidden { display: none; }
+.hidden { display: none !important; }
 .block { display: block; }
 .flex { display: flex; }
 
