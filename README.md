@@ -1,6 +1,6 @@
-# 🍅 Focus Timer – A Chrome Extension for Productivity
+# 🍅 Tomato Focus – A Chrome Extension for Productivity
 
-A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
+A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, task management, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
 
 <p align="center">
   <img src="docs/timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
@@ -20,6 +20,14 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Long Breaks**: 15-minute extended breaks after a configurable number of sessions
 - **Visual Progress**: Circular progress ring with smooth countdown animation
 - **Session Counter**: Track your completed focus sessions
+
+### 📋 Task Management (NEW!)
+- **Task List**: Create, edit, and delete tasks to organize your work
+- **Task-Timer Integration**: Associate your Pomodoro sessions with specific tasks
+- **Progress Tracking**: See how many Pomodoros each task has consumed vs estimated
+- **Current Task Display**: Shows your active task right on the timer screen
+- **Auto-completion**: Tasks are automatically marked complete when estimated Pomodoros are reached
+- **Task Statistics**: Enhanced analytics showing task-based productivity metrics
 
 ### ⚙️ Customizable Settings
 - **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)

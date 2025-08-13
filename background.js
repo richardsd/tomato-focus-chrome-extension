@@ -5,6 +5,7 @@ const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
     STORAGE_KEY: 'pomodoroState',
     STATISTICS_KEY: 'pomodoroStatistics',
+    TASKS_KEY: 'pomodoroTasks',
     NOTIFICATION_ID: 'pomodoroNotification',
     BADGE_UPDATE_INTERVAL: 1000,
     DEFAULT_SETTINGS: {
@@ -60,6 +61,8 @@ class TimerState {
         this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
         this.wasPausedForIdle = false;
         this.statistics = null; // Will be loaded async
+        this.currentTaskId = null; // Currently selected task
+        this.tasks = []; // Will be loaded async
     }
 
     getState() {
@@ -70,7 +73,9 @@ class TimerState {
             isWorkSession: this.isWorkSession,
             settings: { ...this.settings },
             wasPausedForIdle: this.wasPausedForIdle,
-            statistics: this.statistics
+            statistics: this.statistics,
+            currentTaskId: this.currentTaskId,
+            tasks: this.tasks
         };
     }
 
@@ -196,6 +201,104 @@ class StatisticsManager {
         stats.focusTimeToday += minutes;
         await this.saveStatistics(stats);
         return stats;
+    }
+}
+
+/**
+ * Manages task storage and operations
+ */
+class TaskManager {
+    static generateId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    static async getTasks() {
+        try {
+            const result = await chromePromise.storage.local.get([CONSTANTS.TASKS_KEY]);
+            return result[CONSTANTS.TASKS_KEY] || [];
+        } catch (error) {
+            console.error('Failed to load tasks:', error);
+            return [];
+        }
+    }
+
+    static async saveTasks(tasks) {
+        try {
+            await chromePromise.storage.local.set({
+                [CONSTANTS.TASKS_KEY]: tasks
+            });
+        } catch (error) {
+            console.error('Failed to save tasks:', error);
+        }
+    }
+
+    static async createTask(taskData) {
+        const tasks = await this.getTasks();
+        const newTask = {
+            id: this.generateId(),
+            title: taskData.title || 'Untitled Task',
+            description: taskData.description || '',
+            estimatedPomodoros: taskData.estimatedPomodoros || 1,
+            completedPomodoros: 0,
+            isCompleted: false,
+            createdAt: new Date().toISOString(),
+            completedAt: null
+        };
+
+        tasks.push(newTask);
+        await this.saveTasks(tasks);
+        return newTask;
+    }
+
+    static async updateTask(taskId, updates) {
+        const tasks = await this.getTasks();
+        const taskIndex = tasks.findIndex(task => task.id === taskId);
+
+        if (taskIndex === -1) {
+            throw new Error('Task not found');
+        }
+
+        // Handle completion status
+        if (updates.isCompleted !== undefined) {
+            updates.completedAt = updates.isCompleted ? new Date().toISOString() : null;
+        }
+
+        tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
+        await this.saveTasks(tasks);
+        return tasks[taskIndex];
+    }
+
+    static async deleteTask(taskId) {
+        const tasks = await this.getTasks();
+        const filteredTasks = tasks.filter(task => task.id !== taskId);
+        await this.saveTasks(filteredTasks);
+        return true;
+    }
+
+    static async incrementTaskPomodoros(taskId) {
+        const tasks = await this.getTasks();
+        const task = tasks.find(task => task.id === taskId);
+
+        if (!task) {
+            console.warn('Task not found for incrementing pomodoros:', taskId);
+            return null;
+        }
+
+        task.completedPomodoros++;
+
+        // Auto-complete task if estimated pomodoros are reached
+        if (task.completedPomodoros >= task.estimatedPomodoros && !task.isCompleted) {
+            task.isCompleted = true;
+            task.completedAt = new Date().toISOString();
+        }
+
+        await this.saveTasks(tasks);
+        return task;
+    }
+
+    static async getTaskById(taskId) {
+        const tasks = await this.getTasks();
+        return tasks.find(task => task.id === taskId) || null;
     }
 }
 
@@ -447,6 +550,7 @@ class TimerController {
     async init() {
         await this.loadState();
         await this.loadStatistics();
+        await this.loadTasks();
         this.setupAlarmListener();
         this.setupMessageListener();
         this.setupIdleListener();
@@ -476,6 +580,15 @@ class TimerController {
         } catch (error) {
             console.error('Failed to load statistics:', error);
             this.state.statistics = { completedToday: 0, focusTimeToday: 0 };
+        }
+    }
+
+    async loadTasks() {
+        try {
+            this.state.tasks = await TaskManager.getTasks();
+        } catch (error) {
+            console.error('Failed to load tasks:', error);
+            this.state.tasks = [];
         }
     }
 
@@ -584,6 +697,20 @@ class TimerController {
                 const focusTimeMinutes = this.state.settings.workDuration;
                 this.state.statistics = await StatisticsManager.incrementCompleted();
                 this.state.statistics = await StatisticsManager.addFocusTime(focusTimeMinutes);
+
+                // If a task is selected, increment its completed pomodoros
+                if (this.state.currentTaskId) {
+                    const updatedTask = await TaskManager.incrementTaskPomodoros(this.state.currentTaskId);
+                    if (updatedTask) {
+                        // Refresh task list
+                        await this.loadTasks();
+
+                        // Show completion message if task is now complete
+                        if (updatedTask.isCompleted) {
+                            await NotificationManager.show('Task Completed!', `Great job! You've completed "${updatedTask.title}"`, this.state.settings);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error('Failed to update statistics:', error);
             }
@@ -711,8 +838,9 @@ class TimerController {
 
             switch (action) {
             case 'getState':
-                // Refresh statistics before sending state
+                // Refresh statistics and tasks before sending state
                 await this.loadStatistics();
+                await this.loadTasks();
                 sendResponse(this.state.getState());
                 break;
 
@@ -739,6 +867,45 @@ class TimerController {
             case 'checkNotifications': {
                 const permissionLevel = await NotificationManager.checkPermissions();
                 sendResponse({ permissionLevel });
+                break;
+            }
+
+            // Task management actions
+            case 'createTask': {
+                const newTask = await TaskManager.createTask(request.taskData);
+                await this.loadTasks();
+                sendResponse({ success: true, task: newTask, state: this.state.getState() });
+                break;
+            }
+
+            case 'updateTask': {
+                const updatedTask = await TaskManager.updateTask(request.taskId, request.updates);
+                await this.loadTasks();
+                sendResponse({ success: true, task: updatedTask, state: this.state.getState() });
+                break;
+            }
+
+            case 'deleteTask': {
+                await TaskManager.deleteTask(request.taskId);
+                // If deleted task was current task, clear current task
+                if (this.state.currentTaskId === request.taskId) {
+                    this.state.currentTaskId = null;
+                }
+                await this.loadTasks();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+
+            case 'setCurrentTask': {
+                this.state.currentTaskId = request.taskId;
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+
+            case 'getTasks': {
+                await this.loadTasks();
+                sendResponse({ tasks: this.state.tasks });
                 break;
             }
 

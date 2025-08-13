@@ -16,9 +16,24 @@
                     <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
                 </div>
                 <h1 id="sessionTitle" class="header__title">Tomato Focus</h1>
-                <button id="settingsBtn" class="header__settings" aria-label="Open settings">
-                    <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
-                </button>
+                <div class="header__actions">
+                    <button id="tasksBtn" class="header__tasks" aria-label="View tasks" title="Tasks">
+                        📋
+                    </button>
+                    <button id="settingsBtn" class="header__settings" aria-label="Open settings">
+                        <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
+                    </button>
+                </div>
+            </div>
+
+            <!-- Current Task Display -->
+            <div id="currentTask" class="current-task hidden">
+                <div class="current-task__content">
+                    <div class="current-task__title">Current Task</div>
+                    <div id="currentTaskName" class="current-task__name">No task selected</div>
+                    <div id="currentTaskProgress" class="current-task__progress">0/0 🍅</div>
+                </div>
+                <button id="clearTaskBtn" class="current-task__clear" aria-label="Clear current task">×</button>
             </div>
 
             <div class="timer">
@@ -40,7 +55,7 @@
 
                 <button id="skipBreakBtn" class="btn btn--skip hidden">Skip Break</button>
 
-                <div id="sessionCount" class="session-counter">Session: 0</div>
+                <div id="cycleProgress" class="cycle-progress">Focus 1 of 4</div>
             </div>
 
             <!-- Statistics Section -->
@@ -138,6 +153,58 @@
             <!-- Sticky Save Button -->
             <div class="settings-footer">
                 <button id="saveSettings" class="btn btn--primary btn--full">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Tasks Panel -->
+        <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
+            <div class="tasks-header flex items-center justify-between mb-4">
+                <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
+                    ←
+                </button>
+                <h1 class="header__title">Tasks</h1>
+                <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
+                    +
+                </button>
+            </div>
+
+            <div class="tasks-content">
+                <!-- Task List -->
+                <div id="tasksList" class="tasks-list">
+                    <div class="tasks-empty">
+                        <div class="tasks-empty__icon">📋</div>
+                        <div class="tasks-empty__text">No tasks yet</div>
+                        <div class="tasks-empty__subtext">Add a task to start tracking your Pomodoros</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Form Modal -->
+        <div id="taskFormModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="taskFormTitle">Add Task</h2>
+                    <button id="closeTaskFormBtn" class="modal-close" aria-label="Close">×</button>
+                </div>
+                <form id="taskForm" class="task-form">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title *</label>
+                        <input type="text" id="taskTitle" name="taskTitle" placeholder="What do you want to focus on?" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Description (optional)</label>
+                        <textarea id="taskDescription" name="taskDescription" placeholder="Add details about this task..." rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskEstimate">Estimated Pomodoros</label>
+                        <input type="number" id="taskEstimate" name="taskEstimate" min="1" max="20" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" id="cancelTaskBtn" class="btn btn--secondary">Cancel</button>
+                        <button type="submit" id="saveTaskBtn" class="btn btn--primary">Save Task</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

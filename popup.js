@@ -12,7 +12,7 @@ const POPUP_CONSTANTS = {
         pauseBtn: '#pauseBtn',
         resetBtn: '#resetBtn',
         skipBreakBtn: '#skipBreakBtn',
-        sessionCount: '#sessionCount',
+        cycleProgress: '#cycleProgress',
         completedToday: '#completedToday',
         focusTime: '#focusTime',
         saveSettingsBtn: '#saveSettings',
@@ -20,12 +20,25 @@ const POPUP_CONSTANTS = {
         notificationMessage: '#notificationMessage',
         timerPanel: '#timerPanel',
         settingsPanel: '#settingsPanel',
+        tasksPanel: '#tasksPanel',
         settingsBtn: '#settingsBtn',
+        tasksBtn: '#tasksBtn',
         backBtn: '#backBtn',
+        backFromTasksBtn: '#backFromTasksBtn',
         progressRing: '.timer__progress-ring-progress',
         progressRingBackground: '.timer__progress-ring-background',
         sessionIcon: '#sessionIcon',
-        sessionTitle: '#sessionTitle'
+        sessionTitle: '#sessionTitle',
+        currentTask: '#currentTask',
+        currentTaskName: '#currentTaskName',
+        currentTaskProgress: '#currentTaskProgress',
+        clearTaskBtn: '#clearTaskBtn',
+        addTaskBtn: '#addTaskBtn',
+        tasksList: '#tasksList',
+        taskFormModal: '#taskFormModal',
+        taskForm: '#taskForm',
+        closeTaskFormBtn: '#closeTaskFormBtn',
+        cancelTaskBtn: '#cancelTaskBtn'
     },
     THEMES: {
         WORK: {
@@ -46,6 +59,8 @@ const POPUP_CONSTANTS = {
         timeLeft: 25 * 60,
         currentSession: 1,
         isWorkSession: true,
+        currentTaskId: null,
+        tasks: [],
         settings: {
             workDuration: 25,
             shortBreak: 5,
@@ -125,7 +140,321 @@ const utils = {
                typeof state.currentSession === 'number' &&
                typeof state.isWorkSession === 'boolean' &&
                state.settings && typeof state.settings === 'object';
-        // Note: statistics is optional and may be null during initialization
+        // Note: statistics, tasks, and currentTaskId are optional and may be null during initialization
+    }
+};
+
+/**
+ * Manages task UI operations
+ */
+class TaskUIManager {
+    constructor(messageHandler) {
+        this.messageHandler = messageHandler;
+        this.currentEditingTaskId = null;
+    }
+
+    /**
+     * Render the tasks list
+     */
+    renderTasksList(tasks, currentTaskId) {
+        console.log('renderTasksList called with:', { tasks, currentTaskId });
+        const tasksList = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksList);
+        if (!tasksList) {
+            console.warn('tasksList element not found');
+            return;
+        }
+
+        console.log('Tasks list element found, rendering...');
+
+        if (!tasks || tasks.length === 0) {
+            console.log('No tasks found, showing empty state');
+            tasksList.innerHTML = `
+                <div class="tasks-empty">
+                    <div class="tasks-empty__icon">📋</div>
+                    <div class="tasks-empty__text">No tasks yet</div>
+                    <div class="tasks-empty__subtext">Add a task to start tracking your Pomodoros</div>
+                </div>
+            `;
+            return;
+        }
+
+        console.log('Rendering', tasks.length, 'tasks');
+        const tasksHTML = tasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
+        console.log('Generated HTML:', tasksHTML);
+        tasksList.innerHTML = tasksHTML;
+        console.log('TasksList innerHTML after setting:', tasksList.innerHTML);
+
+        // Add event listeners for task items
+        this.attachTaskEventListeners();
+    }
+
+    /**
+     * Render a single task item
+     */
+    renderTaskItem(task, currentTaskId) {
+        const isCurrentTask = task.id === currentTaskId;
+        const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
+        const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
+        const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In Progress' : 'Pending');
+
+        return `
+            <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''}"
+                 data-task-id="${task.id}">
+                <div class="task-item__header">
+                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}">${this.escapeHtml(task.title)}</div>
+                    <div class="task-item__actions">
+                        ${!task.isCompleted ? `<button class="task-item__action task-select" data-task-id="${task.id}" title="Select task">🎯</button>` : ''}
+                        <button class="task-item__action task-edit" data-task-id="${task.id}" title="Edit task">✏️</button>
+                        <button class="task-item__action task-delete" data-task-id="${task.id}" title="Delete task">🗑️</button>
+                    </div>
+                </div>
+                ${task.description ? `<div class="task-item__description">${this.escapeHtml(task.description)}</div>` : ''}
+                <div class="task-item__progress">
+                    <div class="task-item__pomodoros">🍅 ${progress}</div>
+                    <div class="task-item__status ${statusClass}">${statusText}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Attach event listeners to task items
+     */
+    attachTaskEventListeners() {
+        // Select task buttons
+        document.querySelectorAll('.task-select').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = btn.dataset.taskId;
+                this.selectTask(taskId);
+            });
+        });
+
+        // Edit task buttons
+        document.querySelectorAll('.task-edit').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = btn.dataset.taskId;
+                this.editTask(taskId);
+            });
+        });
+
+        // Delete task buttons
+        document.querySelectorAll('.task-delete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = btn.dataset.taskId;
+                this.deleteTask(taskId);
+            });
+        });
+
+        // Task item click to select
+        document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
+            item.addEventListener('click', () => {
+                const taskId = item.dataset.taskId;
+                this.selectTask(taskId);
+            });
+        });
+
+        // Complete task on double-click
+        document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
+            item.addEventListener('dblclick', () => {
+                const taskId = item.dataset.taskId;
+                this.toggleTaskCompletion(taskId, true);
+            });
+        });
+    }
+
+    /**
+     * Select a task as current
+     */
+    async selectTask(taskId) {
+        try {
+            const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId });
+
+            // Refresh UI with updated state
+            if (response && response.state) {
+                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+            }
+        } catch (error) {
+            console.error('Failed to select task:', error);
+        }
+    }
+
+    /**
+     * Edit a task
+     */
+    async editTask(taskId) {
+        try {
+            const response = await this.messageHandler.sendMessage('getTasks');
+            const task = response.tasks.find(t => t.id === taskId);
+            if (task) {
+                this.showTaskForm(task);
+            }
+        } catch (error) {
+            console.error('Failed to load task for editing:', error);
+        }
+    }
+
+    /**
+     * Delete a task
+     */
+    async deleteTask(taskId) {
+        if (!window.confirm('Are you sure you want to delete this task?')) {
+            return;
+        }
+
+        try {
+            const response = await this.messageHandler.sendMessage('deleteTask', { taskId });
+
+            // Refresh UI with updated state
+            if (response && response.state) {
+                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+            }
+        } catch (error) {
+            console.error('Failed to delete task:', error);
+        }
+    }
+
+    /**
+     * Toggle task completion
+     */
+    async toggleTaskCompletion(taskId, isCompleted) {
+        try {
+            const response = await this.messageHandler.sendMessage('updateTask', {
+                taskId,
+                updates: { isCompleted }
+            });
+
+            // Refresh UI with updated state
+            if (response && response.state) {
+                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+            }
+        } catch (error) {
+            console.error('Failed to update task completion:', error);
+        }
+    }
+
+    /**
+     * Show task form modal
+     */
+    showTaskForm(task = null) {
+        this.currentEditingTaskId = task ? task.id : null;
+        const modal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+        const title = document.getElementById('taskFormTitle');
+        const form = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskForm);
+
+        if (modal && title && form) {
+            title.textContent = task ? 'Edit Task' : 'Add Task';
+
+            // Populate form if editing
+            if (task) {
+                document.getElementById('taskTitle').value = task.title;
+                document.getElementById('taskDescription').value = task.description || '';
+                document.getElementById('taskEstimate').value = task.estimatedPomodoros;
+            } else {
+                form.reset();
+                document.getElementById('taskEstimate').value = 1;
+            }
+
+            modal.classList.remove('hidden');
+            document.getElementById('taskTitle').focus();
+        }
+    }
+
+    /**
+     * Hide task form modal
+     */
+    hideTaskForm() {
+        console.log('Hiding task form modal');
+        const modal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+        if (modal) {
+            modal.classList.add('hidden');
+            console.log('Task form modal hidden successfully');
+        } else {
+            console.warn('Task form modal element not found');
+        }
+        this.currentEditingTaskId = null;
+    }
+
+    /**
+     * Handle task form submission
+     */
+    async handleTaskFormSubmit(formData) {
+        try {
+            if (this.currentEditingTaskId) {
+                // Update existing task
+                const response = await this.messageHandler.sendMessage('updateTask', {
+                    taskId: this.currentEditingTaskId,
+                    updates: {
+                        title: formData.title,
+                        description: formData.description,
+                        estimatedPomodoros: formData.estimatedPomodoros
+                    }
+                });
+
+                // Refresh UI with updated state
+                if (response && response.state) {
+                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+                }
+            } else {
+                // Create new task
+                const response = await this.messageHandler.sendMessage('createTask', {
+                    taskData: formData
+                });
+
+                // Refresh UI with updated state
+                if (response && response.state) {
+                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+                }
+            }
+            this.hideTaskForm();
+        } catch (error) {
+            console.error('Failed to save task:', error);
+            alert('Failed to save task. Please try again.');
+        }
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Update current task display
+     */
+    updateCurrentTaskDisplay(currentTaskId, tasks) {
+        const currentTaskElement = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTask);
+        const currentTaskName = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTaskName);
+        const currentTaskProgress = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTaskProgress);
+
+        if (!currentTaskElement || !currentTaskName || !currentTaskProgress) {
+            return;
+        }
+
+        if (!currentTaskId) {
+            currentTaskElement.classList.add('hidden');
+            return;
+        }
+
+        const currentTask = tasks.find(t => t.id === currentTaskId);
+        if (!currentTask) {
+            currentTaskElement.classList.add('hidden');
+            return;
+        }
+
+        currentTaskElement.classList.remove('hidden');
+        currentTaskName.textContent = currentTask.title;
+        currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
     }
 };
 
@@ -289,10 +618,11 @@ class UIManager {
         }
 
         this.updateTimer(state);
-        this.updateSessionCount(state);
+        this.updateCycleProgress(state);
         this.updateStatistics(state);
         this.updateButtons(state);
         this.updateSettings(state);
+        this.updateCurrentTaskDisplay(state);
         this.debouncedUpdate(state);
     }
 
@@ -308,9 +638,12 @@ class UIManager {
     /**
      * Update session count display
      */
-    updateSessionCount(state) {
-        if (this.elements.sessionCount) {
-            this.elements.sessionCount.textContent = `Session: ${state.currentSession}`;
+    updateCycleProgress(state) {
+        if (this.elements.cycleProgress) {
+            const longBreakInterval = state.settings.longBreakInterval;
+            // Calculate current position in the cycle (1-based)
+            const currentInCycle = ((state.currentSession - 1) % longBreakInterval) + 1;
+            this.elements.cycleProgress.textContent = `Focus ${currentInCycle} of ${longBreakInterval}`;
         }
     }
 
@@ -333,11 +666,15 @@ class UIManager {
      * Update button states and visibility
      */
     updateButtons(state) {
+        console.log('updateButtons called with state:', { isRunning: state.isRunning, autoStart: state.settings.autoStart });
+
         // Update start/pause buttons
         if (state.isRunning) {
+            console.log('Timer is running - hiding start, showing pause');
             this.hideElement(this.elements.startBtn);
             this.showElement(this.elements.pauseBtn);
         } else {
+            console.log('Timer is not running - hiding pause, showing start');
             this.hideElement(this.elements.pauseBtn);
             this.showElement(this.elements.startBtn);
 
@@ -345,7 +682,9 @@ class UIManager {
             if (this.elements.startBtn) {
                 const fullDuration = this.calculateFullDuration(state);
                 const isResuming = state.timeLeft < fullDuration && state.timeLeft > 0;
-                this.elements.startBtn.textContent = isResuming ? 'Resume' : 'Start';
+                const buttonText = isResuming ? 'Resume' : 'Start';
+                this.elements.startBtn.textContent = buttonText;
+                console.log('Updated start button text to:', buttonText);
             }
         }
 
@@ -415,12 +754,39 @@ class UIManager {
     }
 
     /**
+     * Update current task display
+     */
+    updateCurrentTaskDisplay(state) {
+        const currentTaskElement = this.elements.currentTask;
+        const currentTaskName = this.elements.currentTaskName;
+        const currentTaskProgress = this.elements.currentTaskProgress;
+
+        if (!currentTaskElement || !currentTaskName || !currentTaskProgress) {
+            return;
+        }
+
+        if (!state.currentTaskId || !state.tasks) {
+            currentTaskElement.classList.add('hidden');
+            return;
+        }
+
+        const currentTask = state.tasks.find(t => t.id === state.currentTaskId);
+        if (!currentTask) {
+            currentTaskElement.classList.add('hidden');
+            return;
+        }
+
+        currentTaskElement.classList.remove('hidden');
+        currentTaskName.textContent = currentTask.title;
+        currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
+    }
+
+    /**
      * Show element with animation
      */
     showElement(element) {
         if (element) {
-            element.style.display = 'inline-block';
-            element.style.opacity = '1';
+            element.classList.remove('hidden');
         }
     }
 
@@ -429,8 +795,7 @@ class UIManager {
      */
     hideElement(element) {
         if (element) {
-            element.style.display = 'none';
-            element.style.opacity = '0';
+            element.classList.add('hidden');
         }
     }
 }
@@ -581,7 +946,8 @@ class NavigationManager {
     constructor() {
         this.panels = {
             timer: utils.getElement(POPUP_CONSTANTS.SELECTORS.timerPanel),
-            settings: utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsPanel)
+            settings: utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsPanel),
+            tasks: utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksPanel)
         };
     }
 
@@ -589,16 +955,49 @@ class NavigationManager {
      * Show timer panel
      */
     showTimerPanel() {
-        if (this.panels.timer) {this.panels.timer.style.display = 'block';}
-        if (this.panels.settings) {this.panels.settings.style.display = 'none';}
+        if (this.panels.timer) {
+            this.panels.timer.classList.remove('hidden');
+        }
+        if (this.panels.settings) {
+            this.panels.settings.classList.add('hidden');
+        }
+        if (this.panels.tasks) {
+            this.panels.tasks.classList.add('hidden');
+        }
     }
 
     /**
      * Show settings panel
      */
     showSettingsPanel() {
-        if (this.panels.timer) {this.panels.timer.style.display = 'none';}
-        if (this.panels.settings) {this.panels.settings.style.display = 'block';}
+        if (this.panels.timer) {
+            this.panels.timer.classList.add('hidden');
+        }
+        if (this.panels.settings) {
+            this.panels.settings.classList.remove('hidden');
+        }
+        if (this.panels.tasks) {
+            this.panels.tasks.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Show tasks panel
+     */
+    showTasksPanel() {
+        console.log('NavigationManager: Showing tasks panel');
+        if (this.panels.timer) {
+            this.panels.timer.classList.add('hidden');
+        }
+        if (this.panels.settings) {
+            this.panels.settings.classList.add('hidden');
+        }
+        if (this.panels.tasks) {
+            this.panels.tasks.classList.remove('hidden');
+            console.log('Tasks panel is now visible');
+        } else {
+            console.warn('Tasks panel element not found!');
+        }
     }
 }
 /**
@@ -612,7 +1011,9 @@ class PopupController {
         this.notificationController = new NotificationController();
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
+        this.taskUIManager = new TaskUIManager(this.messageHandler);
 
+        console.log('PopupController initialized');
         this.init();
     }
 
@@ -621,13 +1022,34 @@ class PopupController {
      */
     async init() {
         try {
+            console.log('Initializing popup...');
+
+            // Ensure we start with the timer panel visible and modal hidden
+            this.navigationManager.showTimerPanel();
+            this.taskUIManager.hideTaskForm();
+
             await this.loadInitialState();
             this.setupEventListeners();
             this.checkNotifications();
+
+            // Make sure the tasks list is rendered with empty state if no tasks
+            const state = await this.messageHandler.sendMessage('getState');
+            if (this.taskUIManager) {
+                this.taskUIManager.renderTasksList(state.tasks || [], state.currentTaskId);
+            }
+
+            console.log('Popup initialization complete');
         } catch (error) {
             console.error('Failed to initialize popup:', error);
             // Load with default state if initialization fails
+            this.navigationManager.showTimerPanel();
+            this.taskUIManager.hideTaskForm();
             this.updateState(POPUP_CONSTANTS.DEFAULT_STATE);
+
+            // Ensure empty tasks list is shown
+            if (this.taskUIManager) {
+                this.taskUIManager.renderTasksList([], null);
+            }
         }
     }
 
@@ -636,7 +1058,9 @@ class PopupController {
      */
     async loadInitialState() {
         try {
+            console.log('Loading initial state...');
             const state = await this.messageHandler.sendMessage('getState');
+            console.log('Received state:', state);
             this.updateState(state);
         } catch (error) {
             console.error('Failed to load initial state:', error);
@@ -655,6 +1079,12 @@ class PopupController {
 
         this.uiManager.updateUI(state);
         this.themeManager.applyTheme(state);
+
+        // Update task-related UI
+        if (state.tasks && this.taskUIManager) {
+            this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+            this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        }
     }
 
     /**
@@ -671,6 +1101,7 @@ class PopupController {
         this.setupTimerEvents();
         this.setupNavigationEvents();
         this.setupSettingsEvents();
+        this.setupTaskEvents();
         this.setupGlobalEvents();
     }
 
@@ -730,7 +1161,9 @@ class PopupController {
      */
     setupNavigationEvents() {
         const settingsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsBtn);
+        const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
+        const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
 
         if (settingsBtn) {
             settingsBtn.addEventListener('click', () => {
@@ -738,9 +1171,100 @@ class PopupController {
             });
         }
 
+        if (tasksBtn) {
+            tasksBtn.addEventListener('click', async () => {
+                console.log('Tasks button clicked');
+                this.navigationManager.showTasksPanel();
+
+                // Refresh the task list when showing the tasks panel
+                try {
+                    const state = await this.messageHandler.sendMessage('getState');
+                    console.log('Refreshed state for tasks panel:', state);
+                    if (state.tasks && this.taskUIManager) {
+                        this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+                    }
+                } catch (error) {
+                    console.error('Failed to refresh tasks:', error);
+                }
+            });
+        }
+
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 this.navigationManager.showTimerPanel();
+            });
+        }
+
+        if (backFromTasksBtn) {
+            backFromTasksBtn.addEventListener('click', () => {
+                this.navigationManager.showTimerPanel();
+            });
+        }
+    }
+
+    /**
+     * Setup task event listeners
+     */
+    setupTaskEvents() {
+        const addTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.addTaskBtn);
+        const closeTaskFormBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.closeTaskFormBtn);
+        const cancelTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.cancelTaskBtn);
+        const taskForm = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskForm);
+        const clearTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.clearTaskBtn);
+        const taskFormModal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+
+        if (addTaskBtn) {
+            addTaskBtn.addEventListener('click', () => {
+                this.taskUIManager.showTaskForm();
+            });
+        }
+
+        if (closeTaskFormBtn) {
+            closeTaskFormBtn.addEventListener('click', () => {
+                this.taskUIManager.hideTaskForm();
+            });
+        }
+
+        if (cancelTaskBtn) {
+            cancelTaskBtn.addEventListener('click', () => {
+                this.taskUIManager.hideTaskForm();
+            });
+        }
+
+        if (clearTaskBtn) {
+            clearTaskBtn.addEventListener('click', async () => {
+                try {
+                    await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                } catch (error) {
+                    console.error('Failed to clear current task:', error);
+                }
+            });
+        }
+
+        if (taskForm) {
+            taskForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const taskData = {
+                    title: document.getElementById('taskTitle').value.trim(),
+                    description: document.getElementById('taskDescription').value.trim(),
+                    estimatedPomodoros: parseInt(document.getElementById('taskEstimate').value) || 1
+                };
+
+                if (!taskData.title) {
+                    alert('Please enter a task title');
+                    return;
+                }
+
+                await this.taskUIManager.handleTaskFormSubmit(taskData);
+            });
+        }
+
+        // Close modal when clicking outside
+        if (taskFormModal) {
+            taskFormModal.addEventListener('click', (e) => {
+                if (e.target === taskFormModal) {
+                    this.taskUIManager.hideTaskForm();
+                }
             });
         }
     }
@@ -800,7 +1324,13 @@ class PopupController {
 
         // Escape to go back to timer panel
         if (event.code === 'Escape') {
-            this.navigationManager.showTimerPanel();
+            // Close modal first if open
+            const modal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+            if (modal && !modal.classList.contains('hidden')) {
+                this.taskUIManager.hideTaskForm();
+            } else {
+                this.navigationManager.showTimerPanel();
+            }
         }
 
         // R to reset timer
@@ -808,10 +1338,21 @@ class PopupController {
             event.preventDefault();
             this.uiManager.elements.resetBtn?.click();
         }
+
+        // T to open tasks panel
+        if (event.code === 'KeyT' && event.ctrlKey) {
+            event.preventDefault();
+            this.navigationManager.showTasksPanel();
+        }
     }
 }
 
 // Initialize the popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new PopupController();
+    console.log('DOM Content Loaded - initializing popup');
+    try {
+        new PopupController();
+    } catch (error) {
+        console.error('Failed to create PopupController:', error);
+    }
 });
