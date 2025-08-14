@@ -354,65 +354,93 @@ body {
 }
 
 .btn--primary {
-  background: var(--color-primary);
+  background: rgba(220, 47, 2, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(220, 47, 2, 0.9);
   color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(220, 47, 2, 0.3);
 }
 
 .btn--primary:hover {
-  background: var(--color-primary-dark);
-  box-shadow: 0 4px 8px rgba(220, 47, 2, 0.3);
+  background: rgba(220, 47, 2, 0.9);
+  border-color: rgba(220, 47, 2, 1);
+  box-shadow: 0 4px 12px rgba(220, 47, 2, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn--success {
-  background: var(--color-success);
+  background: rgba(22, 163, 74, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(22, 163, 74, 0.9);
   color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
 }
 
 .btn--success:hover {
-  background: var(--color-success-dark);
-  box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+  background: rgba(22, 163, 74, 0.9);
+  border-color: rgba(22, 163, 74, 1);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn--warning {
-  background: var(--color-warning);
+  background: rgba(245, 158, 11, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(245, 158, 11, 0.9);
   color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
 .btn--warning:hover {
-  background: var(--color-warning-dark);
-  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.9);
+  border-color: rgba(245, 158, 11, 1);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn--danger {
-  background: var(--color-danger);
+  background: rgba(239, 68, 68, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(239, 68, 68, 0.9);
   color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .btn--danger:hover {
-  background: var(--color-danger-dark);
-  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.9);
+  border-color: rgba(239, 68, 68, 1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn--neutral {
-  background: var(--color-neutral);
+  background: rgba(107, 114, 128, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(107, 114, 128, 0.9);
   color: var(--color-white);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
 .btn--neutral:hover {
-  background: var(--color-neutral-dark);
-  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+  background: rgba(107, 114, 128, 0.9);
+  border-color: rgba(107, 114, 128, 1);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
+  transform: translateY(-2px);
 }
 
 .btn--neutral:disabled {
-  background: var(--color-neutral);
-  opacity: 0.6;
+  background: rgba(107, 114, 128, 0.4);
+  border-color: rgba(107, 114, 128, 0.5);
+  opacity: 0.7;
+  backdrop-filter: blur(5px);
 }
 
 .btn--neutral:disabled:hover {
-  background: var(--color-neutral);
-  box-shadow: none;
+  background: rgba(107, 114, 128, 0.4);
+  border-color: rgba(107, 114, 128, 0.5);
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
   transform: none;
-  opacity: 0.6;
+  opacity: 0.7;
 }
 
 .btn--secondary {
@@ -658,13 +686,17 @@ select.settings-input {
 
 .break-mode .btn--success,
 .break-mode .btn--neutral:not(:disabled) {
-  background: var(--color-success);
+  background: rgba(22, 163, 74, 0.8);
+  border-color: rgba(22, 163, 74, 0.9);
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
 }
 
 .break-mode .btn--success:hover,
 .break-mode .btn--neutral:not(:disabled):hover {
-  background: var(--color-success-dark);
-  box-shadow: 0 4px 8px rgba(22, 163, 74, 0.3);
+  background: rgba(22, 163, 74, 0.9);
+  border-color: rgba(22, 163, 74, 1);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+  transform: translateY(-2px);
 }
 
 /* Light Theme */

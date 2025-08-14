@@ -1240,11 +1240,11 @@ class PopupController {
             clearTaskBtn.addEventListener('click', async () => {
                 try {
                     const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
-                    
+
                     // Update UI immediately with the response
                     if (response && response.state) {
                         this.updateState(response.state);
-                        
+
                         // Also update task UI components if available
                         if (this.taskUIManager) {
                             this.taskUIManager.renderTasksList(response.state.tasks || [], response.state.currentTaskId);
