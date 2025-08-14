@@ -1248,13 +1248,13 @@ select.settings-input {
   width: 90%;
   max-width: 400px;
   max-height: 85vh;
-  overflow-y: auto;
   color: var(--theme-secondary-light);
   box-shadow: var(--shadow-xl);
   margin: 20px;
   position: relative;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .modal-header {
@@ -1291,11 +1291,18 @@ select.settings-input {
 
 /* Task Form */
 .task-form {
-  padding: 20px;
   display: flex;
   flex-direction: column;
   min-height: 0;
   flex: 1;
+  overflow: hidden;
+}
+
+.task-form-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .form-group {
@@ -1343,10 +1350,12 @@ select.settings-input {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
   flex-wrap: wrap;
-  padding-top: 16px;
+  padding: 16px 20px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--theme-surface-dark);
+  flex-shrink: 0;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
 
 .form-actions .btn {
@@ -1376,6 +1385,10 @@ select.settings-input {
   color: var(--theme-secondary-light);
 }
 
+.light-theme .form-actions {
+  background: var(--theme-surface-light);
+}
+
 .light-theme .current-task {
   background: rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 0, 0, 0.1);
@@ -1395,5 +1408,9 @@ select.settings-input {
 }
 
 .dark-theme .modal-content {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.dark-theme .form-actions {
   background: rgba(255, 255, 255, 0.95);
 }
