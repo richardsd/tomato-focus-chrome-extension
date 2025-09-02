@@ -63,7 +63,7 @@ class TimerState {
         this.statistics = null; // Will be loaded async
         this.currentTaskId = null; // Currently selected task
         this.tasks = []; // Will be loaded async
-    this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
+    this.uiPreferences = { hideCompleted: false, filter: 'all', searchQuery: '', sort: 'created', selectMode: false, selectedIds: [] }; // lightweight UI prefs
     }
 
     getState() {
@@ -588,7 +588,9 @@ class TimerController {
                 // Don't restore running state on service worker restart
                 this.state.isRunning = false;
                 // Ensure uiPreferences shape
-                if (!this.state.uiPreferences) { this.state.uiPreferences = { hideCompleted: false }; }
+                if (!this.state.uiPreferences) { this.state.uiPreferences = { hideCompleted: false, filter: 'all', searchQuery: '', sort: 'created', selectMode: false, selectedIds: [] }; }
+                // Fill any missing keys
+                this.state.uiPreferences = { hideCompleted: false, filter: 'all', searchQuery: '', sort: 'created', selectMode: false, selectedIds: [], ...this.state.uiPreferences };
             }
         } catch (error) {
             console.error('Failed to load state:', error);
@@ -607,6 +609,10 @@ class TimerController {
     async loadTasks() {
         try {
             this.state.tasks = await TaskManager.getTasks();
+            // Ensure stable order property (added lazily)
+            let changed = false;
+            this.state.tasks.forEach((t, idx) => { if (t.order === undefined) { t.order = idx; changed = true; } });
+            if (changed) { await TaskManager.saveTasks(this.state.tasks); }
         } catch (error) {
             console.error('Failed to load tasks:', error);
             this.state.tasks = [];
@@ -869,6 +875,66 @@ class TimerController {
                 const { uiPreferences } = request;
                 this.state.uiPreferences = { ...this.state.uiPreferences, ...uiPreferences };
                 await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+            case 'reorderTasks': {
+                const { orderedIds } = request;
+                if (Array.isArray(orderedIds)) {
+                    const map = new Map();
+                    orderedIds.forEach((id, idx) => map.set(id, idx));
+                    this.state.tasks.sort((a, b) => (map.has(a.id)?map.get(a.id):a.order) - (map.has(b.id)?map.get(b.id):b.order));
+                    // Persist new order property
+                    this.state.tasks = this.state.tasks.map((t, idx) => ({ ...t, order: idx }));
+                    await TaskManager.saveTasks(this.state.tasks);
+                    await this.saveState();
+                }
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+            case 'bulkCompleteTasks': {
+                const { ids } = request;
+                if (Array.isArray(ids) && ids.length) {
+                    const tasks = await TaskManager.getTasks();
+                    let modified = false;
+                    for (const id of ids) {
+                        const idx = tasks.findIndex(t => t.id === id);
+                        if (idx !== -1 && !tasks[idx].isCompleted) {
+                            tasks[idx].isCompleted = true;
+                            tasks[idx].completedAt = new Date().toISOString();
+                            if (tasks[idx].completedPomodoros < tasks[idx].estimatedPomodoros) {
+                                tasks[idx].completedPomodoros = tasks[idx].estimatedPomodoros;
+                            }
+                            modified = true;
+                        }
+                    }
+                    if (modified) { await TaskManager.saveTasks(tasks); }
+                    await this.loadTasks();
+                }
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+            case 'bulkDeleteTasks': {
+                const { ids } = request;
+                if (Array.isArray(ids) && ids.length) {
+                    for (const id of ids) {
+                        await TaskManager.deleteTask(id);
+                        if (this.state.currentTaskId === id) { this.state.currentTaskId = null; }
+                    }
+                    await this.loadTasks();
+                }
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+            case 'clearCompletedTasks': {
+                const tasks = await TaskManager.getTasks();
+                const remaining = tasks.filter(t => !t.isCompleted);
+                await TaskManager.saveTasks(remaining);
+                if (this.state.currentTaskId) {
+                    const stillExists = remaining.some(t => t.id === this.state.currentTaskId);
+                    if (!stillExists) { this.state.currentTaskId = null; }
+                }
+                await this.loadTasks();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
             }

@@ -39,7 +39,7 @@ const POPUP_CONSTANTS = {
         taskFormModal: '#taskFormModal',
         taskForm: '#taskForm',
         closeTaskFormBtn: '#closeTaskFormBtn',
-        cancelTaskBtn: '#cancelTaskBtn'
+    cancelTaskBtn: '#cancelTaskBtn'
     },
     THEMES: {
         WORK: {
@@ -152,6 +152,13 @@ class TaskUIManager {
     constructor(messageHandler) {
         this.messageHandler = messageHandler;
         this.currentEditingTaskId = null;
+    this.hideCompletedPreference = false;
+    this.filter = 'all';
+    this.searchQuery = '';
+    this.sort = 'created';
+    this.selectMode = false;
+    this.selectedIds = new Set();
+    this.dragSrcEl = null;
     }
 
     /**
@@ -166,8 +173,30 @@ class TaskUIManager {
         }
 
     // Apply hideCompleted preference if available on window state snapshot
-    const hideCompleted = this.hideCompletedPreference === true;
-    const displayTasks = hideCompleted ? tasks.filter(t => !t.isCompleted) : tasks;
+        // Build pipeline
+        let displayTasks = [...(tasks || [])];
+        const hideCompleted = this.hideCompletedPreference === true;
+        if (hideCompleted && this.filter === 'all') {
+            displayTasks = displayTasks.filter(t => !t.isCompleted);
+        }
+        switch (this.filter) {
+        case 'active': displayTasks = displayTasks.filter(t => !t.isCompleted); break;
+        case 'completed': displayTasks = displayTasks.filter(t => t.isCompleted); break;
+        case 'current': displayTasks = displayTasks.filter(t => t.id === currentTaskId); break;
+        }
+        if (this.searchQuery) {
+            const q = this.searchQuery.toLowerCase();
+            displayTasks = displayTasks.filter(t => (t.title && t.title.toLowerCase().includes(q)) || (t.description && t.description.toLowerCase().includes(q)));
+        }
+        // Sort
+        if (this.sort === 'remaining') {
+            displayTasks.sort((a,b)=> (a.estimatedPomodoros - a.completedPomodoros) - (b.estimatedPomodoros - b.completedPomodoros));
+        } else if (this.sort === 'status') {
+            const order = { pending:0, 'in-progress':1, completed:2 };
+            displayTasks.sort((a,b)=> (order[this.getStatusKey(a)] - order[this.getStatusKey(b)]));
+        } else { // created
+            displayTasks.sort((a,b)=> (a.order ?? 0) - (b.order ?? 0));
+        }
 
     console.log('Tasks list element found, rendering...', { hideCompleted });
 
@@ -176,8 +205,8 @@ class TaskUIManager {
             tasksList.innerHTML = `
                 <div class="tasks-empty">
                     <div class="tasks-empty__icon">📋</div>
-                    <div class="tasks-empty__text">No tasks yet</div>
-                    <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
+            <div class="tasks-empty__text">${tasks && tasks.length ? 'No tasks match filters' : 'No tasks yet'}</div>
+            <div class="tasks-empty__subtext">${tasks && tasks.length ? 'Adjust filters or search' : 'Add a task to start tracking your focus sessions'}</div>
                 </div>
             `;
             return;
@@ -191,38 +220,43 @@ class TaskUIManager {
 
         // Add event listeners for task items
         this.attachTaskEventListeners();
+    this.updateBulkUI(tasks);
+    this.enableDragAndDrop();
     }
 
     /**
      * Render a single task item
      */
+    getStatusKey(task) {return task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');}
+
     renderTaskItem(task, currentTaskId) {
         const isCurrentTask = task.id === currentTaskId;
         const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
-        const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
+        const statusClass = this.getStatusKey(task);
     const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
 
         // Truncate title if it's too long (max 50 characters)
         const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
 
         return `
-            <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''}"
-                 data-task-id="${task.id}" aria-label="Task: ${this.escapeHtml(task.title)}. ${statusText}. Progress ${progress} pomodoros." tabindex="0">
+            <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''} ${this.selectMode ? 'select-mode' : ''}"
+                 data-task-id="${task.id}" draggable="${!this.selectMode}" aria-label="Task: ${this.escapeHtml(task.title)}. ${statusText}. Progress ${progress} pomodoros." tabindex="0">
+                ${this.selectMode ? `<button class="task-item__select-box ${this.selectedIds.has(task.id) ? 'selected':''}" data-select-id="${task.id}" aria-pressed="${this.selectedIds.has(task.id)}" aria-label="Select task"></button>` : ''}
                 <div class="task-item__header">
                     <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">
                         ${this.escapeHtml(truncatedTitle)}
                     </div>
                     <div class="task-item__actions" role="group" aria-label="Task actions">
-                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Selected task' : 'Select task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Current task' : 'Select task')}">🎯</button>
-                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" aria-label="Mark task completed" title="Complete">✅</button>` : ''}
-                        ${task.isCompleted ? `<button class="task-item__action task-reopen" data-task-id="${task.id}" aria-label="Reopen task" title="Reopen">↺</button>` : ''}
-                        <button class="task-item__action task-edit" data-task-id="${task.id}" aria-label="Edit task" title="Edit">✏️</button>
-                        <button class="task-item__action task-delete" data-task-id="${task.id}" aria-label="Delete task" title="Delete">🗑️</button>
+                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Selected task' : 'Select task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Current task' : 'Select task')}"><svg width="16" height="16"><use href="#icon-target"/></svg></button>
+                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" aria-label="Mark task completed" title="Complete"><svg width=\"16\" height=\"16\"><use href=\"#icon-check\"/></svg></button>` : ''}
+                        ${task.isCompleted ? `<button class="task-item__action task-reopen" data-task-id="${task.id}" aria-label="Reopen task" title="Reopen"><svg width=\"16\" height=\"16\"><use href=\"#icon-reopen\"/></svg></button>` : ''}
+                        <button class="task-item__action task-edit" data-task-id="${task.id}" aria-label="Edit task" title="Edit"><svg width="16" height="16"><use href="#icon-edit"/></svg></button>
+                        <button class="task-item__action task-delete" data-task-id="${task.id}" aria-label="Delete task" title="Delete"><svg width="16" height="16"><use href="#icon-trash"/></svg></button>
                     </div>
                 </div>
                 ${task.description ? `<div class="task-item__description" title="${this.escapeHtml(task.description)}">${this.escapeHtml(task.description)}</div>` : ''}
                 <div class="task-item__progress" aria-label="Progress: ${progress} pomodoros; Status: ${statusText}">
-                    <div class="task-item__pomodoros" aria-hidden="false">🍅 ${progress}</div>
+                    <div class="task-item__pomodoros" aria-hidden="false"><svg width="14" height="14"><use href="#icon-tomato"/></svg> ${progress}</div>
                     <div class="task-item__status ${statusClass}" role="status">${statusText}</div>
                 </div>
             </div>
@@ -231,6 +265,16 @@ class TaskUIManager {
      * Attach event listeners to task items
      */
     attachTaskEventListeners() {
+        // Selection boxes
+        document.querySelectorAll('.task-item__select-box').forEach(box => {
+            box.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = box.getAttribute('data-select-id');
+                if (this.selectedIds.has(id)) { this.selectedIds.delete(id); } else { this.selectedIds.add(id); }
+                box.classList.toggle('selected');
+                this.updateBulkUI();
+            });
+        });
         // Select task buttons
         document.querySelectorAll('.task-select').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -279,6 +323,7 @@ class TaskUIManager {
         // Task item click to select
         document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
             item.addEventListener('click', () => {
+                if (this.selectMode) { return; }
                 const taskId = item.dataset.taskId;
                 this.selectTask(taskId);
             });
@@ -287,6 +332,7 @@ class TaskUIManager {
         // Complete task on double-click
         document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
             item.addEventListener('dblclick', () => {
+                if (this.selectMode) { return; }
                 const taskId = item.dataset.taskId;
                 this.toggleTaskCompletion(taskId, true);
             });
@@ -497,6 +543,67 @@ class TaskUIManager {
         currentTaskElement.classList.remove('hidden');
         currentTaskName.textContent = currentTask.title;
         currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
+    }
+    /* Bulk UI update (moved from MessageHandler) */
+    updateBulkUI(allTasks = null) {
+        const bulkBar = document.getElementById('bulkActions');
+        const clearCompletedWrapper = document.getElementById('clearCompletedWrapper');
+        const hasCompleted = (allTasks || []).some(t => t.isCompleted);
+        if (clearCompletedWrapper) {
+            if (hasCompleted) { clearCompletedWrapper.classList.remove('hidden'); } else { clearCompletedWrapper.classList.add('hidden'); }
+        }
+        if (!bulkBar) { return; }
+        if (this.selectMode) {
+            bulkBar.classList.remove('hidden');
+            const bulkCompleteBtn = document.getElementById('bulkCompleteBtn');
+            const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+            if (bulkCompleteBtn) bulkCompleteBtn.disabled = this.selectedIds.size === 0;
+            if (bulkDeleteBtn) bulkDeleteBtn.disabled = this.selectedIds.size === 0;
+        } else {
+            bulkBar.classList.add('hidden');
+        }
+    }
+
+    /* Drag & drop enable (moved from MessageHandler) */
+    enableDragAndDrop() {
+        if (this.selectMode) { return; }
+        const list = document.getElementById('tasksList');
+        if (!list) { return; }
+        const items = list.querySelectorAll('.task-item');
+        items.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                this.dragSrcEl = item;
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                list.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+            });
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                if (item === this.dragSrcEl) return;
+                item.classList.add('drag-over');
+            });
+            item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+            item.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                if (item === this.dragSrcEl) return;
+                const listEl = item.parentNode;
+                const nodes = Array.from(listEl.querySelectorAll('.task-item'));
+                const srcIndex = nodes.indexOf(this.dragSrcEl);
+                const destIndex = nodes.indexOf(item);
+                if (srcIndex < destIndex) {
+                    listEl.insertBefore(this.dragSrcEl, item.nextSibling);
+                } else {
+                    listEl.insertBefore(this.dragSrcEl, item);
+                }
+                listEl.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+                // Persist new order
+                const orderedIds = Array.from(listEl.querySelectorAll('.task-item')).map(i=>i.getAttribute('data-task-id'));
+                try { await this.messageHandler.sendMessage('reorderTasks', { orderedIds }); } catch(err){ console.error('reorder failed', err); }
+            });
+        });
     }
 };
 
@@ -1155,10 +1262,32 @@ class PopupController {
                 const active = !!state.uiPreferences.hideCompleted;
                 toggle.setAttribute('aria-pressed', active.toString());
                 toggle.title = active ? 'Show completed tasks' : 'Hide completed tasks';
+                toggle.innerHTML = `<svg width="18" height="18"><use href="${active ? '#icon-eye-off' : '#icon-eye'}"/></svg>`;
             }
             if (this.taskUIManager) {
                 this.taskUIManager.hideCompletedPreference = !!state.uiPreferences.hideCompleted;
+                this.taskUIManager.filter = state.uiPreferences.filter || 'all';
+                this.taskUIManager.searchQuery = state.uiPreferences.searchQuery || '';
+                this.taskUIManager.sort = state.uiPreferences.sort || 'created';
+                this.taskUIManager.selectMode = !!state.uiPreferences.selectMode;
             }
+        }
+
+        // Sync toolbar states
+        const filterButtons = document.querySelectorAll('.pill');
+        filterButtons.forEach(btn => {
+            const isActive = btn.getAttribute('data-filter') === this.taskUIManager.filter;
+            btn.classList.toggle('pill--active', isActive);
+            btn.setAttribute('aria-pressed', isActive.toString());
+        });
+        const searchInput = document.getElementById('taskSearch');
+        if (searchInput && searchInput.value !== this.taskUIManager.searchQuery) { searchInput.value = this.taskUIManager.searchQuery; }
+        const sortSelect = document.getElementById('taskSort');
+        if (sortSelect && sortSelect.value !== this.taskUIManager.sort) { sortSelect.value = this.taskUIManager.sort; }
+        const selectModeToggle = document.getElementById('selectModeToggle');
+        if (selectModeToggle) {
+            selectModeToggle.setAttribute('aria-pressed', this.taskUIManager.selectMode.toString());
+            selectModeToggle.classList.toggle('active', this.taskUIManager.selectMode);
         }
     }
 
@@ -1240,6 +1369,16 @@ class PopupController {
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
     const hideCompletedToggle = document.getElementById('hideCompletedToggle');
+    const filterButtons = document.querySelectorAll('.pill');
+    const searchInput = document.getElementById('taskSearch');
+    const sortSelect = document.getElementById('taskSort');
+    const quickAddForm = document.getElementById('quickAddForm');
+    const quickAddInput = document.getElementById('quickAddInput');
+    const selectModeToggle = document.getElementById('selectModeToggle');
+    const bulkCompleteBtn = document.getElementById('bulkCompleteBtn');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkCancelBtn = document.getElementById('bulkCancelBtn');
+    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 
         if (settingsBtn) {
             settingsBtn.addEventListener('click', async () => {
@@ -1292,6 +1431,7 @@ class PopupController {
                 const newValue = !isPressed;
                 hideCompletedToggle.setAttribute('aria-pressed', newValue.toString());
                 hideCompletedToggle.title = newValue ? 'Show completed tasks' : 'Hide completed tasks';
+                hideCompletedToggle.innerHTML = `<svg width="18" height="18"><use href="${newValue ? '#icon-eye-off' : '#icon-eye'}"/></svg>`;
                 try {
                     const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { hideCompleted: newValue } });
                     if (response && response.state && this.taskUIManager) {
@@ -1301,6 +1441,121 @@ class PopupController {
                 } catch (e) {
                     console.error('Failed to update UI preference', e);
                 }
+            });
+        }
+
+        // Filter buttons
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', async ()=> {
+                const filter = btn.getAttribute('data-filter');
+                try {
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { filter } });
+                    if (response && response.state && this.taskUIManager) {
+                        this.taskUIManager.filter = filter;
+                        this.updateState(response.state);
+                    }
+                } catch(err){ console.error('filter update failed', err); }
+            });
+        });
+
+        // Search debounce
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', ()=> {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(async ()=> {
+                    const query = searchInput.value.trim();
+                    try {
+                        const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { searchQuery: query } });
+                        if (response && response.state && this.taskUIManager) {
+                            this.taskUIManager.searchQuery = query;
+                            this.taskUIManager.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                        }
+                    } catch(err){ console.error('search update failed', err); }
+                }, 150);
+            });
+        }
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', async () => {
+                const sort = sortSelect.value;
+                try {
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { sort } });
+                    if (response && response.state && this.taskUIManager) {
+                        this.taskUIManager.sort = sort;
+                        this.taskUIManager.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                    }
+                } catch(err){ console.error('sort update failed', err); }
+            });
+        }
+
+        if (quickAddForm && quickAddInput) {
+            quickAddForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = quickAddInput.value.trim();
+                if (!title) return;
+                try {
+                    const response = await this.messageHandler.sendMessage('createTask', { taskData: { title, estimatedPomodoros: 1 } });
+                    if (response && response.state) {
+                        quickAddInput.value = '';
+                        this.updateState(response.state);
+                    }
+                } catch(err){ console.error('quick add failed', err); }
+            });
+        }
+
+        if (selectModeToggle) {
+            selectModeToggle.addEventListener('click', async ()=> {
+                const isPressed = selectModeToggle.getAttribute('aria-pressed') === 'true';
+                const newValue = !isPressed;
+                selectModeToggle.setAttribute('aria-pressed', newValue.toString());
+                try {
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { selectMode: newValue, selectedIds: [] } });
+                    if (response && response.state && this.taskUIManager) {
+                        this.taskUIManager.selectMode = newValue;
+                        this.taskUIManager.selectedIds.clear();
+                        this.updateState(response.state);
+                    }
+                } catch(err){ console.error('select mode update failed', err); }
+            });
+        }
+
+        if (bulkCompleteBtn) {
+            bulkCompleteBtn.addEventListener('click', async ()=> {
+                const ids = Array.from(this.taskUIManager.selectedIds);
+                if (!ids.length) return;
+                try {
+                    const response = await this.messageHandler.sendMessage('bulkCompleteTasks', { ids });
+                    if (response && response.state) { this.updateState(response.state); }
+                } catch(err){ console.error('bulk complete failed', err); }
+            });
+        }
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', async ()=> {
+                const ids = Array.from(this.taskUIManager.selectedIds);
+                if (!ids.length) return;
+                if (!window.confirm(`Delete ${ids.length} tasks? This cannot be undone.`)) return;
+                try {
+                    const response = await this.messageHandler.sendMessage('bulkDeleteTasks', { ids });
+                    if (response && response.state) { this.updateState(response.state); }
+                } catch(err){ console.error('bulk delete failed', err); }
+            });
+        }
+        if (bulkCancelBtn) {
+            bulkCancelBtn.addEventListener('click', async ()=> {
+                try {
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { selectMode: false, selectedIds: [] } });
+                    if (response && response.state) { this.updateState(response.state); }
+                } catch(err){ console.error('bulk cancel failed', err); }
+            });
+        }
+        if (clearCompletedBtn) {
+            clearCompletedBtn.addEventListener('click', async ()=> {
+                if (!window.confirm('Clear all completed tasks?')) return;
+                try {
+                    const response = await this.messageHandler.sendMessage('clearCompletedTasks');
+                    if (response && response.state) { this.updateState(response.state); }
+                } catch(err){ console.error('clear completed failed', err); }
             });
         }
     }
