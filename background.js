@@ -63,6 +63,7 @@ class TimerState {
         this.statistics = null; // Will be loaded async
         this.currentTaskId = null; // Currently selected task
         this.tasks = []; // Will be loaded async
+    this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
     }
 
     getState() {
@@ -75,7 +76,8 @@ class TimerState {
             wasPausedForIdle: this.wasPausedForIdle,
             statistics: this.statistics,
             currentTaskId: this.currentTaskId,
-            tasks: this.tasks
+            tasks: this.tasks,
+            uiPreferences: { ...this.uiPreferences }
         };
     }
 
@@ -270,9 +272,14 @@ class TaskManager {
             throw new Error('Task not found');
         }
 
-        // Handle completion status
+        // Handle completion status consistency
         if (updates.isCompleted !== undefined) {
             updates.completedAt = updates.isCompleted ? new Date().toISOString() : null;
+            // If marking completed manually and pomodoros < estimate, snap progress to estimate for UI consistency
+            if (updates.isCompleted && tasks[taskIndex].completedPomodoros < tasks[taskIndex].estimatedPomodoros) {
+                updates.completedPomodoros = tasks[taskIndex].estimatedPomodoros;
+            }
+            // If reopening a task that previously auto-snapped, keep completedPomodoros as-is (user may adjust estimate later)
         }
 
         tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
@@ -580,6 +587,8 @@ class TimerController {
                 this.state.settings = { ...CONSTANTS.DEFAULT_SETTINGS, ...this.state.settings };
                 // Don't restore running state on service worker restart
                 this.state.isRunning = false;
+                // Ensure uiPreferences shape
+                if (!this.state.uiPreferences) { this.state.uiPreferences = { hideCompleted: false }; }
             }
         } catch (error) {
             console.error('Failed to load state:', error);
@@ -855,6 +864,14 @@ class TimerController {
                 await this.loadTasks();
                 sendResponse(this.state.getState());
                 break;
+
+            case 'updateUiPreferences': {
+                const { uiPreferences } = request;
+                this.state.uiPreferences = { ...this.state.uiPreferences, ...uiPreferences };
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
 
             case 'toggleTimer':
                 this.toggle();

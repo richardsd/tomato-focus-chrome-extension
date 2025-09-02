@@ -165,9 +165,13 @@ class TaskUIManager {
             return;
         }
 
-        console.log('Tasks list element found, rendering...');
+    // Apply hideCompleted preference if available on window state snapshot
+    const hideCompleted = this.hideCompletedPreference === true;
+    const displayTasks = hideCompleted ? tasks.filter(t => !t.isCompleted) : tasks;
 
-        if (!tasks || tasks.length === 0) {
+    console.log('Tasks list element found, rendering...', { hideCompleted });
+
+    if (!displayTasks || displayTasks.length === 0) {
             console.log('No tasks found, showing empty state');
             tasksList.innerHTML = `
                 <div class="tasks-empty">
@@ -179,8 +183,8 @@ class TaskUIManager {
             return;
         }
 
-        console.log('Rendering', tasks.length, 'tasks');
-        const tasksHTML = tasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
+    console.log('Rendering', displayTasks.length, 'tasks (filtered)');
+    const tasksHTML = displayTasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
         console.log('Generated HTML:', tasksHTML);
         tasksList.innerHTML = tasksHTML;
         console.log('TasksList innerHTML after setting:', tasksList.innerHTML);
@@ -196,33 +200,34 @@ class TaskUIManager {
         const isCurrentTask = task.id === currentTaskId;
         const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
         const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
-        const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In Progress' : 'Pending');
+    const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
 
         // Truncate title if it's too long (max 50 characters)
         const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
 
         return `
             <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''}"
-                 data-task-id="${task.id}">
+                 data-task-id="${task.id}" aria-label="Task: ${this.escapeHtml(task.title)}. ${statusText}. Progress ${progress} pomodoros." tabindex="0">
                 <div class="task-item__header">
-                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">${this.escapeHtml(truncatedTitle)}</div>
-                    <div class="task-item__actions">
-                        ${!task.isCompleted ? `<button class="task-item__action task-select" data-task-id="${task.id}" title="Select task">🎯</button>` : ''}
-                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" title="Mark as completed">✅</button>` : ''}
-                        <button class="task-item__action task-edit" data-task-id="${task.id}" title="Edit task">✏️</button>
-                        <button class="task-item__action task-delete" data-task-id="${task.id}" title="Delete task">🗑️</button>
+                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">
+                        ${this.escapeHtml(truncatedTitle)}
+                    </div>
+                    <div class="task-item__actions" role="group" aria-label="Task actions">
+                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Selected task' : 'Select task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Current task' : 'Select task')}">🎯</button>
+                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" aria-label="Mark task completed" title="Complete">✅</button>` : ''}
+                        ${task.isCompleted ? `<button class="task-item__action task-reopen" data-task-id="${task.id}" aria-label="Reopen task" title="Reopen">↺</button>` : ''}
+                        <button class="task-item__action task-edit" data-task-id="${task.id}" aria-label="Edit task" title="Edit">✏️</button>
+                        <button class="task-item__action task-delete" data-task-id="${task.id}" aria-label="Delete task" title="Delete">🗑️</button>
                     </div>
                 </div>
-                ${task.description ? `<div class="task-item__description">${this.escapeHtml(task.description)}</div>` : ''}
-                <div class="task-item__progress">
-                    <div class="task-item__pomodoros">🍅 ${progress}</div>
-                    <div class="task-item__status ${statusClass}">${statusText}</div>
+                ${task.description ? `<div class="task-item__description" title="${this.escapeHtml(task.description)}">${this.escapeHtml(task.description)}</div>` : ''}
+                <div class="task-item__progress" aria-label="Progress: ${progress} pomodoros; Status: ${statusText}">
+                    <div class="task-item__pomodoros" aria-hidden="false">🍅 ${progress}</div>
+                    <div class="task-item__status ${statusClass}" role="status">${statusText}</div>
                 </div>
             </div>
         `;
-    }
-
-    /**
+    }    /**
      * Attach event listeners to task items
      */
     attachTaskEventListeners() {
@@ -241,6 +246,15 @@ class TaskUIManager {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
                 this.toggleTaskCompletion(taskId, true);
+            });
+        });
+
+        // Reopen task buttons
+        document.querySelectorAll('.task-reopen').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = btn.dataset.taskId;
+                this.toggleTaskCompletion(taskId, false);
             });
         });
 
@@ -284,6 +298,20 @@ class TaskUIManager {
      */
     async selectTask(taskId) {
         try {
+            // Check if the task is completed and warn user
+            const tasksResponse = await this.messageHandler.sendMessage('getTasks');
+            const task = tasksResponse.tasks.find(t => t.id === taskId);
+
+            if (task && task.isCompleted) {
+                const shouldReopen = window.confirm('This task is completed. Do you want to reopen it and set it as current?');
+                if (shouldReopen) {
+                    // Reopen the task first
+                    await this.toggleTaskCompletion(taskId, false);
+                } else {
+                    return;
+                }
+            }
+
             const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId });
 
             // Refresh UI with updated state
@@ -1119,6 +1147,19 @@ class PopupController {
             this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
             this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         }
+
+        // Update hideCompleted toggle button state if present
+        if (state.uiPreferences) {
+            const toggle = document.getElementById('hideCompletedToggle');
+            if (toggle) {
+                const active = !!state.uiPreferences.hideCompleted;
+                toggle.setAttribute('aria-pressed', active.toString());
+                toggle.title = active ? 'Show completed tasks' : 'Hide completed tasks';
+            }
+            if (this.taskUIManager) {
+                this.taskUIManager.hideCompletedPreference = !!state.uiPreferences.hideCompleted;
+            }
+        }
     }
 
     /**
@@ -1198,6 +1239,7 @@ class PopupController {
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
+    const hideCompletedToggle = document.getElementById('hideCompletedToggle');
 
         if (settingsBtn) {
             settingsBtn.addEventListener('click', async () => {
@@ -1241,6 +1283,24 @@ class PopupController {
         if (backFromTasksBtn) {
             backFromTasksBtn.addEventListener('click', () => {
                 this.navigationManager.showTimerPanel();
+            });
+        }
+
+        if (hideCompletedToggle) {
+            hideCompletedToggle.addEventListener('click', async () => {
+                const isPressed = hideCompletedToggle.getAttribute('aria-pressed') === 'true';
+                const newValue = !isPressed;
+                hideCompletedToggle.setAttribute('aria-pressed', newValue.toString());
+                hideCompletedToggle.title = newValue ? 'Show completed tasks' : 'Hide completed tasks';
+                try {
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { hideCompleted: newValue } });
+                    if (response && response.state && this.taskUIManager) {
+                        this.taskUIManager.hideCompletedPreference = newValue;
+                        this.taskUIManager.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                    }
+                } catch (e) {
+                    console.error('Failed to update UI preference', e);
+                }
             });
         }
     }
