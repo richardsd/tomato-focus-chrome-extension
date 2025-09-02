@@ -198,13 +198,17 @@ class TaskUIManager {
         const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
         const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In Progress' : 'Pending');
 
+        // Truncate title if it's too long (max 50 characters)
+        const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
+
         return `
             <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''}"
                  data-task-id="${task.id}">
                 <div class="task-item__header">
-                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}">${this.escapeHtml(task.title)}</div>
+                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">${this.escapeHtml(truncatedTitle)}</div>
                     <div class="task-item__actions">
                         ${!task.isCompleted ? `<button class="task-item__action task-select" data-task-id="${task.id}" title="Select task">🎯</button>` : ''}
+                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" title="Mark as completed">✅</button>` : ''}
                         <button class="task-item__action task-edit" data-task-id="${task.id}" title="Edit task">✏️</button>
                         <button class="task-item__action task-delete" data-task-id="${task.id}" title="Delete task">🗑️</button>
                     </div>
@@ -228,6 +232,15 @@ class TaskUIManager {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
                 this.selectTask(taskId);
+            });
+        });
+
+        // Complete task buttons
+        document.querySelectorAll('.task-complete').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = btn.dataset.taskId;
+                this.toggleTaskCompletion(taskId, true);
             });
         });
 

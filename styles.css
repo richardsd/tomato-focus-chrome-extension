@@ -111,8 +111,9 @@ body {
   padding: var(--space-3);
   background: var(--theme-primary);
   min-height: 420px;
-  max-height: none;
+  max-height: 600px; /* Limit body height */
   height: auto;
+  overflow: hidden; /* Prevent body scrolling */
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -1036,25 +1037,32 @@ select.settings-input {
   display: flex;
   flex-direction: column;
   width: 100%;
-  overflow: visible;
+  overflow: hidden; /* Ensure no scrollbars at panel level */
+}
+
+/* Tasks Panel specific styling */
+#tasksPanel {
+  display: flex;
+  flex-direction: column;
+  height: 500px; /* Fixed height for the entire panel */
+  overflow: hidden; /* Prevent scrolling at panel level */
 }
 
 /* Tasks Panel */
 .tasks-header {
-  position: sticky;
-  top: 0;
+  flex-shrink: 0; /* Don't let header shrink */
   background: var(--theme-bg);
-  z-index: 10;
   padding: 16px 0 12px 0;
   margin-bottom: 8px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tasks-content {
-  padding: 0 4px;
-  min-height: auto;
+  flex: 1; /* Take remaining space */
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* Prevent scrolling at content level */
+  padding: 0 4px;
 }
 
 .btn--add {
@@ -1078,10 +1086,13 @@ select.settings-input {
   transform: scale(1.05);
 }
 
-/* Tasks List */
+/* Tasks List - ONLY scrollable container */
 .tasks-list {
-    overflow: visible;
-    padding-right: 4px;
+    flex: 1; /* Take all available space in content */
+    overflow-y: auto; /* ONLY scrollbar here */
+    overflow-x: hidden; /* Prevent horizontal scroll */
+    padding-right: 8px; /* Space for scrollbar */
+    margin-right: -4px; /* Offset to hide scrollbar track outside */
 }
 
 
@@ -1197,6 +1208,16 @@ select.settings-input {
   border-color: var(--color-primary);
 }
 
+.task-item__action.task-complete {
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.task-item__action.task-complete:hover {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: var(--color-success);
+}
+
 .task-item__action.delete {
   color: var(--color-danger);
   border-color: rgba(220, 38, 127, 0.3);
@@ -1209,10 +1230,11 @@ select.settings-input {
 
 .task-item__description {
   font-size: 14px;
-  color: var(--theme-secondary);
+  color: var(--theme-secondary-light);
   margin-bottom: 12px;
   line-height: 1.4;
   word-wrap: break-word;
+  opacity: 0.9;
 }
 
 .task-item__progress {
