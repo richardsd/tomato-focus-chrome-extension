@@ -706,6 +706,22 @@ class UIManager {
      * Update settings form values
      */
     updateSettings(state) {
+        // Only update settings form if the settings panel is not currently visible
+        // to avoid interfering with user input
+        const settingsPanel = this.elements.settingsPanel;
+        if (settingsPanel && !settingsPanel.classList.contains('hidden')) {
+            // Settings panel is visible, don't update to avoid interrupting user edits
+            return;
+        }
+
+        this.forceUpdateSettings(state);
+    }
+
+    /**
+     * Force update settings form values regardless of panel visibility
+     * Used when explicitly navigating to settings panel
+     */
+    forceUpdateSettings(state) {
         const settingsInputs = {
             workDuration: state.settings.workDuration,
             shortBreak: state.settings.shortBreak,
@@ -1171,8 +1187,17 @@ class PopupController {
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
 
         if (settingsBtn) {
-            settingsBtn.addEventListener('click', () => {
+            settingsBtn.addEventListener('click', async () => {
                 this.navigationManager.showSettingsPanel();
+
+                // Load current settings when showing the settings panel
+                try {
+                    const state = await this.messageHandler.sendMessage('getState');
+                    // Force update settings form when navigating to settings panel
+                    this.uiManager.forceUpdateSettings(state);
+                } catch (error) {
+                    console.error('Failed to refresh settings:', error);
+                }
             });
         }
 
