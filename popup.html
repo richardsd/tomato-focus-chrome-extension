@@ -209,45 +209,37 @@
                 </button>
                 <h1 class="header__title">Tasks</h1>
                 <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
-                    <button id="hideCompletedToggle" class="btn--toggle" aria-label="Hide completed tasks" aria-pressed="false" title="Hide completed tasks">
-                        <svg width="18" height="18"><use href="#icon-eye"/></svg>
-                    </button>
-                    <button id="selectModeToggle" class="btn--toggle" aria-label="Toggle multi-select" aria-pressed="false" title="Multi-select">
-                        <svg width="18" height="18"><use href="#icon-select"/></svg>
-                    </button>
                     <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
                         <svg width="20" height="20"><use href="#icon-plus"/></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Toolbar: filters, search, sort -->
-            <div class="tasks-toolbar" role="toolbar" aria-label="Task filters and search">
-                <div class="filter-pills" role="group" aria-label="Filters">
-                    <button class="pill pill--active" data-filter="all" aria-pressed="true">All</button>
-                    <button class="pill" data-filter="active" aria-pressed="false">Active</button>
-                    <button class="pill" data-filter="completed" aria-pressed="false">Completed</button>
-                    <button class="pill" data-filter="current" aria-pressed="false">Current</button>
+            <!-- Compact Toolbar: filters, search, sort, quick add -->
+            <div class="tasks-toolbar" role="toolbar" aria-label="Task tools">
+                <div class="toolbar-row toolbar-row--top">
+                    <div class="filter-pills" role="group" aria-label="Filters">
+                        <button class="pill pill--active" data-filter="all" aria-pressed="true">All</button>
+                        <button class="pill" data-filter="active" aria-pressed="false">Active</button>
+                        <button class="pill" data-filter="completed" aria-pressed="false">Completed</button>
+                        <button class="pill" data-filter="current" aria-pressed="false">Current</button>
+                    </div>
+                    <div class="tasks-toolbar__search-group">
+                        <input id="taskSearch" type="search" placeholder="Search" aria-label="Search tasks" autocomplete="off" />
+                        <select id="taskSort" aria-label="Sort tasks">
+                            <option value="created">Created</option>
+                            <option value="remaining">Remaining</option>
+                            <option value="status">Status</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="tasks-toolbar__spacer"></div>
-                <div class="tasks-toolbar__search-group">
-                    <input id="taskSearch" type="search" placeholder="Search..." aria-label="Search tasks" autocomplete="off" />
-                    <select id="taskSort" aria-label="Sort tasks">
-                        <option value="created">Created</option>
-                        <option value="remaining">Remaining</option>
-                        <option value="status">Status</option>
-                    </select>
-                </div>
+                <form id="quickAddForm" class="quick-add quick-add--inline" autocomplete="off" aria-label="Quick add task">
+                    <input id="quickAddInput" type="text" placeholder="Add task…" aria-label="Quick add task" maxlength="120" />
+                    <button type="submit" class="quick-add__btn" aria-label="Add task"><svg width="16" height="16"><use href="#icon-plus"/></svg></button>
+                </form>
             </div>
 
             <div class="tasks-content">
-                <!-- Quick Add -->
-                <form id="quickAddForm" class="quick-add" autocomplete="off">
-                    <input id="quickAddInput" type="text" placeholder="Quick add task..." aria-label="Quick add task" maxlength="120" />
-                    <button type="submit" class="quick-add__btn" aria-label="Add task">
-                        <svg width="18" height="18"><use href="#icon-plus"/></svg>
-                    </button>
-                </form>
                 <!-- Task List -->
                 <div id="tasksList" class="tasks-list">
                     <div class="tasks-empty">
