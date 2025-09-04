@@ -8,23 +8,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- SVG Icon Sprite -->
-    <svg style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true">
-        <symbol id="icon-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
-        <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></symbol>
-        <symbol id="icon-reopen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 6.21 6.21L1 10"/><path d="M3.51 15A9 9 0 0 0 17.79 17.79L23 14"/></symbol>
-        <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.375-9.375z"/></symbol>
-        <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
-        <symbol id="icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
-        <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
-        <symbol id="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-7-11-7a20.3 20.3 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 7 11 7a20.3 20.3 0 0 1-2.16 3.19M12 12v0"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
-        <symbol id="icon-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></symbol>
-        <symbol id="icon-tomato" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22c5.523 0 10-3.582 10-8 0-3.507-2.613-6.517-6.273-7.555.18-.3.273-.637.273-.996A1.449 1.449 0 0 0 14.545 4c-.577 0-1.08.322-1.328.793L12 4l-.977.793A1.449 1.449 0 0 0 9.695 4 1.449 1.449 0 0 0 8.25 5.449c0 .36.094.697.273.996C4.863 7.483 2.25 10.493 2.25 14c0 4.418 4.477 8 10 8Z"/></symbol>
-        <symbol id="icon-select" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
-        <symbol id="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
-        <symbol id="icon-bulk-complete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
-        <symbol id="icon-bulk-delete" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
-    </svg>
     <div class="container">
         <!-- Main Timer Panel -->
         <div id="timerPanel" class="panel" role="main" aria-labelledby="sessionTitle">
@@ -55,9 +38,9 @@
 
             <div class="timer">
                 <div class="timer__circle">
-                    <svg class="timer__progress-ring" width="200" height="200">
-                        <circle class="timer__progress-ring-background" cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
-                        <circle class="timer__progress-ring-progress" cx="100" cy="100" r="90" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dashoffset="0"/>
+                    <svg class="timer__progress-ring" width="180" height="180">
+                        <circle class="timer__progress-ring-background" cx="90" cy="90" r="80" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+                        <circle class="timer__progress-ring-progress" cx="90" cy="90" r="80" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dashoffset="0"/>
                     </svg>
                     <div id="timer" class="timer__display">25:00</div>
                 </div>
@@ -203,40 +186,22 @@
 
         <!-- Tasks Panel -->
         <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
-            <div class="tasks-header flex items-center justify-between mb-4">
+            <div class="tasks-header header flex items-center justify-between mb-4">
                 <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
                     ←
                 </button>
                 <h1 class="header__title">Tasks</h1>
                 <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
+                    <button id="hideCompletedToggle" class="btn--toggle" aria-label="Hide completed tasks" aria-pressed="false" title="Hide completed tasks">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
                     <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
-                        <svg width="20" height="20"><use href="#icon-plus"/></svg>
+                        +
                     </button>
                 </div>
-            </div>
-
-            <!-- Compact Toolbar: filters, search, sort, quick add -->
-            <div class="tasks-toolbar" role="toolbar" aria-label="Task tools">
-                <div class="toolbar-row toolbar-row--top">
-                    <div class="filter-pills" role="group" aria-label="Filters">
-                        <button class="pill pill--active" data-filter="all" aria-pressed="true">All</button>
-                        <button class="pill" data-filter="active" aria-pressed="false">Active</button>
-                        <button class="pill" data-filter="completed" aria-pressed="false">Completed</button>
-                        <button class="pill" data-filter="current" aria-pressed="false">Current</button>
-                    </div>
-                    <div class="tasks-toolbar__search-group">
-                        <input id="taskSearch" type="search" placeholder="Search" aria-label="Search tasks" autocomplete="off" />
-                        <select id="taskSort" aria-label="Sort tasks">
-                            <option value="created">Created</option>
-                            <option value="remaining">Remaining</option>
-                            <option value="status">Status</option>
-                        </select>
-                    </div>
-                </div>
-                <form id="quickAddForm" class="quick-add quick-add--inline" autocomplete="off" aria-label="Quick add task">
-                    <input id="quickAddInput" type="text" placeholder="Add task…" aria-label="Quick add task" maxlength="120" />
-                    <button type="submit" class="quick-add__btn" aria-label="Add task"><svg width="16" height="16"><use href="#icon-plus"/></svg></button>
-                </form>
             </div>
 
             <div class="tasks-content">
@@ -248,14 +213,9 @@
                         <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
                     </div>
                 </div>
-                <div class="bulk-actions hidden" id="bulkActions" aria-label="Bulk actions" role="group">
-                    <button id="bulkCompleteBtn" class="bulk-btn" aria-label="Mark selected completed"><svg width="18" height="18"><use href="#icon-bulk-complete"/></svg> Complete</button>
-                    <button id="bulkDeleteBtn" class="bulk-btn bulk-btn--danger" aria-label="Delete selected tasks"><svg width="18" height="18"><use href="#icon-bulk-delete"/></svg> Delete</button>
-                    <button id="bulkCancelBtn" class="bulk-btn bulk-btn--secondary" aria-label="Exit selection"><svg width="18" height="18"><use href="#icon-close"/></svg> Cancel</button>
-                </div>
-                <div class="clear-completed hidden" id="clearCompletedWrapper">
-                    <button id="clearCompletedBtn" class="clear-completed__btn" aria-label="Clear completed tasks">Clear completed</button>
-                </div>
+            </div>
+            <div class="tasks-footer">
+                <button id="clearCompletedBtn" class="tasks-clear-link hidden" aria-label="Clear completed tasks" title="Remove all completed tasks permanently">Clear completed tasks</button>
             </div>
         </div>
 
