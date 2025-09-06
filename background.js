@@ -63,7 +63,7 @@ class TimerState {
         this.statistics = null; // Will be loaded async
         this.currentTaskId = null; // Currently selected task
         this.tasks = []; // Will be loaded async
-    this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
+        this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
     }
 
     getState() {
@@ -301,7 +301,7 @@ class TaskManager {
 
         task.completedPomodoros++;
 
-    // Do NOT auto-complete when reaching estimate; user must mark manually.
+        // Do NOT auto-complete when reaching estimate; user must mark manually.
 
         await this.saveTasks(tasks);
         return task;
