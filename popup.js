@@ -165,13 +165,13 @@ class TaskUIManager {
             return;
         }
 
-    // Apply hideCompleted preference if available on window state snapshot
-    const hideCompleted = this.hideCompletedPreference === true;
-    const displayTasks = hideCompleted ? tasks.filter(t => !t.isCompleted) : tasks;
+        // Apply hideCompleted preference if available on window state snapshot
+        const hideCompleted = this.hideCompletedPreference === true;
+        const displayTasks = hideCompleted ? tasks.filter(t => !t.isCompleted) : tasks;
 
-    console.log('Tasks list element found, rendering...', { hideCompleted });
+        console.log('Tasks list element found, rendering...', { hideCompleted });
 
-    if (!displayTasks || displayTasks.length === 0) {
+        if (!displayTasks || displayTasks.length === 0) {
             console.log('No tasks found, showing empty state');
             tasksList.innerHTML = `
                 <div class="tasks-empty">
@@ -183,8 +183,8 @@ class TaskUIManager {
             return;
         }
 
-    console.log('Rendering', displayTasks.length, 'tasks (filtered)');
-    const tasksHTML = displayTasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
+        console.log('Rendering', displayTasks.length, 'tasks (filtered)');
+        const tasksHTML = displayTasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
         console.log('Generated HTML:', tasksHTML);
         tasksList.innerHTML = tasksHTML;
         console.log('TasksList innerHTML after setting:', tasksList.innerHTML);
@@ -211,7 +211,7 @@ class TaskUIManager {
         const isCurrentTask = task.id === currentTaskId;
         const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
         const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
-    const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
+        const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
 
         // Truncate title if it's too long (max 50 characters)
         const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
@@ -1261,7 +1261,7 @@ class PopupController {
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
-    const hideCompletedToggle = document.getElementById('hideCompletedToggle');
+        const hideCompletedToggle = document.getElementById('hideCompletedToggle');
 
         if (settingsBtn) {
             settingsBtn.addEventListener('click', async () => {
@@ -1337,7 +1337,7 @@ class PopupController {
         const taskForm = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskForm);
         const clearTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.clearTaskBtn);
         const taskFormModal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
-    const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+        const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 
         if (addTaskBtn) {
             addTaskBtn.addEventListener('click', () => {
