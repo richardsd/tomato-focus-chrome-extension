@@ -223,18 +223,23 @@ class TaskUIManager {
                     <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">
                         ${this.escapeHtml(truncatedTitle)}
                     </div>
-                    <div class="task-item__actions" role="group" aria-label="Task actions">
-                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-pressed="${isCurrentTask}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Unset current task' : 'Set as current task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Unset current task' : 'Set as current task')}">🎯</button>
-                        ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" aria-label="Mark task completed" title="Complete">✅</button>` : ''}
-                        ${task.isCompleted ? `<button class="task-item__action task-reopen" data-task-id="${task.id}" aria-label="Reopen task" title="Reopen">↺</button>` : ''}
-                        <button class="task-item__action task-edit" data-task-id="${task.id}" aria-label="Edit task" title="Edit">✏️</button>
-                        <button class="task-item__action task-delete" data-task-id="${task.id}" aria-label="Delete task" title="Delete">🗑️</button>
+                    <div class="task-item__menu" data-task-id="${task.id}">
+                        <button class="task-item__menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="Task actions menu" title="Actions">⋮</button>
+                        <div class="task-item__menu-dropdown" role="menu" aria-label="Task actions">
+                            <button class="task-item__action task-select" role="menuitem" data-task-id="${task.id}" aria-pressed="${isCurrentTask}">🎯 ${task.isCompleted ? 'Reopen & Select' : (isCurrentTask ? 'Unset Current' : 'Set Current')}</button>
+                            ${!task.isCompleted ? `<button class="task-item__action task-complete" role="menuitem" data-task-id="${task.id}">✅ Complete</button>` : ''}
+                            ${task.isCompleted ? `<button class="task-item__action task-reopen" role="menuitem" data-task-id="${task.id}">↺ Reopen</button>` : ''}
+                            <button class="task-item__action task-edit" role="menuitem" data-task-id="${task.id}">✏️ Edit</button>
+                            <button class="task-item__action task-delete" role="menuitem" data-task-id="${task.id}">🗑 Delete</button>
+                        </div>
                     </div>
                 </div>
-                ${task.description ? `<div class="task-item__description" title="${this.escapeHtml(task.description)}">${this.escapeHtml(task.description)}</div>` : ''}
-                <div class="task-item__progress" aria-label="Progress: ${progress} pomodoros; Status: ${statusText}">
-                    <div class="task-item__pomodoros" aria-hidden="false">🍅 ${progress}</div>
-                    <div class="task-item__status ${statusClass}" role="status">${statusText}</div>
+                ${task.description ? `<div class="task-item__description" data-has-description="true" title="${this.escapeHtml(task.description)}">${this.escapeHtml(task.description)}</div>` : ''}
+                <div class="task-item__footer">
+                    <div class="task-item__progress" aria-label="Progress: ${progress} pomodoros; Status: ${statusText}">
+                        <div class="task-item__pomodoros" aria-hidden="false">🍅 ${progress}</div>
+                        <div class="task-item__status ${statusClass}" role="status">${statusText}</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -302,6 +307,114 @@ class TaskUIManager {
                 this.toggleTaskCompletion(taskId, true);
             });
         });
+
+        // Setup expandable descriptions & menus after tasks render
+        this.setupDescriptionToggles();
+        this.setupMenus();
+    }
+
+    /**
+     * Setup description expand / collapse toggles for overflowing text
+     */
+    setupDescriptionToggles() {
+        document.querySelectorAll('.task-item__description').forEach(desc => {
+            if (desc.dataset.processed === 'true') { return; }
+
+            const rawText = (desc.textContent || '').trim();
+            if (!rawText) { desc.dataset.processed = 'true'; return; }
+
+            // Wrap contents if not already
+            if (!desc.querySelector('.task-item__desc-text')) {
+                const wrapper = document.createElement('span');
+                wrapper.className = 'task-item__desc-text';
+                while (desc.firstChild) { wrapper.appendChild(desc.firstChild); }
+                desc.appendChild(wrapper);
+            }
+
+            // Remove any previous state
+            desc.classList.remove('clamped','expanded');
+
+            // Measure full height
+            const fullHeight = desc.scrollHeight;
+            const style = window.getComputedStyle(desc);
+            let lineHeight = parseFloat(style.lineHeight);
+            if (Number.isNaN(lineHeight)) { lineHeight = 16; }
+
+            // Apply clamp to compute visible height
+            desc.classList.add('clamped');
+            const visibleHeight = desc.offsetHeight; // offsetHeight reflects the clamped box
+
+            // Determine overflow if more than ~0.5 line hidden OR char heuristic fallback
+            const hiddenHeight = fullHeight - visibleHeight;
+            const charFallback = rawText.length > 120; // if very long text, assume overflow in case measurements fail
+            const isOverflowing = hiddenHeight > (lineHeight * 0.5) || charFallback;
+
+            if (!isOverflowing) {
+                desc.classList.remove('clamped');
+                desc.dataset.processed = 'true';
+                return;
+            }
+
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'task-item__desc-toggle-inline';
+            toggle.textContent = 'more';
+            toggle.setAttribute('aria-expanded','false');
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                if (expanded) {
+                    desc.classList.add('clamped');
+                    desc.classList.remove('expanded');
+                    toggle.textContent = 'more';
+                    toggle.setAttribute('aria-expanded','false');
+                } else {
+                    desc.classList.remove('clamped');
+                    desc.classList.add('expanded');
+                    toggle.textContent = 'less';
+                    toggle.setAttribute('aria-expanded','true');
+                }
+            });
+            desc.insertAdjacentElement('afterend', toggle);
+            desc.dataset.processed = 'true';
+        });
+    }
+
+    /**
+     * Setup hamburger menu dropdown interactions
+     */
+    setupMenus() {
+        const triggers = document.querySelectorAll('.task-item__menu-trigger');
+        triggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const menu = trigger.closest('.task-item__menu');
+                const expanded = trigger.getAttribute('aria-expanded') === 'true';
+                this.closeAllMenus();
+                if (!expanded) {
+                    trigger.setAttribute('aria-expanded','true');
+                    menu.classList.add('open');
+                    const card = trigger.closest('.task-item');
+                    if (card) { card.classList.add('task-item--menu-open'); }
+                }
+            });
+        });
+        if (!this._menuOutsideHandler) {
+            this._menuOutsideHandler = (e) => {
+                if (!e.target.closest('.task-item__menu')) { this.closeAllMenus(); }
+            };
+            document.addEventListener('click', this._menuOutsideHandler);
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { this.closeAllMenus(); } });
+        }
+    }
+
+    closeAllMenus() {
+        document.querySelectorAll('.task-item__menu.open').forEach(menu => {
+            menu.classList.remove('open');
+            const card = menu.closest('.task-item');
+            if (card) { card.classList.remove('task-item--menu-open'); }
+        });
+        document.querySelectorAll('.task-item__menu-trigger[aria-expanded="true"]').forEach(btn => btn.setAttribute('aria-expanded','false'));
     }
 
     /**

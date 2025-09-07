@@ -1190,6 +1190,11 @@ select.settings-input {
   outline: none;
 }
 
+/* Stacking context to ensure dropdown of current task isn't clipped */
+.task-item { z-index: 0; }
+.task-item.task-item--current { z-index: 2; }
+.task-item.task-item--menu-open { z-index: 10; }
+
 .task-item:hover {
   background: rgba(255,255,255,0.97);
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -1201,20 +1206,33 @@ select.settings-input {
 }
 
 .task-item.task-item--completed {
-  opacity: 0.72;
+  background: linear-gradient(135deg,#f6f7f8,#e5e7eb);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.04) inset;
 }
+
+/* Muted textual content but keep actions normal */
+.task-item.task-item--completed .task-item__title { color:#6b7280; text-decoration:line-through; }
+.task-item.task-item--completed .task-item__description { color:#6b7280; }
+.task-item.task-item--completed .task-item__pomodoros,
+.task-item.task-item--completed .task-item__progress,
+.task-item.task-item--completed .task-item__footer { color:#6b7280; }
+/* Neutralize status pill for completed card to stay in gray palette */
+.task-item.task-item--completed .task-item__status { background:#d4d7db; color:#6b7280; }
+.task-item.task-item--completed .task-item__status.completed { background:#d4d7db; color:#6b7280; }
+
+/* Preserve normal appearance for action menu elements */
+.task-item.task-item--completed .task-item__menu-trigger,
+.task-item.task-item--completed .task-item__menu-dropdown .task-item__action { color:#374151; opacity:1; filter:none; }
+
+/* Keep menu trigger vivid */
+.task-item.task-item--completed .task-item__menu-trigger { filter:none; opacity:1; background:rgba(0,0,0,0.06); }
+.task-item.task-item--completed .task-item__menu-trigger:hover { background:rgba(0,0,0,0.12); }
 
 .task-item:focus-visible {
   box-shadow: 0 0 0 3px rgba(59,130,246,0.5);
 }
 
-.task-item__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  gap: 8px;
-}
+.task-item__header { display:flex; align-items:flex-start; justify-content:flex-start; margin-bottom:4px; gap:8px; }
 
 .task-item__title {
   font-weight: 600;
@@ -1235,12 +1253,7 @@ select.settings-input {
   text-decoration: line-through;
 }
 
-.task-item__actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  flex-shrink: 0;
-}
+.task-item__actions { display:flex; gap:4px; align-items:center; flex-shrink:0; }
 
 .task-item__action {
   background: rgba(0,0,0,0.04);
@@ -1303,19 +1316,39 @@ select.settings-input {
   border-color: var(--color-danger);
 }
 
-.task-item__description {
-  font-size: var(--font-size-xs);
-  color: #4b5563;
-  margin: 0 0 6px;
-  line-height: 1.4;
-  word-break: break-word;
-  display: -webkit-box;
-  line-clamp: 3;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  max-height: 4.2em;
-}
+.task-item__description { font-size:var(--font-size-xs); color:#4b5563; margin:0 0 4px; line-height:1.4; word-break:break-word; position:relative; }
+/* Clamp behavior */
+.task-item__description.clamped { display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; max-height:4.2em; }
+.task-item__description.expanded { -webkit-line-clamp:unset; line-clamp:unset; max-height:none; }
+.task-item__description.clamped::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.4em; background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.9)); pointer-events:none; }
+
+.task-item__desc-toggle { background:none; border:none; color:var(--color-primary); font-size:10px; padding:2px 0 4px; cursor:pointer; text-decoration:underline; align-self:flex-start; line-height:1; font-weight:600; }
+.task-item__desc-toggle:hover { color:var(--color-primary-dark); }
+
+.task-item__footer { display:flex; align-items:flex-end; justify-content:space-between; gap:8px; margin-top:4px; padding-top:6px; border-top:1px solid rgba(0,0,0,0.08); }
+
+/* Compact visual tweaks when card is current */
+.task-item--current .task-item__footer { border-top:1px solid rgba(37,99,235,0.25); }
+/* Footer alignment tweaks */
+.task-item__footer { position:relative; }
+.task-item__footer .task-item__status { margin-left:auto; }
+
+/* Inline description toggle */
+.task-item__desc-toggle-inline { background:none; border:none; color:var(--color-primary); font-size:10px; padding:2px 0 2px; cursor:pointer; text-decoration:underline; font-weight:600; display:inline-flex; align-self:flex-end; margin-left:auto; }
+.task-item__desc-toggle-inline:hover { color:var(--color-primary-dark); }
+
+/* Hamburger menu */
+.task-item__menu { position:relative; flex-shrink:0; }
+.task-item__menu-trigger { background:rgba(0,0,0,0.05); border:1px solid rgba(0,0,0,0.1); width:28px; height:28px; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; line-height:1; color:#374151; transition:background .2s, transform .2s; }
+.task-item__menu-trigger:hover { background:rgba(0,0,0,0.1); }
+.task-item__menu.open .task-item__menu-trigger { background:var(--color-primary); color:#fff; border-color:var(--color-primary); }
+.task-item__menu-dropdown { position:absolute; top:32px; right:0; background:#ffffff; border:1px solid rgba(0,0,0,0.12); border-radius:14px; padding:6px 6px 6px; display:none; min-width:160px; box-shadow:0 10px 28px -6px rgba(0,0,0,0.28),0 4px 10px rgba(0,0,0,0.12); z-index:500; }
+.task-item__menu.open .task-item__menu-dropdown { display:flex; flex-direction:column; gap:4px; }
+.task-item__menu-dropdown .task-item__action { width:100%; justify-content:flex-start; font-size:11px; gap:6px; background:rgba(0,0,0,0.035); color:#374151; border-color:rgba(0,0,0,0.05); border-radius:10px; }
+.task-item__menu-dropdown .task-item__action:hover { background:rgba(0,0,0,0.08); }
+
+/* Adjust menu inside current task visual style */
+.task-item--current .task-item__menu-dropdown { border-color:rgba(37,99,235,0.4); }
 
 /* Align task textual content to left (override container centering) */
 .task-item,
@@ -1371,14 +1404,7 @@ select.settings-input {
 .tasks-clear-link:hover { background: rgba(255,255,255,0.15); color: var(--color-white); }
 .tasks-clear-link:focus-visible { outline: 2px solid var(--color-white); outline-offset: 2px; }
 
-.task-item__progress {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 6px;
-  border-top: 1px solid rgba(0,0,0,0.08);
-}
+.task-item__progress { display:flex; align-items:center; gap:10px; flex:1; }
 
 .task-item__pomodoros {
   font-size: var(--font-size-xs);
