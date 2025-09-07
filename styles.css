@@ -1121,6 +1121,8 @@ select.settings-input {
 .btn--toggle[aria-pressed="true"] { background: var(--color-neutral-dark); color: #fff; }
 .btn--toggle[aria-pressed="true"]:hover { background: var(--color-neutral); }
 
+/* (Removed clear current task button styles after toggle behavior implemented on task item select) */
+
 /* Tasks List - ONLY scrollable container */
 .tasks-list {
   flex: 1; /* Take all available space in content */

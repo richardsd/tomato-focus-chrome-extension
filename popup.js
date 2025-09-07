@@ -224,7 +224,7 @@ class TaskUIManager {
                         ${this.escapeHtml(truncatedTitle)}
                     </div>
                     <div class="task-item__actions" role="group" aria-label="Task actions">
-                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Selected task' : 'Select task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Current task' : 'Select task')}">🎯</button>
+                        <button class="task-item__action task-select" data-task-id="${task.id}" aria-pressed="${isCurrentTask}" aria-label="${task.isCompleted ? 'Reopen and select task' : (isCurrentTask ? 'Unset current task' : 'Set as current task')}" title="${task.isCompleted ? 'Reopen & select' : (isCurrentTask ? 'Unset current task' : 'Set as current task')}">🎯</button>
                         ${!task.isCompleted ? `<button class="task-item__action task-complete" data-task-id="${task.id}" aria-label="Mark task completed" title="Complete">✅</button>` : ''}
                         ${task.isCompleted ? `<button class="task-item__action task-reopen" data-task-id="${task.id}" aria-label="Reopen task" title="Reopen">↺</button>` : ''}
                         <button class="task-item__action task-edit" data-task-id="${task.id}" aria-label="Edit task" title="Edit">✏️</button>
@@ -309,14 +309,27 @@ class TaskUIManager {
      */
     async selectTask(taskId) {
         try {
-            // Check if the task is completed and warn user
-            const tasksResponse = await this.messageHandler.sendMessage('getTasks');
-            const task = tasksResponse.tasks.find(t => t.id === taskId);
+            // Fetch latest full state to determine current selection
+            const stateResponse = await this.messageHandler.sendMessage('getState');
+            const tasks = stateResponse.tasks || [];
+            const task = tasks.find(t => t.id === taskId);
+            const currentTaskId = stateResponse.currentTaskId;
 
+            // If clicking the currently active task, unset it
+            if (currentTaskId === taskId) {
+                const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                if (response && response.state) {
+                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
+                    document.body.classList.toggle('compact-mode', !!response.state.currentTaskId);
+                }
+                return;
+            }
+
+            // If selecting a completed task, confirm reopen
             if (task && task.isCompleted) {
-                const shouldReopen = window.confirm('This task is completed. Do you want to reopen it and set it as current?');
+                const shouldReopen = window.confirm('This task is completed. Reopen and set as current?');
                 if (shouldReopen) {
-                    // Reopen the task first
                     await this.toggleTaskCompletion(taskId, false);
                 } else {
                     return;
@@ -1378,6 +1391,7 @@ class PopupController {
                 }
             });
         }
+
 
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
