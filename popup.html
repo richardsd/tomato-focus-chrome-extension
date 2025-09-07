@@ -38,9 +38,9 @@
 
             <div class="timer">
                 <div class="timer__circle">
-                    <svg class="timer__progress-ring" width="200" height="200">
-                        <circle class="timer__progress-ring-background" cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
-                        <circle class="timer__progress-ring-progress" cx="100" cy="100" r="90" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dashoffset="0"/>
+                    <svg class="timer__progress-ring" width="180" height="180">
+                        <circle class="timer__progress-ring-background" cx="90" cy="90" r="80" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
+                        <circle class="timer__progress-ring-progress" cx="90" cy="90" r="80" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dashoffset="0"/>
                     </svg>
                     <div id="timer" class="timer__display">25:00</div>
                 </div>
@@ -186,14 +186,22 @@
 
         <!-- Tasks Panel -->
         <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
-            <div class="tasks-header flex items-center justify-between mb-4">
+            <div class="tasks-header header flex items-center justify-between mb-4">
                 <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
                     ←
                 </button>
                 <h1 class="header__title">Tasks</h1>
-                <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
-                    +
-                </button>
+                <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
+                    <button id="hideCompletedToggle" class="btn--toggle" aria-label="Hide completed tasks" aria-pressed="false" title="Hide completed tasks">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                    <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
+                        +
+                    </button>
+                </div>
             </div>
 
             <div class="tasks-content">
@@ -205,6 +213,9 @@
                         <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
                     </div>
                 </div>
+            </div>
+            <div class="tasks-footer">
+                <button id="clearCompletedBtn" class="tasks-clear-link hidden" aria-label="Clear completed tasks" title="Remove all completed tasks permanently">Clear completed tasks</button>
             </div>
         </div>
 

@@ -26,7 +26,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Task-Timer Integration**: Associate your Pomodoro sessions with specific tasks
 - **Progress Tracking**: See how many Pomodoros each task has consumed vs estimated
 - **Current Task Display**: Shows your active task right on the timer screen
-- **Auto-completion**: Tasks are automatically marked complete when estimated Pomodoros are reached
+- **Quick Toggle**: Click the target (🎯) icon again to unset the current task
 - **Task Statistics**: Enhanced analytics showing task-based productivity metrics
 
 ### ⚙️ Customizable Settings

@@ -63,6 +63,7 @@ class TimerState {
         this.statistics = null; // Will be loaded async
         this.currentTaskId = null; // Currently selected task
         this.tasks = []; // Will be loaded async
+        this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
     }
 
     getState() {
@@ -75,7 +76,8 @@ class TimerState {
             wasPausedForIdle: this.wasPausedForIdle,
             statistics: this.statistics,
             currentTaskId: this.currentTaskId,
-            tasks: this.tasks
+            tasks: this.tasks,
+            uiPreferences: { ...this.uiPreferences }
         };
     }
 
@@ -270,9 +272,10 @@ class TaskManager {
             throw new Error('Task not found');
         }
 
-        // Handle completion status
+        // Handle completion status timestamps only; do NOT auto-adjust pomodoro counts
         if (updates.isCompleted !== undefined) {
             updates.completedAt = updates.isCompleted ? new Date().toISOString() : null;
+            // We intentionally do not modify completedPomodoros here; user retains recorded effort
         }
 
         tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
@@ -298,11 +301,7 @@ class TaskManager {
 
         task.completedPomodoros++;
 
-        // Auto-complete task if estimated pomodoros are reached
-        if (task.completedPomodoros >= task.estimatedPomodoros && !task.isCompleted) {
-            task.isCompleted = true;
-            task.completedAt = new Date().toISOString();
-        }
+        // Do NOT auto-complete when reaching estimate; user must mark manually.
 
         await this.saveTasks(tasks);
         return task;
@@ -580,6 +579,8 @@ class TimerController {
                 this.state.settings = { ...CONSTANTS.DEFAULT_SETTINGS, ...this.state.settings };
                 // Don't restore running state on service worker restart
                 this.state.isRunning = false;
+                // Ensure uiPreferences shape
+                if (!this.state.uiPreferences) { this.state.uiPreferences = { hideCompleted: false }; }
             }
         } catch (error) {
             console.error('Failed to load state:', error);
@@ -856,6 +857,14 @@ class TimerController {
                 sendResponse(this.state.getState());
                 break;
 
+            case 'updateUiPreferences': {
+                const { uiPreferences } = request;
+                this.state.uiPreferences = { ...this.state.uiPreferences, ...uiPreferences };
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+
             case 'toggleTimer':
                 this.toggle();
                 sendResponse(this.state.getState());
@@ -893,6 +902,11 @@ class TimerController {
             case 'updateTask': {
                 const updatedTask = await TaskManager.updateTask(request.taskId, request.updates);
                 await this.loadTasks();
+                // If the updated task was the current one and is now completed, unset it as active
+                if (updatedTask.isCompleted && this.state.currentTaskId === updatedTask.id) {
+                    this.state.currentTaskId = null;
+                    await this.saveState();
+                }
                 sendResponse({ success: true, task: updatedTask, state: this.state.getState() });
                 break;
             }
@@ -918,6 +932,20 @@ class TimerController {
             case 'getTasks': {
                 await this.loadTasks();
                 sendResponse({ tasks: this.state.tasks });
+                break;
+            }
+
+            case 'clearCompletedTasks': {
+                // Remove all completed tasks; keep others
+                const remaining = this.state.tasks.filter(t => !t.isCompleted);
+                this.state.tasks = remaining;
+                // If current task was removed, clear selection
+                if (this.state.currentTaskId && !remaining.find(t => t.id === this.state.currentTaskId)) {
+                    this.state.currentTaskId = null;
+                }
+                await TaskManager.saveTasks(remaining);
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
                 break;
             }
 
