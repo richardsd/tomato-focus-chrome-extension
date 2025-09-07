@@ -30,6 +30,10 @@
                     <span class="toolbar-btn__label">Tasks</span>
                     <span id="tasksCount" class="badge hidden" aria-hidden="true">0</span>
                 </button>
+                <button id="statsBtn" class="toolbar-btn" aria-label="View statistics" title="Open statistics panel">
+                    <span class="toolbar-btn__icon" aria-hidden="true">📊</span>
+                    <span class="toolbar-btn__label">Stats</span>
+                </button>
             </div>
 
             <!-- Current Task Display -->
@@ -221,6 +225,24 @@
             </div>
             <div class="tasks-footer">
                 <button id="clearCompletedBtn" class="tasks-clear-link hidden" aria-label="Clear completed tasks" title="Remove all completed tasks permanently">Clear completed tasks</button>
+            </div>
+        </div>
+
+        <!-- Statistics Panel -->
+        <div id="statsPanel" class="panel hidden" role="region" aria-label="Statistics panel">
+            <div class="tasks-header header flex items-center justify-between mb-4">
+                <button id="backFromStatsBtn" class="btn--back" aria-label="Back to timer">←</button>
+                <h1 class="header__title">Statistics</h1>
+                <div style="width:40px;height:40px;"></div>
+            </div>
+            <div id="statsPanelContent" class="stats-panel-content">
+                <div id="statsSummary" class="stat-grid" aria-label="Today summary">
+                    <!-- Populated dynamically -->
+                </div>
+                <section id="statsHistorySection" class="stats-history-section hidden" aria-label="Last 7 days" >
+                    <h3 class="stats-section__title">Last 7 Days</h3>
+                    <div id="stats7DayChart" class="stats-chart" role="group" aria-label="7 day sessions chart"></div>
+                </section>
             </div>
         </div>
 
