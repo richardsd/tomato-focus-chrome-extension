@@ -160,23 +160,30 @@ body {
    =========================================== */
 
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display:grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items:center;
   margin-bottom: var(--space-4);
-  min-height: 40px; /* Ensure consistent height */
+  min-height:40px;
 }
 
-.header__title {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--theme-secondary);
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  margin: 0;
-  white-space: nowrap; /* Prevent line breaking */
-  flex: 1;
-  text-align: center;
-}
+.header__title { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--theme-secondary); text-shadow:0 2px 4px rgba(0,0,0,0.3); margin:0; white-space:nowrap; text-align:center; }
+.header__title--centered { justify-self:center; }
+
+.header__actions { display:flex; justify-content:flex-end; align-items:center; gap:6px; }
+
+/* Secondary toolbar */
+.toolbar-secondary { display:flex; align-items:center; gap:8px; margin:-4px 0 14px; padding:0 2px; }
+.toolbar-btn { position:relative; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.16); border:1px solid rgba(255,255,255,0.28); color:#fff; font-size:var(--font-size-sm); font-weight:var(--font-weight-medium); padding:6px 14px 7px; border-radius:14px; cursor:pointer; backdrop-filter:blur(8px) saturate(140%); transition:background var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); }
+.toolbar-btn:hover { background:rgba(255,255,255,0.24); }
+.toolbar-btn:active { transform:translateY(1px); }
+.toolbar-btn:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+.toolbar-btn__icon { line-height:1; font-size:var(--font-size-sm); display:flex; }
+.badge { background:rgba(255,255,255,0.18); color:#fff; font-size:11px; font-weight:600; line-height:1.1; padding:3px 8px 4px; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; min-width:24px; box-shadow:0 1px 2px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.35) inset; font-variant-numeric: tabular-nums; font-feature-settings:'tnum'; letter-spacing:.2px; backdrop-filter:blur(8px) saturate(140%); transition:background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast); }
+.badge--accent { background:linear-gradient(135deg,var(--color-primary-light),var(--color-primary)); box-shadow:0 2px 4px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.4) inset; }
+.badge--pulse { animation:badgePulse .45s ease; }
+@keyframes badgePulse { 0%{ transform:scale(1); } 40%{ transform:scale(1.15); } 70%{ transform:scale(0.95); } 100%{ transform:scale(1); } }
+.badge.hidden { display:none; }
 
 .header__icon {
   width: 32px;

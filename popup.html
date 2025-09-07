@@ -11,19 +11,25 @@
     <div class="container">
         <!-- Main Timer Panel -->
         <div id="timerPanel" class="panel" role="main" aria-labelledby="sessionTitle">
-            <div class="header flex items-center justify-between mb-4">
+            <div class="header mb-3">
                 <div id="sessionIcon" class="header__icon">
                     <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
                 </div>
-                <h1 id="sessionTitle" class="header__title">Tomato Focus</h1>
+                <h1 id="sessionTitle" class="header__title header__title--centered">Tomato Focus</h1>
                 <div class="header__actions">
-                    <button id="tasksBtn" class="header__tasks" aria-label="View tasks" title="Tasks">
-                        📋
-                    </button>
                     <button id="settingsBtn" class="header__settings" aria-label="Open settings">
                         <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
                     </button>
                 </div>
+            </div>
+
+            <!-- Secondary toolbar (Tasks access moved here) -->
+            <div class="toolbar-secondary" aria-label="Secondary actions">
+                <button id="tasksBtn" class="toolbar-btn" aria-label="View tasks" title="View tasks list">
+                    <span class="toolbar-btn__icon" aria-hidden="true">📋</span>
+                    <span class="toolbar-btn__label">Tasks</span>
+                    <span id="tasksCount" class="badge hidden" aria-hidden="true">0</span>
+                </button>
             </div>
 
             <!-- Current Task Display -->

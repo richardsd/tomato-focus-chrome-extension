@@ -1296,6 +1296,15 @@ class PopupController {
             return;
         }
 
+        // Migration: map legacy uiPreferences.tasksFilter 'active' -> 'in-progress'
+        try {
+            if (state.uiPreferences && state.uiPreferences.tasksFilter === 'active') {
+                state.uiPreferences.tasksFilter = 'in-progress';
+                // Persist updated preference
+                chrome.runtime.sendMessage({ action: 'updateUiPreferences', updates: { tasksFilter: 'in-progress' } });
+            }
+        } catch (e) { console.warn('Failed migrating tasksFilter preference', e); }
+
         // Fast path: if only timeLeft changed (normal ticking), avoid updating unrelated UI to prevent layout thrash/flicker
         try {
             if (this._lastState) {
@@ -1333,6 +1342,32 @@ class PopupController {
             }
             // Always update current task summary strip (small top display) regardless
             this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+
+            // Update tasks count badge
+            try {
+                const countEl = document.getElementById('tasksCount');
+                if (countEl) {
+                    const total = state.tasks.length;
+                    if (total > 0) {
+                        const newText = total > 99 ? '99+' : String(total);
+                        const prev = countEl.textContent;
+                        countEl.textContent = newText;
+                        countEl.classList.remove('hidden');
+                        // Accent style for higher counts for visual weight
+                        countEl.classList.toggle('badge--accent', total >= 10);
+                        // Trigger pulse when number changes
+                        if (prev !== newText) {
+                            countEl.classList.remove('badge--pulse');
+                            // Force reflow to restart animation
+                            void countEl.offsetWidth;
+                            countEl.classList.add('badge--pulse');
+                        }
+                    } else {
+                        countEl.classList.add('hidden');
+                        countEl.classList.remove('badge--accent','badge--pulse');
+                    }
+                }
+            } catch (e) { console.warn('Failed updating tasks count badge', e); }
         }
 
         // Toggle compact mode (smaller timer & tighter spacing) when a current task is active
