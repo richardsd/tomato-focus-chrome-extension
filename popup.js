@@ -152,6 +152,7 @@ class TaskUIManager {
     constructor(messageHandler) {
         this.messageHandler = messageHandler;
         this.currentEditingTaskId = null;
+        this.currentFilter = 'all';
     }
 
     /**
@@ -164,12 +165,15 @@ class TaskUIManager {
             console.warn('tasksList element not found');
             return;
         }
+        // Apply filter
+        let displayTasks = tasks;
+        if (this.currentFilter === 'in-progress') {
+            displayTasks = tasks.filter(t => !t.isCompleted);
+        } else if (this.currentFilter === 'completed') {
+            displayTasks = tasks.filter(t => t.isCompleted);
+        }
 
-        // Apply hideCompleted preference if available on window state snapshot
-        const hideCompleted = this.hideCompletedPreference === true;
-        const displayTasks = hideCompleted ? tasks.filter(t => !t.isCompleted) : tasks;
-
-        console.log('Tasks list element found, rendering...', { hideCompleted });
+        console.log('Tasks list element found, rendering with filter:', this.currentFilter);
 
         if (!displayTasks || displayTasks.length === 0) {
             console.log('No tasks found, showing empty state');
@@ -1344,14 +1348,9 @@ class PopupController {
 
         // Update hideCompleted toggle button state if present
         if (state.uiPreferences) {
-            const toggle = document.getElementById('hideCompletedToggle');
-            if (toggle) {
-                const active = !!state.uiPreferences.hideCompleted;
-                toggle.setAttribute('aria-pressed', active.toString());
-                toggle.title = active ? 'Show completed tasks' : 'Hide completed tasks';
-            }
-            if (this.taskUIManager) {
-                this.taskUIManager.hideCompletedPreference = !!state.uiPreferences.hideCompleted;
+            if (this.taskUIManager && state.uiPreferences.tasksFilter) {
+                this.taskUIManager.currentFilter = state.uiPreferences.tasksFilter;
+                this.syncFilterButtons(state.uiPreferences.tasksFilter);
             }
         }
 
@@ -1436,7 +1435,7 @@ class PopupController {
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
-        const hideCompletedToggle = document.getElementById('hideCompletedToggle');
+        const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
             settingsBtn.addEventListener('click', async () => {
@@ -1483,23 +1482,36 @@ class PopupController {
             });
         }
 
-        if (hideCompletedToggle) {
-            hideCompletedToggle.addEventListener('click', async () => {
-                const isPressed = hideCompletedToggle.getAttribute('aria-pressed') === 'true';
-                const newValue = !isPressed;
-                hideCompletedToggle.setAttribute('aria-pressed', newValue.toString());
-                hideCompletedToggle.title = newValue ? 'Show completed tasks' : 'Hide completed tasks';
+        if (filtersBar) {
+            filtersBar.addEventListener('click', async (e) => {
+                const btn = e.target.closest('.tasks-filter');
+                if (!btn) {return;}
+                const selected = btn.getAttribute('data-filter');
+                if (!selected) {return;}
+                // If already active, ignore
+                if (btn.classList.contains('is-active')) {return;}
                 try {
-                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { hideCompleted: newValue } });
+                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { tasksFilter: selected } });
                     if (response && response.state && this.taskUIManager) {
-                        this.taskUIManager.hideCompletedPreference = newValue;
+                        this.taskUIManager.currentFilter = selected;
+                        this.syncFilterButtons(selected);
                         this.taskUIManager.renderTasksList(response.state.tasks, response.state.currentTaskId);
                     }
-                } catch (e) {
-                    console.error('Failed to update UI preference', e);
+                } catch (err) {
+                    console.error('Failed to set tasks filter', err);
                 }
             });
         }
+    }
+
+    syncFilterButtons(activeFilter) {
+        const bar = document.getElementById('tasksFilters');
+        if (!bar) {return;}
+        bar.querySelectorAll('.tasks-filter').forEach(btn => {
+            const isActive = btn.getAttribute('data-filter') === activeFilter;
+            btn.classList.toggle('is-active', isActive);
+            btn.setAttribute('aria-pressed', isActive.toString());
+        });
     }
 
     /**

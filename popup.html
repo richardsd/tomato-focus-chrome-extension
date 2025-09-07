@@ -192,16 +192,15 @@
                 </button>
                 <h1 class="header__title">Tasks</h1>
                 <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
-                    <button id="hideCompletedToggle" class="btn--toggle" aria-label="Hide completed tasks" aria-pressed="false" title="Hide completed tasks">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </button>
-                    <button id="addTaskBtn" class="btn--add" aria-label="Add new task">
-                        +
-                    </button>
+                    <button id="addTaskBtn" class="btn--add" aria-label="Add new task">+</button>
                 </div>
+            </div>
+
+            <!-- Quick Filters Bar -->
+            <div id="tasksFilters" class="tasks-filters" role="toolbar" aria-label="Task filters">
+                <button class="tasks-filter is-active" data-filter="all" aria-pressed="true">All</button>
+                <button class="tasks-filter" data-filter="in-progress" aria-pressed="false">In Progress</button>
+                <button class="tasks-filter" data-filter="completed" aria-pressed="false">Completed</button>
             </div>
 
             <div class="tasks-content">
