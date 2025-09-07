@@ -233,8 +233,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--space-5);
+  margin: 0 auto var(--space-3);
   position: relative;
+  contain: layout paint; /* Prevent internal changes from affecting outside flow */
+  will-change: contents; /* Hint to browser for isolation */
+  min-height: 180px; /* lock height to prevent collapse during font size/transition interplay */
 }
 
 .timer__progress-ring {
@@ -246,9 +249,12 @@ body {
 }
 
 .timer__progress-ring-progress {
-  transition: stroke-dashoffset 1s ease-in-out;
+  /* Remove transition entirely to avoid animation-induced jitter */
+  transition: none;
   filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.6));
   stroke: var(--color-white);
+  will-change: stroke-dashoffset; /* Compositor hint */
+  transform: translateZ(0); /* Force its own layer */
 }
 
 .timer__progress-ring-background {
@@ -262,6 +268,15 @@ body {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: var(--z-elevated);
+  font-variant-numeric: tabular-nums; /* Prevent width changes between digits */
+  font-feature-settings: 'tnum';
+  line-height: 1; /* Stabilize vertical metrics */
+  width: 6ch; /* Reserve space for widest time (e.g., 100:00 if ever) */
+  max-width: 6ch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(0); /* Own layer to reduce repaint scope */
 }
 
 /* ===========================================
@@ -1059,6 +1074,12 @@ select.settings-input {
   overflow: visible; /* allow shadows (e.g., back button) to render fully */
 }
 
+/* Timer Panel adjustments: ensure no scrollbar appears while keeping stable sizing */
+#timerPanel.panel {
+  overflow: hidden; /* Prevent stray scrollbar after height stabilization changes */
+  /* The internal sections already center content; this avoids vertical scroll caused by min-heights */
+}
+
 /* Tasks Panel specific styling */
 #tasksPanel {
   display: flex;
@@ -1565,9 +1586,9 @@ select.settings-input {
 body.compact-mode .current-task { margin-top: 0; padding: 10px 14px 8px; border-radius: 16px; }
 body.compact-mode .current-task__name { font-size: var(--font-size-sm); line-height: 1.2; }
 body.compact-mode .current-task__progress { font-size: var(--font-size-xs); margin-top: 2px; }
-body.compact-mode .timer__circle { width: 170px; height: 170px; margin-top: 18px; transition: width .25s ease, height .25s ease, margin .25s ease; }
-body.compact-mode .timer__display { font-size: var(--font-size-timer-compact); transition: font-size .25s ease; }
-body.compact-mode .controls-container { transition: margin .25s ease; }
+body.compact-mode .timer__circle { width: 170px; height: 170px; margin-top: 18px; /* remove transitions to prevent vertical jitter */ transition: none; }
+body.compact-mode .timer__display { font-size: var(--font-size-timer-compact); /* remove transition to stop height thrash */ transition: none; }
+body.compact-mode .controls-container { /* remove transition to stabilize vertical layout */ transition: none; }
 body.compact-mode .panel .header { margin-bottom: 10px; }
 body.compact-mode .cycle-progress { margin-top: 4px; }
 body.compact-mode .controls { margin-bottom: 10px; }

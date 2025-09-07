@@ -764,6 +764,8 @@ class UIManager {
         this.circumference = utils.getCircumference();
         this.setProgressRingDasharray();
         this.debouncedUpdate = utils.debounce(this.updateProgressRing.bind(this), POPUP_CONSTANTS.UPDATE_DEBOUNCE);
+        this._lastProgressOffset = null; // cache last applied strokeDashoffset to prevent redundant paints
+        this._rafPending = false; // track scheduled rAF update
     }
 
     /**
@@ -937,8 +939,19 @@ class UIManager {
         const totalDuration = this.calculateFullDuration(state);
         const progress = state.timeLeft / totalDuration;
         const offset = this.circumference * (1 - progress);
-
-        progressRing.style.strokeDashoffset = offset;
+        // Batch DOM write in next animation frame to avoid mid-frame layout flashes
+        if (this._lastProgressOffset !== null && Math.abs(offset - this._lastProgressOffset) < 0.25) {
+            // Change is too small to matter visually; skip
+            return;
+        }
+        	if (this._rafPending) { return; }
+        	this._rafPending = true;
+        	(window.requestAnimationFrame || window.setTimeout)(() => {
+            // Recompute just in case (elapsed time could change). We'll trust cached offset for simplicity.
+            progressRing.style.strokeDashoffset = offset;
+            this._lastProgressOffset = offset;
+            this._rafPending = false;
+        	});
     }
 
     /**
@@ -1279,19 +1292,52 @@ class PopupController {
             return;
         }
 
+        // Fast path: if only timeLeft changed (normal ticking), avoid updating unrelated UI to prevent layout thrash/flicker
+        try {
+            if (this._lastState) {
+                const prev = this._lastState;
+                const fieldsToCompare = ['isRunning','currentSession','isWorkSession','currentTaskId'];
+                const structuralUnchanged = fieldsToCompare.every(k => prev[k] === state[k]);
+                const settingsUnchanged = prev.settings === state.settings || (
+                    prev.settings && state.settings &&
+                    ['workDuration','shortBreak','longBreak','longBreakInterval','autoStart','theme','pauseOnIdle','playSound','volume']
+                        .every(k => prev.settings[k] === state.settings[k])
+                );
+                const tasksSameRef = prev.tasks === state.tasks; // tasks array not reallocated
+                if (structuralUnchanged && settingsUnchanged && tasksSameRef && prev.timeLeft !== state.timeLeft) {
+                    // Only timeLeft is different -> update just timer + progress ring
+                    this.uiManager.updateTimer(state);
+                    this.uiManager.updateProgressRing(state);
+                    this._lastState = state; // store new ref
+                    return; // Skip rest
+                }
+            }
+        } catch (e) {
+            console.warn('Fast-path diff failed; falling back to full update', e);
+        }
+
         this.uiManager.updateUI(state);
         this.themeManager.applyTheme(state);
 
         // Update task-related UI
         if (state.tasks && this.taskUIManager) {
-            this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+            const tasksPanelEl = this.navigationManager?.panels?.tasks;
+            const tasksPanelVisible = tasksPanelEl && !tasksPanelEl.classList.contains('hidden');
+            const shouldSkip = state.isRunning && tasksPanelVisible; // prevent flicker while viewing tasks during active countdown
+            if (!shouldSkip) {
+                this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+            }
+            // Always update current task summary strip (small top display) regardless
             this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         }
 
         // Toggle compact mode (smaller timer & tighter spacing) when a current task is active
         try {
             const hasCurrent = !!(state.currentTaskId && state.tasks && state.tasks.some(t => t.id === state.currentTaskId));
-            document.body.classList.toggle('compact-mode', hasCurrent);
+            // Only toggle if changed to avoid unnecessary layout / transition churn
+            if (document.body.classList.contains('compact-mode') !== hasCurrent) {
+                document.body.classList.toggle('compact-mode', hasCurrent);
+            }
         } catch (e) {
             console.warn('Failed to toggle compact mode', e);
         }
@@ -1308,6 +1354,9 @@ class PopupController {
                 this.taskUIManager.hideCompletedPreference = !!state.uiPreferences.hideCompleted;
             }
         }
+
+        	// Store last state for diffing
+        	this._lastState = state;
     }
 
     /**
