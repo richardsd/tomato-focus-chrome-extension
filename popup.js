@@ -297,12 +297,7 @@ class TaskUIManager {
         });
 
         // Task item click to select
-        document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
-            item.addEventListener('click', () => {
-                const taskId = item.dataset.taskId;
-                this.selectTask(taskId);
-            });
-        });
+        // (Selection now restricted to explicit menu action; card surface no longer selects the task.)
 
         // Complete task on double-click
         document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
@@ -438,7 +433,12 @@ class TaskUIManager {
                 if (response && response.state) {
                     this.renderTasksList(response.state.tasks, response.state.currentTaskId);
                     this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-                    document.body.classList.toggle('compact-mode', !!response.state.currentTaskId);
+                    const hasCurrent = !!response.state.currentTaskId;
+                    document.body.classList.toggle('compact-mode', hasCurrent);
+                    document.body.classList.toggle('has-current-task', hasCurrent);
+                    (window.requestAnimationFrame || window.setTimeout)(() => {
+                        window._popupController?.syncCurrentTaskLayout?.();
+                    });
                 }
                 return;
             }
@@ -462,6 +462,10 @@ class TaskUIManager {
                 // Immediate compact mode toggle
                 const hasCurrent = !!response.state.currentTaskId;
                 document.body.classList.toggle('compact-mode', hasCurrent);
+                document.body.classList.toggle('has-current-task', hasCurrent);
+                (window.requestAnimationFrame || window.setTimeout)(() => {
+                    window._popupController?.syncCurrentTaskLayout?.();
+                });
             }
         } catch (error) {
             console.error('Failed to select task:', error);
@@ -1231,6 +1235,8 @@ class PopupController {
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
         this.taskUIManager = new TaskUIManager(this.messageHandler);
+        // Bind layout sync for height management
+        this.syncCurrentTaskLayout = this.syncCurrentTaskLayout.bind(this);
 
         console.log('PopupController initialized');
         this.init();
@@ -1377,6 +1383,9 @@ class PopupController {
             if (document.body.classList.contains('compact-mode') !== hasCurrent) {
                 document.body.classList.toggle('compact-mode', hasCurrent);
             }
+            // Always manage has-current-task class
+            document.body.classList.toggle('has-current-task', hasCurrent);
+            this.syncCurrentTaskLayout();
         } catch (e) {
             console.warn('Failed to toggle compact mode', e);
         }
@@ -1391,6 +1400,21 @@ class PopupController {
 
         	// Store last state for diffing
         	this._lastState = state;
+    }
+
+    /**
+     * Ensure popup stays within 600px by optionally hiding stats
+     * if compressed layout still overflows. Runs after state updates
+     * and current task visibility changes.
+     */
+    syncCurrentTaskLayout() {
+        // Defer to next frame so DOM has applied style changes
+        (window.requestAnimationFrame || window.setTimeout)(() => {
+            try {
+                const overflow = document.documentElement.scrollHeight > 600;
+                document.body.classList.toggle('hide-stats', overflow);
+            } catch (e) { console.warn('syncCurrentTaskLayout failed', e); }
+        });
     }
 
     /**
@@ -1594,6 +1618,10 @@ class PopupController {
                             this.taskUIManager.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks || []);
                         }
                         document.body.classList.remove('compact-mode');
+                        document.body.classList.remove('has-current-task');
+                        (window.requestAnimationFrame || window.setTimeout)(() => {
+                            window._popupController?.syncCurrentTaskLayout?.();
+                        });
                     }
                 } catch (error) {
                     console.error('Failed to clear current task:', error);
@@ -1755,7 +1783,9 @@ class PopupController {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded - initializing popup');
     try {
-        new PopupController();
+        const controller = new PopupController();
+        // Expose for layout sync calls from task UI operations
+        window._popupController = controller;
     } catch (error) {
         console.error('Failed to create PopupController:', error);
     }
