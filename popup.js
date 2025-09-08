@@ -22,16 +22,16 @@ const POPUP_CONSTANTS = {
         timerPanel: '#timerPanel',
         settingsPanel: '#settingsPanel',
         tasksPanel: '#tasksPanel',
-    statsPanel: '#statsPanel',
+        statsPanel: '#statsPanel',
         settingsBtn: '#settingsBtn',
         tasksBtn: '#tasksBtn',
-    statsBtn: '#statsBtn',
+        statsBtn: '#statsBtn',
         backBtn: '#backBtn',
         backFromTasksBtn: '#backFromTasksBtn',
-    backFromStatsBtn: '#backFromStatsBtn',
-    statsSummary: '#statsSummary',
-    statsHistorySection: '#statsHistorySection',
-    stats7DayChart: '#stats7DayChart',
+        backFromStatsBtn: '#backFromStatsBtn',
+        statsSummary: '#statsSummary',
+        statsHistorySection: '#statsHistorySection',
+        stats7DayChart: '#stats7DayChart',
         progressRing: '.timer__progress-ring-progress',
         progressRingBackground: '.timer__progress-ring-background',
         sessionIcon: '#sessionIcon',
@@ -1194,6 +1194,9 @@ class NavigationManager {
         if (this.panels.tasks) {
             this.panels.tasks.classList.add('hidden');
         }
+        if (this.panels.stats) {
+            this.panels.stats.classList.add('hidden');
+        }
     }
 
     /**
@@ -1516,10 +1519,10 @@ class PopupController {
     setupNavigationEvents() {
         const settingsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsBtn);
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
-    const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
+        const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
-    const backFromStatsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromStatsBtn);
+        const backFromStatsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromStatsBtn);
         const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
