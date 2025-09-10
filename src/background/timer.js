@@ -1,0 +1,468 @@
+import { CONSTANTS, chromePromise } from './constants.js';
+import { StatisticsManager } from './statistics.js';
+import { TaskManager } from './tasks.js';
+import { NotificationManager } from './notifications.js';
+import { BadgeManager } from './badge.js';
+import { ContextMenuManager } from './contextMenus.js';
+
+class TimerState {
+    constructor() {
+        this.reset();
+    }
+
+    reset() {
+        this.isRunning = false;
+        this.timeLeft = CONSTANTS.DEFAULT_SETTINGS.workDuration * 60;
+        this.currentSession = 1;
+        this.isWorkSession = true;
+        this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
+        this.wasPausedForIdle = false;
+        this.statistics = null; // Will be loaded async
+        this.currentTaskId = null; // Currently selected task
+        this.tasks = []; // Will be loaded async
+        this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
+    }
+
+    getState() {
+        return {
+            isRunning: this.isRunning,
+            timeLeft: this.timeLeft,
+            currentSession: this.currentSession,
+            isWorkSession: this.isWorkSession,
+            settings: { ...this.settings },
+            wasPausedForIdle: this.wasPausedForIdle,
+            statistics: this.statistics,
+            currentTaskId: this.currentTaskId,
+            tasks: this.tasks,
+            uiPreferences: { ...this.uiPreferences }
+        };
+    }
+
+    updateSettings(newSettings) {
+        this.settings = { ...this.settings, ...newSettings };
+    }
+
+    startWork() {
+        this.timeLeft = this.settings.workDuration * 60;
+        this.isWorkSession = true;
+    }
+
+    startShortBreak() {
+        this.timeLeft = this.settings.shortBreak * 60;
+        this.isWorkSession = false;
+    }
+
+    startLongBreak() {
+        this.timeLeft = this.settings.longBreak * 60;
+        this.isWorkSession = false;
+    }
+
+    incrementSession() {
+        this.currentSession++;
+    }
+
+    shouldTakeLongBreak() {
+        // Check if the current session count indicates it's time for a long break
+        return this.currentSession % this.settings.longBreakInterval === 0;
+    }
+}
+
+class StorageManager {
+    static async saveState(state) {
+        try {
+            await chromePromise.storage.local.set({
+                [CONSTANTS.STORAGE_KEY]: state
+            });
+        } catch (error) {
+            console.error('Failed to save state:', error);
+        }
+    }
+
+    static async loadState() {
+        try {
+            const result = await chromePromise.storage.local.get([CONSTANTS.STORAGE_KEY]);
+            return result[CONSTANTS.STORAGE_KEY] || null;
+        } catch (error) {
+            console.error('Failed to load state:', error);
+            return null;
+        }
+    }
+}
+
+export class TimerController {
+    constructor() {
+        this.state = new TimerState();
+        this.alarmName = CONSTANTS.ALARM_NAME;
+        this.isInitialized = false;
+
+        this.init();
+    }
+
+    async init() {
+        await this.loadState();
+        await this.loadStatistics();
+        await this.loadTasks();
+        this.setupAlarmListener();
+        this.setupMessageListener();
+        this.setupIdleListener();
+        this.isInitialized = true;
+        this.checkIdleResume();
+        this.updateUI();
+    }
+
+    async loadState() {
+        const savedState = await StorageManager.loadState();
+        if (savedState) {
+            Object.assign(this.state, savedState);
+        } else {
+            await this.saveState();
+        }
+    }
+
+    async saveState() {
+        await StorageManager.saveState(this.state.getState());
+    }
+
+    async loadStatistics() {
+        this.state.statistics = await StatisticsManager.getStatistics();
+    }
+
+    async loadTasks() {
+        this.state.tasks = await TaskManager.getTasks();
+    }
+
+    updateUI() {
+        const { timeLeft, isRunning, isWorkSession } = this.state;
+
+        BadgeManager.update(timeLeft, isRunning, isWorkSession);
+        ContextMenuManager.update(isRunning, isWorkSession, timeLeft);
+
+        // Send message to popup if it's open
+        this.sendMessageToPopup('updateTimer', this.state.getState());
+
+        this.saveState();
+    }
+
+    sendMessageToPopup(action, data) {
+        chrome.runtime
+            .sendMessage({ action, state: data })
+            .catch((error) => {
+                // Ignore connection errors when no popup is open
+                if (!error.message.includes('Receiving end does not exist')) {
+                    console.warn('Failed to send message to popup:', error.message);
+                }
+            });
+    }
+
+    setupAlarmListener() {
+        chrome.alarms.onAlarm.addListener(alarm => {
+            if (alarm.name === this.alarmName) {
+                this.onTimerComplete();
+            }
+        });
+    }
+
+    setupMessageListener() {
+        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+            this.handleMessage(request, sender, sendResponse);
+            return true; // Keep the message channel open for async responses
+        });
+    }
+
+    setupIdleListener() {
+        chrome.idle.onStateChanged.addListener(async (newState) => {
+            if (newState === 'idle' && this.state.isRunning && this.state.settings.pauseOnIdle) {
+                console.log('Auto-pausing due to idle state');
+                this.pause();
+                this.state.wasPausedForIdle = true;
+                await this.saveState();
+            }
+        });
+    }
+
+    checkIdleResume() {
+        if (this.state.wasPausedForIdle && this.state.settings.pauseOnIdle) {
+            chrome.idle.queryState(60, async (state) => {
+                if (state === 'active') {
+                    console.log('Resuming after idle');
+                    this.state.wasPausedForIdle = false;
+                    await this.saveState();
+                    this.updateUI();
+                }
+            });
+        }
+    }
+
+    async start() {
+        if (this.state.isRunning) return;
+
+        this.state.isRunning = true;
+        await this.saveState();
+        await this.scheduleAlarm();
+        this.startBadgeUpdater();
+        this.updateBadge();
+        ContextMenuManager.update(true, this.state.isWorkSession, this.state.timeLeft);
+        this.updateUI();
+    }
+
+    async pause() {
+        if (!this.state.isRunning) return;
+
+        this.state.isRunning = false;
+        await chrome.alarms.clear(this.alarmName);
+        await this.saveState();
+        this.stopBadgeUpdater();
+        this.updateBadge();
+        ContextMenuManager.update(false, this.state.isWorkSession, this.state.timeLeft);
+        this.updateUI();
+    }
+
+    async reset() {
+        this.state.isRunning = false;
+        this.state.currentSession = 1;
+        this.state.startWork();
+        await chrome.alarms.clear(this.alarmName);
+        await this.saveState();
+        this.stopBadgeUpdater();
+        this.updateBadge();
+        ContextMenuManager.update(false, this.state.isWorkSession, this.state.timeLeft);
+        this.updateUI();
+    }
+
+    async scheduleAlarm() {
+        const now = Date.now();
+        const when = now + this.state.timeLeft * 1000;
+        await chrome.alarms.create(this.alarmName, { when });
+    }
+
+    async onTimerComplete() {
+        const sessionType = this.state.isWorkSession ? 'Work' : 'Break';
+        console.log(`${sessionType} session complete`);
+
+        if (this.state.isWorkSession) {
+            await StatisticsManager.incrementCompleted();
+            await StatisticsManager.addFocusTime(this.state.settings.workDuration);
+            this.state.statistics = await StatisticsManager.getStatistics();
+            if (this.state.currentTaskId) {
+                await TaskManager.incrementTaskPomodoros(this.state.currentTaskId);
+                this.state.tasks = await TaskManager.getTasks();
+            }
+            this.state.incrementSession();
+        }
+
+        if (this.state.isWorkSession) {
+            if (this.state.shouldTakeLongBreak()) {
+                this.state.startLongBreak();
+            } else {
+                this.state.startShortBreak();
+            }
+        } else {
+            this.state.startWork();
+        }
+
+        this.state.isRunning = this.state.settings.autoStart;
+        await this.saveState();
+
+        if (this.state.settings.playSound || NotificationManager) {
+            await NotificationManager.show(
+                'Tomato Focus',
+                `${sessionType} session complete`,
+                this.state.settings
+            );
+        }
+
+        if (this.state.isRunning) {
+            await this.scheduleAlarm();
+        }
+
+        this.updateBadge();
+        ContextMenuManager.update(this.state.isRunning, this.state.isWorkSession, this.state.timeLeft);
+        this.updateUI();
+    }
+
+    toggle() {
+        if (this.state.isRunning) {
+            this.pause();
+        } else {
+            this.start();
+        }
+    }
+
+    async skipBreak() {
+        if (!this.state.isWorkSession) {
+            this.state.startWork();
+            await chrome.alarms.clear(this.alarmName);
+            if (this.state.isRunning) {
+                await this.scheduleAlarm();
+            }
+            await this.saveState();
+            this.updateBadge();
+            ContextMenuManager.update(this.state.isRunning, this.state.isWorkSession, this.state.timeLeft);
+            this.updateUI();
+        }
+    }
+
+    async startQuickTimer(minutes) {
+        this.state.isRunning = true;
+        this.state.isWorkSession = true;
+        this.state.timeLeft = minutes * 60;
+        await this.saveState();
+        await this.scheduleAlarm();
+        this.updateBadge();
+        ContextMenuManager.update(true, true, this.state.timeLeft);
+        this.updateUI();
+    }
+
+    updateBadge() {
+        BadgeManager.update(this.state.timeLeft, this.state.isRunning, this.state.isWorkSession);
+    }
+
+    startBadgeUpdater() {
+        if (this.badgeInterval) return;
+        this.badgeInterval = setInterval(() => {
+            if (this.state.isRunning) {
+                this.state.timeLeft--;
+                if (this.state.timeLeft <= 0) {
+                    this.onTimerComplete();
+                }
+                this.updateBadge();
+            }
+        }, CONSTANTS.BADGE_UPDATE_INTERVAL);
+    }
+
+    stopBadgeUpdater() {
+        if (this.badgeInterval) {
+            clearInterval(this.badgeInterval);
+            this.badgeInterval = null;
+        }
+    }
+
+    async handleMessage(request, sender, sendResponse) {
+        try {
+            switch (request.action) {
+            case 'getState':
+                sendResponse({ state: this.state.getState() });
+                break;
+            case 'start':
+                await this.start();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'pause':
+                await this.pause();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'reset':
+                await this.reset();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'skipBreak':
+                await this.skipBreak();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'saveSettings':
+                this.state.updateSettings(request.settings);
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'createTask':
+                await TaskManager.createTask(request.task);
+                this.state.tasks = await TaskManager.getTasks();
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'updateTask':
+                await TaskManager.updateTask(request.taskId, request.updates);
+                this.state.tasks = await TaskManager.getTasks();
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'deleteTask':
+                await TaskManager.deleteTask(request.taskId);
+                if (this.state.currentTaskId === request.taskId) {
+                    this.state.currentTaskId = null;
+                }
+                this.state.tasks = await TaskManager.getTasks();
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'setCurrentTask':
+                this.state.currentTaskId = request.taskId;
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'clearStatistics':
+                await StatisticsManager.clearAll();
+                await this.loadStatistics();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'getStatisticsHistory':
+                const all = await StatisticsManager.getAllStatistics();
+                sendResponse({ success: true, history: all });
+                break;
+            default:
+                sendResponse({ error: 'Unknown action' });
+            }
+        } catch (error) {
+            console.error('Error handling message:', error);
+            sendResponse({ error: error.message });
+        }
+    }
+}
+
+export function initializeBackground() {
+    const timerController = new TimerController();
+
+    chrome.contextMenus.onClicked.addListener((info) => {
+        const { menuItemId } = info;
+        switch (menuItemId) {
+        case 'start-pause':
+            timerController.toggle();
+            break;
+        case 'reset':
+            timerController.reset();
+            break;
+        case 'skip-break':
+            timerController.skipBreak();
+            break;
+        case 'quick-5':
+            timerController.startQuickTimer(5);
+            break;
+        case 'quick-15':
+            timerController.startQuickTimer(15);
+            break;
+        case 'quick-25':
+            timerController.startQuickTimer(25);
+            break;
+        case 'quick-45':
+            timerController.startQuickTimer(45);
+            break;
+        default:
+            console.warn('Unknown context menu item:', menuItemId);
+        }
+    });
+
+    chrome.runtime.onStartup.addListener(() => {
+        console.log('Extension started');
+    });
+
+    chrome.runtime.onInstalled.addListener((details) => {
+        console.log('Extension installed/updated:', details.reason);
+        ContextMenuManager.create();
+        NotificationManager.checkPermissions().then(level => {
+            console.log('Notification permission level:', level);
+            if (level !== 'granted') {
+                console.warn('Notifications may not work properly');
+            }
+        });
+    });
+
+    chrome.runtime.onSuspend.addListener(() => {
+        console.log('Service worker suspending - saving state');
+        timerController.saveState();
+    });
+
+    self.addEventListener('beforeunload', () => {
+        timerController.stopBadgeUpdater();
+        chrome.alarms.clearAll();
+    });
+}
