@@ -216,6 +216,16 @@ class StatisticsManager {
             throw error;
         }
     }
+
+    static async getAllStatistics() {
+        try {
+            const result = await chromePromise.storage.local.get([CONSTANTS.STATISTICS_KEY]);
+            return result[CONSTANTS.STATISTICS_KEY] || {};
+        } catch (e) {
+            console.error('Failed to get all statistics map', e);
+            return {};
+        }
+    }
 }
 
 /**
@@ -954,6 +964,12 @@ class TimerController {
                 // Refresh statistics in state
                 await this.loadStatistics();
                 sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+
+            case 'getStatisticsHistory': {
+                const all = await StatisticsManager.getAllStatistics();
+                sendResponse({ success: true, history: all });
                 break;
             }
 

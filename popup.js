@@ -22,10 +22,16 @@ const POPUP_CONSTANTS = {
         timerPanel: '#timerPanel',
         settingsPanel: '#settingsPanel',
         tasksPanel: '#tasksPanel',
+        statsPanel: '#statsPanel',
         settingsBtn: '#settingsBtn',
         tasksBtn: '#tasksBtn',
+        statsBtn: '#statsBtn',
         backBtn: '#backBtn',
         backFromTasksBtn: '#backFromTasksBtn',
+        backFromStatsBtn: '#backFromStatsBtn',
+        statsSummary: '#statsSummary',
+        statsHistorySection: '#statsHistorySection',
+        stats7DayChart: '#stats7DayChart',
         progressRing: '.timer__progress-ring-progress',
         progressRingBackground: '.timer__progress-ring-background',
         sessionIcon: '#sessionIcon',
@@ -1170,7 +1176,8 @@ class NavigationManager {
         this.panels = {
             timer: utils.getElement(POPUP_CONSTANTS.SELECTORS.timerPanel),
             settings: utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsPanel),
-            tasks: utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksPanel)
+            tasks: utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksPanel),
+            stats: utils.getElement(POPUP_CONSTANTS.SELECTORS.statsPanel)
         };
     }
 
@@ -1186,6 +1193,9 @@ class NavigationManager {
         }
         if (this.panels.tasks) {
             this.panels.tasks.classList.add('hidden');
+        }
+        if (this.panels.stats) {
+            this.panels.stats.classList.add('hidden');
         }
     }
 
@@ -1221,6 +1231,15 @@ class NavigationManager {
         } else {
             console.warn('Tasks panel element not found!');
         }
+    }
+    /**
+     * Show stats panel
+     */
+    showStatsPanel() {
+        if (this.panels.timer) { this.panels.timer.classList.add('hidden'); }
+        if (this.panels.settings) { this.panels.settings.classList.add('hidden'); }
+        if (this.panels.tasks) { this.panels.tasks.classList.add('hidden'); }
+        if (this.panels.stats) { this.panels.stats.classList.remove('hidden'); }
     }
 }
 /**
@@ -1398,6 +1417,14 @@ class PopupController {
             }
         }
 
+        // If statistics panel visible, refresh its contents
+        try {
+            const statsPanelEl = this.navigationManager?.panels?.stats;
+            if (statsPanelEl && !statsPanelEl.classList.contains('hidden')) {
+                this.ensureStatisticsHistory().then(() => this.renderStatisticsPanel(state));
+            }
+        } catch (e) { console.warn('Failed updating statistics panel', e); }
+
         	// Store last state for diffing
         	this._lastState = state;
     }
@@ -1492,8 +1519,10 @@ class PopupController {
     setupNavigationEvents() {
         const settingsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsBtn);
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
+        const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
         const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
+        const backFromStatsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromStatsBtn);
         const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
@@ -1529,6 +1558,17 @@ class PopupController {
             });
         }
 
+        if (statsBtn) {
+            statsBtn.addEventListener('click', async () => {
+                this.navigationManager.showStatsPanel();
+                try {
+                    const state = await this.messageHandler.sendMessage('getState');
+                    await this.ensureStatisticsHistory();
+                    this.renderStatisticsPanel(state);
+                } catch (e) { console.error('Failed to open statistics panel', e); }
+            });
+        }
+
         if (backBtn) {
             backBtn.addEventListener('click', () => {
                 this.navigationManager.showTimerPanel();
@@ -1537,6 +1577,12 @@ class PopupController {
 
         if (backFromTasksBtn) {
             backFromTasksBtn.addEventListener('click', () => {
+                this.navigationManager.showTimerPanel();
+            });
+        }
+
+        if (backFromStatsBtn) {
+            backFromStatsBtn.addEventListener('click', () => {
                 this.navigationManager.showTimerPanel();
             });
         }
@@ -1775,6 +1821,125 @@ class PopupController {
         if (event.code === 'KeyT' && event.ctrlKey) {
             event.preventDefault();
             this.navigationManager.showTasksPanel();
+        }
+    }
+
+    /**
+     * Fetch & cache statistics history (once per popup session)
+     */
+    async ensureStatisticsHistory() {
+        if (this._statsHistoryCache) { return this._statsHistoryCache; }
+        try {
+            const resp = await this.messageHandler.sendMessage('getStatisticsHistory');
+            this._statsHistoryCache = (resp && resp.history) ? resp.history : {};
+            return this._statsHistoryCache;
+        } catch (e) {
+            console.warn('Failed to fetch statistics history', e);
+            this._statsHistoryCache = {};
+            return this._statsHistoryCache;
+        }
+    }
+
+    /**
+     * Build array of recent date strings (YYYY-MM-DD) inclusive of today
+     */
+    buildRecentDates(days = 7) {
+        const dates = [];
+        const now = new Date();
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(now);
+            d.setDate(now.getDate() - i);
+            dates.push(d.toISOString().split('T')[0]);
+        }
+        return dates;
+    }
+
+    /**
+     * Render statistics summary cards + 7-day chart
+     */
+    renderStatisticsPanel(state) {
+        const summaryEl = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsSummary);
+        const chartEl = utils.getElement(POPUP_CONSTANTS.SELECTORS.stats7DayChart);
+        const historySection = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsHistorySection);
+        if (!summaryEl) { return; }
+
+        const todayCompleted = state.statistics?.completedToday || 0;
+        const todayFocus = state.statistics?.focusTimeToday || 0;
+        const history = this._statsHistoryCache || {};
+        let totalCompleted = 0, totalFocus = 0, longestFocus = 0, activeDays = 0;
+        Object.values(history).forEach(day => {
+            if (!day) { return; }
+            const c = day.completedSessions || 0;
+            const f = day.focusTimeMinutes || 0;
+            if (c > 0 || f > 0) { activeDays++; }
+            totalCompleted += c;
+            totalFocus += f;
+            if (f > longestFocus) { longestFocus = f; }
+        });
+        const productivityRate = activeDays ? (totalCompleted / activeDays).toFixed(1) : '0.0';
+
+        summaryEl.innerHTML = `
+            <div class="stat-grid">
+                <div class="stat-card" aria-label="Completed today ${todayCompleted} pomodoros">
+                    <div class="stat-card__label">Today</div>
+                    <div class="stat-card__value">${todayCompleted}</div>
+                    <div class="stat-card__sub">Pomodoros</div>
+                </div>
+                <div class="stat-card" aria-label="Focus time today ${utils.formatFocusTime(todayFocus)}">
+                    <div class="stat-card__label">Focus Today</div>
+                    <div class="stat-card__value">${utils.formatFocusTime(todayFocus)}</div>
+                    <div class="stat-card__sub">Time</div>
+                </div>
+                <div class="stat-card" aria-label="Active days ${activeDays}">
+                    <div class="stat-card__label">Active Days</div>
+                    <div class="stat-card__value">${activeDays}</div>
+                    <div class="stat-card__sub">Last 30d</div>
+                </div>
+                <div class="stat-card" aria-label="Total focus time ${utils.formatFocusTime(totalFocus)}">
+                    <div class="stat-card__label">Total Focus</div>
+                    <div class="stat-card__value">${utils.formatFocusTime(totalFocus)}</div>
+                    <div class="stat-card__sub">Across Days</div>
+                </div>
+                <div class="stat-card" aria-label="Longest day focus ${utils.formatFocusTime(longestFocus)}">
+                    <div class="stat-card__label">Longest Day</div>
+                    <div class="stat-card__value">${utils.formatFocusTime(longestFocus)}</div>
+                    <div class="stat-card__sub">Focus Time</div>
+                </div>
+                <div class="stat-card" aria-label="Average pomodoros per active day ${productivityRate}">
+                    <div class="stat-card__label">Avg / Day</div>
+                    <div class="stat-card__value">${productivityRate}</div>
+                    <div class="stat-card__sub">Pomodoros</div>
+                </div>
+            </div>`;
+
+        if (chartEl) {
+            const recentDates = this.buildRecentDates(7);
+            const chartData = recentDates.map(date => {
+                const day = history[date] || { completedSessions: 0, focusTimeMinutes: 0 };
+                return { date, completed: day.completedSessions || 0, focus: day.focusTimeMinutes || 0 };
+            });
+            const maxFocus = Math.max(30, ...chartData.map(d => d.focus));
+            const maxCompleted = Math.max(1, ...chartData.map(d => d.completed));
+            chartEl.innerHTML = chartData.map(d => {
+                const focusPct = d.focus ? Math.round((d.focus / maxFocus) * 100) : 0;
+                const completedPct = d.completed ? Math.round((d.completed / maxCompleted) * 100) : 0;
+                const dateObj = new Date(d.date);
+                const label = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
+                return `
+                    <div class="chart-bar" role="group" aria-label="${label} ${d.focus} minutes focus, ${d.completed} pomodoros">
+                        <div class="chart-bar__col">
+                            <div class="chart-bar__value" style="height:${focusPct}%" aria-label="Focus ${d.focus} minutes" title="${d.focus}m"></div>
+                            <div class="chart-bar__label" aria-hidden="true">${label}</div>
+                        </div>
+                        <div class="chart-bar__col chart-bar__col--sessions">
+                            <div class="chart-bar__value chart-bar__value--sessions" style="height:${completedPct}%" aria-label="${d.completed} pomodoros" title="${d.completed}"></div>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+
+        if (historySection) {
+            historySection.classList.toggle('hidden', Object.keys(history).length === 0);
         }
     }
 }

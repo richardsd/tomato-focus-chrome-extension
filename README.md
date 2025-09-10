@@ -12,6 +12,17 @@ A configurable **time-management Chrome extension** that helps boost productivit
 
 Stay focused and take healthy breaks! 🍅⏰
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Technical Details](#technical-details)
+- [Development](#development)
+- [Acknowledgments](#acknowledgments)
+- [Support](#support)
+- [License](#license)
+
 ## Features
 
 ### 🧭 Core Timer Functionality
@@ -28,18 +39,31 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Current Task Display**: Shows your active task right on the timer screen
 - **Quick Toggle**: Click the target (🎯) icon again to unset the current task
 - **Task Statistics**: Enhanced analytics showing task-based productivity metrics
+- **Task Filters**: View All, In Progress, or Completed tasks
+- **Clear Completed Tasks**: Remove all finished tasks in one click
+
+<!-- Screenshot Placeholder: Tasks panel showing filters and clear completed button -->
+
+### 📊 Statistics Panel
+- **Daily Summary**: Displays today's completed sessions and total focus time
+- **Data Management**: Option to clear all stored statistics
+
+<!-- Screenshot Placeholder: Statistics panel with daily summary -->
 
 ### ⚙️ Customizable Settings
 - **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)
 - **Break Intervals**: Configure how many sessions before a long break (1–10)
 - **Auto-Start**: Automatically start the next period
 - **Theme Options**: Light and dark mode
+- **Play Sound & Volume**: Enable/disable notification sounds and control volume
+- **Pause When Idle**: Automatically pause (and optionally resume) when the system is idle or locked
 - **Persistent Settings**: Preferences are saved and restored between sessions
 
 ### 🔔 Smart Notifications
 - **Browser Alerts**: Notifications when sessions end
 - **Cross-Platform Support**: macOS, Windows, Linux
 - **Permission Hints**: Built-in help for enabling notifications
+- **Offscreen Audio**: Uses a hidden document to reliably play notification sounds
 
 ### 🚀 Advanced Features
 - **Badge Display**: See time remaining on the extension icon
@@ -47,6 +71,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Quick Timers**: Launch 5/15/25/45 min timers instantly
 - **Skip Break**: Flexibility when needed
 - **Session Persistence**: Survives browser restarts
+- **Idle Detection**: Monitors system state to pause and resume the timer automatically
 
 ### 🎨 Modern Interface
 - **Clean Design**: Minimalist UI with smooth transitions
@@ -122,7 +147,7 @@ Right-click the extension icon to:
 
 ### Code Quality
 This project uses ESLint for code quality and consistency:
-- **Configuration**: `.eslintrc.json` with `eslint:recommended` base
+- **Configuration**: `eslint.config.js` with `eslint:recommended` base
 - **Run linting**: `npm run lint`
 - **Auto-fix issues**: `npm run lint:fix`
 - **IDE Integration**: Install the ESLint extension for real-time feedback
