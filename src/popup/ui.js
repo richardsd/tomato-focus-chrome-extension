@@ -12,26 +12,43 @@ class MessageHandler {
      */
     async sendMessage(action, data = {}) {
         return new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage({ action, ...data }, (response) => {
+            const handleResponse = (resp) => {
                 if (chrome.runtime.lastError) {
                     console.warn('Message failed:', chrome.runtime.lastError.message);
+                    if (action === 'getState') {
+                        resolve(POPUP_CONSTANTS.DEFAULT_STATE);
+                    } else {
+                        reject(new Error(chrome.runtime.lastError.message));
+                    }
+                    return;
+                }
+
+                if (resp && resp.error) {
+                    reject(new Error(resp.error));
+                    return;
+                }
+
+                // Unwrap state responses for convenience
+                if (resp && Object.prototype.hasOwnProperty.call(resp, 'state')) {
+                    resolve(resp.state);
+                } else {
+                    resolve(resp);
+                }
+            };
+
+            chrome.runtime.sendMessage({ action, ...data }, (response) => {
+                if (chrome.runtime.lastError) {
                     // Retry once after a short delay
                     setTimeout(() => {
                         chrome.runtime.sendMessage({ action, ...data }, (retryResponse) => {
                             if (chrome.runtime.lastError) {
                                 console.error('Retry failed:', chrome.runtime.lastError.message);
-                                if (action === 'getState') {
-                                    resolve(POPUP_CONSTANTS.DEFAULT_STATE);
-                                } else {
-                                    reject(new Error(chrome.runtime.lastError.message));
-                                }
-                            } else {
-                                resolve(retryResponse);
                             }
+                            handleResponse(retryResponse);
                         });
                     }, POPUP_CONSTANTS.RETRY_DELAY);
                 } else {
-                    resolve(response);
+                    handleResponse(response);
                 }
             });
         });
@@ -868,11 +885,11 @@ class PopupController {
                 // If already active, ignore
                 if (btn.classList.contains('is-active')) {return;}
                 try {
-                    const response = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { tasksFilter: selected } });
-                    if (response && response.state && this.taskUIManager) {
+                    const state = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { tasksFilter: selected } });
+                    if (state && this.taskUIManager) {
                         this.taskUIManager.currentFilter = selected;
                         this.syncFilterButtons(selected);
-                        this.taskUIManager.renderTasksList(response.state.tasks, response.state.currentTaskId);
+                        this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
                     }
                 } catch (err) {
                     console.error('Failed to set tasks filter', err);
@@ -924,23 +941,21 @@ class PopupController {
         if (clearTaskBtn) {
             clearTaskBtn.addEventListener('click', async () => {
                 try {
-                    const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                    const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
 
                     // Update UI immediately with the response
-                    if (response && response.state) {
-                        this.updateState(response.state);
+                    this.updateState(state);
 
-                        // Also update task UI components if available
-                        if (this.taskUIManager) {
-                            this.taskUIManager.renderTasksList(response.state.tasks || [], response.state.currentTaskId);
-                            this.taskUIManager.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks || []);
-                        }
-                        document.body.classList.remove('compact-mode');
-                        document.body.classList.remove('has-current-task');
-                        (window.requestAnimationFrame || window.setTimeout)(() => {
-                            window._popupController?.syncCurrentTaskLayout?.();
-                        });
+                    // Also update task UI components if available
+                    if (this.taskUIManager) {
+                        this.taskUIManager.renderTasksList(state.tasks || [], state.currentTaskId);
+                        this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks || []);
                     }
+                    document.body.classList.remove('compact-mode');
+                    document.body.classList.remove('has-current-task');
+                    (window.requestAnimationFrame || window.setTimeout)(() => {
+                        window._popupController?.syncCurrentTaskLayout?.();
+                    });
                 } catch (error) {
                     console.error('Failed to clear current task:', error);
                 }
@@ -979,10 +994,8 @@ class PopupController {
             clearCompletedBtn.addEventListener('click', async () => {
                 if (!window.confirm('Remove all completed tasks? This cannot be undone.')) { return; }
                 try {
-                    const response = await this.messageHandler.sendMessage('clearCompletedTasks');
-                    if (response && response.state) {
-                        this.updateState(response.state);
-                    }
+                    const state = await this.messageHandler.sendMessage('clearCompletedTasks');
+                    this.updateState(state);
                 } catch (e) {
                     console.error('Failed to clear completed tasks', e);
                 }

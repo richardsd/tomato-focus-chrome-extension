@@ -281,17 +281,15 @@ export class TaskUIManager {
 
             // If clicking the currently active task, unset it
             if (currentTaskId === taskId) {
-                const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
-                if (response && response.state) {
-                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-                    const hasCurrent = !!response.state.currentTaskId;
-                    document.body.classList.toggle('compact-mode', hasCurrent);
-                    document.body.classList.toggle('has-current-task', hasCurrent);
-                    (window.requestAnimationFrame || window.setTimeout)(() => {
-                        window._popupController?.syncCurrentTaskLayout?.();
-                    });
-                }
+                const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                this.renderTasksList(state.tasks, state.currentTaskId);
+                this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+                const hasCurrent = !!state.currentTaskId;
+                document.body.classList.toggle('compact-mode', hasCurrent);
+                document.body.classList.toggle('has-current-task', hasCurrent);
+                (window.requestAnimationFrame || window.setTimeout)(() => {
+                    window._popupController?.syncCurrentTaskLayout?.();
+                });
                 return;
             }
 
@@ -305,20 +303,18 @@ export class TaskUIManager {
                 }
             }
 
-            const response = await this.messageHandler.sendMessage('setCurrentTask', { taskId });
+            const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId });
 
             // Refresh UI with updated state
-            if (response && response.state) {
-                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-                // Immediate compact mode toggle
-                const hasCurrent = !!response.state.currentTaskId;
-                document.body.classList.toggle('compact-mode', hasCurrent);
-                document.body.classList.toggle('has-current-task', hasCurrent);
-                (window.requestAnimationFrame || window.setTimeout)(() => {
-                    window._popupController?.syncCurrentTaskLayout?.();
-                });
-            }
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            // Immediate compact mode toggle
+            const hasCurrent = !!state.currentTaskId;
+            document.body.classList.toggle('compact-mode', hasCurrent);
+            document.body.classList.toggle('has-current-task', hasCurrent);
+            (window.requestAnimationFrame || window.setTimeout)(() => {
+                window._popupController?.syncCurrentTaskLayout?.();
+            });
         } catch (error) {
             console.error('Failed to select task:', error);
         }
@@ -348,13 +344,11 @@ export class TaskUIManager {
         }
 
         try {
-            const response = await this.messageHandler.sendMessage('deleteTask', { taskId });
+            const state = await this.messageHandler.sendMessage('deleteTask', { taskId });
 
             // Refresh UI with updated state
-            if (response && response.state) {
-                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-            }
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         } catch (error) {
             console.error('Failed to delete task:', error);
         }
@@ -365,16 +359,14 @@ export class TaskUIManager {
      */
     async toggleTaskCompletion(taskId, isCompleted) {
         try {
-            const response = await this.messageHandler.sendMessage('updateTask', {
+            const state = await this.messageHandler.sendMessage('updateTask', {
                 taskId,
                 updates: { isCompleted }
             });
 
             // Refresh UI with updated state
-            if (response && response.state) {
-                this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-            }
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         } catch (error) {
             console.error('Failed to update task completion:', error);
         }
@@ -429,7 +421,7 @@ export class TaskUIManager {
         try {
             if (this.currentEditingTaskId) {
                 // Update existing task
-                const response = await this.messageHandler.sendMessage('updateTask', {
+                const state = await this.messageHandler.sendMessage('updateTask', {
                     taskId: this.currentEditingTaskId,
                     updates: {
                         title: formData.title,
@@ -439,21 +431,17 @@ export class TaskUIManager {
                 });
 
                 // Refresh UI with updated state
-                if (response && response.state) {
-                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-                }
+                this.renderTasksList(state.tasks, state.currentTaskId);
+                this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
             } else {
                 // Create new task
-                const response = await this.messageHandler.sendMessage('createTask', {
-                    taskData: formData
+                const state = await this.messageHandler.sendMessage('createTask', {
+                    task: formData
                 });
 
                 // Refresh UI with updated state
-                if (response && response.state) {
-                    this.renderTasksList(response.state.tasks, response.state.currentTaskId);
-                    this.updateCurrentTaskDisplay(response.state.currentTaskId, response.state.tasks);
-                }
+                this.renderTasksList(state.tasks, state.currentTaskId);
+                this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
             }
             this.hideTaskForm();
         } catch (error) {

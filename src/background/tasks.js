@@ -90,4 +90,11 @@ export class TaskManager {
         const tasks = await this.getTasks();
         return tasks.find(task => task.id === taskId) || null;
     }
+
+    static async clearCompletedTasks() {
+        const tasks = await this.getTasks();
+        const activeTasks = tasks.filter(task => !task.isCompleted);
+        await this.saveTasks(activeTasks);
+        return activeTasks;
+    }
 }

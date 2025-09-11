@@ -280,11 +280,11 @@ export class TimerController {
         this.updateUI();
     }
 
-    toggle() {
+    async toggle() {
         if (this.state.isRunning) {
-            this.pause();
+            await this.pause();
         } else {
-            this.start();
+            await this.start();
         }
     }
 
@@ -352,11 +352,16 @@ export class TimerController {
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
             case 'reset':
+            case 'resetTimer':
                 await this.reset();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
             case 'skipBreak':
                 await this.skipBreak();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'toggleTimer':
+                await this.toggle();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
             case 'saveSettings':
@@ -385,8 +390,30 @@ export class TimerController {
                 await this.saveState();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
+            case 'getTasks':
+                const tasks = await TaskManager.getTasks();
+                sendResponse({ success: true, tasks });
+                break;
             case 'setCurrentTask':
                 this.state.currentTaskId = request.taskId;
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'updateUiPreferences':
+                this.state.uiPreferences = {
+                    ...this.state.uiPreferences,
+                    ...(request.uiPreferences || request.updates || {})
+                };
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            case 'clearCompletedTasks':
+                await TaskManager.clearCompletedTasks();
+                this.state.tasks = await TaskManager.getTasks();
+                if (this.state.currentTaskId) {
+                    const exists = this.state.tasks.some(t => t.id === this.state.currentTaskId);
+                    if (!exists) this.state.currentTaskId = null;
+                }
                 await this.saveState();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
@@ -398,6 +425,10 @@ export class TimerController {
             case 'getStatisticsHistory':
                 const all = await StatisticsManager.getAllStatistics();
                 sendResponse({ success: true, history: all });
+                break;
+            case 'checkNotifications':
+                const permissionLevel = await NotificationManager.checkPermissions();
+                sendResponse({ success: true, permissionLevel });
                 break;
             default:
                 sendResponse({ error: 'Unknown action' });
