@@ -319,13 +319,15 @@ export class TimerController {
 
     startBadgeUpdater() {
         if (this.badgeInterval) return;
-        this.badgeInterval = setInterval(() => {
+        this.badgeInterval = setInterval(async () => {
             if (this.state.isRunning) {
                 this.state.timeLeft--;
                 if (this.state.timeLeft <= 0) {
-                    this.onTimerComplete();
+                    await this.onTimerComplete();
+                } else {
+                    this.updateBadge();
+                    this.sendMessageToPopup('updateTimer', this.state.getState());
                 }
-                this.updateBadge();
             }
         }, CONSTANTS.BADGE_UPDATE_INTERVAL);
     }
