@@ -380,6 +380,9 @@ export class TimerController {
             case 'updateTask':
                 await TaskManager.updateTask(request.taskId, request.updates);
                 this.state.tasks = await TaskManager.getTasks();
+                if (this.state.currentTaskId === request.taskId && request.updates?.isCompleted) {
+                    this.state.currentTaskId = null;
+                }
                 await this.saveState();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;

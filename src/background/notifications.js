@@ -1,6 +1,7 @@
 import { CONSTANTS, chromePromise } from './constants.js';
 
 export class NotificationManager {
+    static offscreenCreated = false;
     static async show(title, message, settings = {}) {
         try {
             const permissionLevel = await chromePromise.notifications.getPermissionLevel();
@@ -57,19 +58,21 @@ export class NotificationManager {
 
     static async playSound(volume = 0.7) {
         try {
-            // Check if offscreen document already exists
-            const existingContexts = await chrome.runtime.getContexts({
-                contextTypes: ['OFFSCREEN_DOCUMENT']
-            });
-
-            if (existingContexts.length === 0) {
-                // Create an offscreen document to play the sound
-                // Since service workers don't have access to Audio API
-                await chrome.offscreen.createDocument({
-                    url: 'offscreen.html',
-                    reasons: ['AUDIO_PLAYBACK'],
-                    justification: 'Play notification sound'
+            // Ensure only a single offscreen document exists
+            if (!NotificationManager.offscreenCreated) {
+                const existingContexts = await chrome.runtime.getContexts({
+                    contextTypes: ['OFFSCREEN_DOCUMENT']
                 });
+
+                if (existingContexts.length === 0) {
+                    await chrome.offscreen.createDocument({
+                        url: 'offscreen.html',
+                        reasons: ['AUDIO_PLAYBACK'],
+                        justification: 'Play notification sound'
+                    });
+                }
+
+                NotificationManager.offscreenCreated = true;
             }
 
             // Send message to offscreen document to play sound
@@ -80,7 +83,11 @@ export class NotificationManager {
             });
 
             if (response && !response.success) {
-                throw new Error(response.error || 'Unknown error playing sound');
+                if (response.error && response.error.includes('interrupted')) {
+                    console.warn('Sound playback interrupted, continuing');
+                } else {
+                    throw new Error(response.error || 'Unknown error playing sound');
+                }
             }
         } catch (error) {
             console.error('Failed to play sound via offscreen document:', error);
@@ -88,8 +95,9 @@ export class NotificationManager {
             try {
                 await chromePromise.notifications.create('fallback-sound', {
                     type: 'basic',
+                    iconUrl: 'icons/icon48.png',
                     title: 'Tomato Focus',
-                    message: '',
+                    message: 'Timer complete',
                     silent: false
                 });
                 // Clear the fallback notification immediately
