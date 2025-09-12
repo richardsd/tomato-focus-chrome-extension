@@ -272,6 +272,9 @@ export class TimerController {
 
         if (this.state.isRunning) {
             await this.scheduleAlarm();
+            this.startBadgeUpdater();
+        } else {
+            this.stopBadgeUpdater();
         }
 
         this.updateBadge();
@@ -322,11 +325,14 @@ export class TimerController {
 
     startBadgeUpdater() {
         if (this.badgeInterval) return;
-        this.badgeInterval = setInterval(async () => {
+        this.badgeInterval = setInterval(() => {
             if (this.state.isRunning) {
                 this.state.timeLeft--;
                 if (this.state.timeLeft <= 0) {
-                    await this.onTimerComplete();
+                    this.state.timeLeft = 0;
+                    this.updateBadge();
+                    this.sendMessageToPopup('updateTimer', this.state.getState());
+                    this.stopBadgeUpdater();
                 } else {
                     this.updateBadge();
                     this.sendMessageToPopup('updateTimer', this.state.getState());
