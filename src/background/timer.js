@@ -369,11 +369,33 @@ export class TimerController {
                 await this.toggle();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
-            case 'saveSettings':
+            case 'saveSettings': {
+                const previous = { ...this.state.settings };
+                const prevDuration = this.state.isWorkSession
+                    ? previous.workDuration * 60
+                    : (this.state.currentSession % previous.longBreakInterval === 0
+                        ? previous.longBreak * 60
+                        : previous.shortBreak * 60);
+                const elapsed = prevDuration - this.state.timeLeft;
+
                 this.state.updateSettings(request.settings);
-                await this.saveState();
+
+                const newDuration = this.state.isWorkSession
+                    ? this.state.settings.workDuration * 60
+                    : (this.state.currentSession % this.state.settings.longBreakInterval === 0
+                        ? this.state.settings.longBreak * 60
+                        : this.state.settings.shortBreak * 60);
+                this.state.timeLeft = Math.max(newDuration - elapsed, 0);
+
+                if (this.state.isRunning) {
+                    await chrome.alarms.clear(this.alarmName);
+                    await this.scheduleAlarm();
+                }
+
+                this.updateUI();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
+            }
             case 'createTask':
                 await TaskManager.createTask(request.task);
                 this.state.tasks = await TaskManager.getTasks();
