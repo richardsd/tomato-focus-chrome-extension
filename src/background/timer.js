@@ -370,14 +370,6 @@ export class TimerController {
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
             case 'saveSettings': {
-                const previous = { ...this.state.settings };
-                const prevDuration = this.state.isWorkSession
-                    ? previous.workDuration * 60
-                    : (this.state.currentSession % previous.longBreakInterval === 0
-                        ? previous.longBreak * 60
-                        : previous.shortBreak * 60);
-                const elapsed = prevDuration - this.state.timeLeft;
-
                 this.state.updateSettings(request.settings);
 
                 const newDuration = this.state.isWorkSession
@@ -385,7 +377,11 @@ export class TimerController {
                     : (this.state.currentSession % this.state.settings.longBreakInterval === 0
                         ? this.state.settings.longBreak * 60
                         : this.state.settings.shortBreak * 60);
-                this.state.timeLeft = Math.max(newDuration - elapsed, 0);
+
+                // Reset remaining time to the newly selected duration rather than
+                // adjusting by the previously elapsed amount which was causing the
+                // timer to grow instead of updating to the expected value.
+                this.state.timeLeft = newDuration;
 
                 if (this.state.isRunning) {
                     await chrome.alarms.clear(this.alarmName);
