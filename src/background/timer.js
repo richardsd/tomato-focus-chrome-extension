@@ -254,8 +254,8 @@ export class TimerController {
             } else {
                 this.state.startShortBreak();
             }
-            this.state.incrementSession();
         } else {
+            this.state.incrementSession();
             this.state.startWork();
         }
 
@@ -292,6 +292,7 @@ export class TimerController {
 
     async skipBreak() {
         if (!this.state.isWorkSession) {
+            this.state.incrementSession();
             this.state.startWork();
             this.state.isRunning = this.state.settings.autoStart || this.state.isRunning;
             await chrome.alarms.clear(this.alarmName);
