@@ -247,15 +247,14 @@ export class TimerController {
                 await TaskManager.incrementTaskPomodoros(this.state.currentTaskId);
                 this.state.tasks = await TaskManager.getTasks();
             }
-            this.state.incrementSession();
-        }
 
-        if (this.state.isWorkSession) {
-            if (this.state.shouldTakeLongBreak()) {
+            const takeLongBreak = this.state.shouldTakeLongBreak();
+            if (takeLongBreak) {
                 this.state.startLongBreak();
             } else {
                 this.state.startShortBreak();
             }
+            this.state.incrementSession();
         } else {
             this.state.startWork();
         }
@@ -291,9 +290,13 @@ export class TimerController {
     async skipBreak() {
         if (!this.state.isWorkSession) {
             this.state.startWork();
+            this.state.isRunning = this.state.settings.autoStart || this.state.isRunning;
             await chrome.alarms.clear(this.alarmName);
             if (this.state.isRunning) {
                 await this.scheduleAlarm();
+                this.startBadgeUpdater();
+            } else {
+                this.stopBadgeUpdater();
             }
             await this.saveState();
             this.updateBadge();
