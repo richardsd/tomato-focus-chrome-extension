@@ -58,6 +58,58 @@
   height: 24px;
 }
 
+/* Current Task Display */
+.current-task {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.current-task__content {
+  flex: 1;
+}
+
+.current-task__title {
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.current-task__name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+.current-task__progress {
+  font-size: var(--font-size-xs);
+  opacity: 0.9;
+}
+
+.current-task__clear {
+  background: none;
+  border: none;
+  color: currentColor;
+  font-size: var(--font-size-lg);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: all var(--transition-base);
+  margin-left: 8px;
+}
+
+.current-task__clear:hover {
+  opacity: 1;
+}
+
    TIMER COMPONENT
    =========================================== */
 
@@ -456,6 +508,40 @@ body.has-current-task .stat-card { padding:12px 12px 14px; gap:6px; }
 .stats-history-section.hidden { display:none; }
 /* Temporarily disable chart until data structure is fixed */
 .stats-history-section { display: none !important; }
+
+/* =============================================================
+   POPUP HEIGHT CONSTRAINT & CURRENT TASK COMPRESSION
+   Keep total popup height <= 600px (Chrome limit) when current
+   task strip is visible by tightening vertical spacing, timer
+   size, and stats section. A JS helper toggles body classes:
+     .has-current-task  -> current task visible
+     .hide-stats        -> stats auto-hidden when still too tall
+   ============================================================= */
+html, body { max-height:600px; }
+body.has-current-task .header { margin-bottom: var(--space-3); }
+body.has-current-task .current-task { margin-top:2px; padding:10px 14px 8px; }
+
+/* Timer shrink */
+/* Keep intrinsic 180x180 size; scale down so SVG + stroke remain centered */
+body.has-current-task .timer__circle { width:180px; height:180px; margin:10px auto 8px; transform:scale(.9); transform-origin:center; }
+body.has-current-task #timer { font-size: var(--font-size-3xl); }
+
+/* Controls tightening */
+body.has-current-task .controls-container { padding:14px 16px; }
+body.has-current-task .controls { margin-bottom:8px; gap:4px; }
+body.has-current-task .controls .btn { min-height:38px; padding:6px 10px; font-size: var(--font-size-xs); }
+body.has-current-task .cycle-progress { padding-top:2px; font-size: var(--font-size-sm); }
+
+/* Stats compression */
+body.has-current-task .stats-section { margin-top:10px; }
+body.has-current-task .stats-container { padding:10px 12px; gap:12px; }
+body.has-current-task .stats-number { font-size: var(--font-size-xl); margin-bottom:2px; }
+body.has-current-task .stats-label { font-size: var(--font-size-xs); line-height:1.2; }
+body.has-current-task.hide-stats .stats-section { display:none; }
+
+/* Compact mode + current task layered (ensure even smaller timer if both used) */
+body.compact-mode.has-current-task .timer__circle { transform:scale(.83); margin-top:8px; }
+body.compact-mode.has-current-task #timer { font-size:2.25rem; }
 
 @media (prefers-contrast: more) {
   .stat-card, .stats-chart { box-shadow:none; }

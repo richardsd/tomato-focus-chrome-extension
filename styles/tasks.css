@@ -381,40 +381,6 @@
 .task-item__description.expanded { -webkit-line-clamp:unset; line-clamp:unset; max-height:none; }
 .task-item__description.clamped::after { content:""; position:absolute; left:0; right:0; bottom:0; height:1.4em; background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0.9)); pointer-events:none; }
 
-/* =============================================================
-   POPUP HEIGHT CONSTRAINT & CURRENT TASK COMPRESSION
-   Keep total popup height <= 600px (Chrome limit) when current
-   task strip is visible by tightening vertical spacing, timer
-   size, and stats section. A JS helper toggles body classes:
-     .has-current-task  -> current task visible
-     .hide-stats        -> stats auto-hidden when still too tall
-   ============================================================= */
-html, body { max-height:600px; }
-body.has-current-task .header { margin-bottom: var(--space-3); }
-body.has-current-task .current-task { margin-top:2px; padding:10px 14px 8px; }
-
-/* Timer shrink */
-/* Keep intrinsic 180x180 size; scale down so SVG + stroke remain centered */
-body.has-current-task .timer__circle { width:180px; height:180px; margin:10px auto 8px; transform:scale(.9); transform-origin:center; }
-body.has-current-task #timer { font-size: var(--font-size-3xl); }
-
-/* Controls tightening */
-body.has-current-task .controls-container { padding:14px 16px; }
-body.has-current-task .controls { margin-bottom:8px; gap:4px; }
-body.has-current-task .controls .btn { min-height:38px; padding:6px 10px; font-size: var(--font-size-xs); }
-body.has-current-task .cycle-progress { padding-top:2px; font-size: var(--font-size-sm); }
-
-/* Stats compression */
-body.has-current-task .stats-section { margin-top:10px; }
-body.has-current-task .stats-container { padding:10px 12px; gap:12px; }
-body.has-current-task .stats-number { font-size: var(--font-size-xl); margin-bottom:2px; }
-body.has-current-task .stats-label { font-size: var(--font-size-xs); line-height:1.2; }
-body.has-current-task.hide-stats .stats-section { display:none; }
-
-/* Compact mode + current task layered (ensure even smaller timer if both used) */
-body.compact-mode.has-current-task .timer__circle { transform:scale(.83); margin-top:8px; }
-body.compact-mode.has-current-task #timer { font-size:2.25rem; }
-
 .task-item__desc-toggle { background:none; border:none; color:var(--color-primary); font-size:10px; padding:2px 0 4px; cursor:pointer; text-decoration:underline; align-self:flex-start; line-height:1; font-weight:600; }
 .task-item__desc-toggle:hover { color:var(--color-primary-dark); }
 
