@@ -110,6 +110,7 @@
   opacity: 1;
 }
 
+/* ===========================================
    TIMER COMPONENT
    =========================================== */
 
@@ -166,6 +167,7 @@
   transform: translateZ(0); /* Own layer to reduce repaint scope */
 }
 
+/* ===========================================
    CONTROLS COMPONENT
    =========================================== */
 
@@ -199,6 +201,7 @@
   min-width: 95px;
 }
 
+/* ===========================================
    THEME STATES
    =========================================== */
 
@@ -231,6 +234,7 @@
   transform: translateY(-2px);
 }
 
+/* ===========================================
    STATISTICS COMPONENT
    =========================================== */
 
@@ -303,6 +307,7 @@
   color: #6b7280;
 }
 
+/* ===========================================
    NOTIFICATION COMPONENT
    =========================================== */
 
@@ -327,7 +332,8 @@
   height: 500px; /* Fixed height for the entire panel */
   overflow: visible; /* Keep internal layout stable; header shadows now escape parent (.panel) */
 }
-  /* ===========================================
+
+/* ===========================================
    COMPACT MODE FINAL (placed at end to override earlier sizing)
    =========================================== */
 body.compact-mode .current-task { margin-top: 0; padding: 10px 14px 8px; border-radius: 16px; }
@@ -340,6 +346,7 @@ body.compact-mode .panel .header { margin-bottom: 10px; }
 body.compact-mode .cycle-progress { margin-top: 4px; }
 body.compact-mode .controls { margin-bottom: 10px; }
 
+/* ===========================================
    STATISTICS PANEL (NEW)
    =========================================== */
 .stats-panel-content {
