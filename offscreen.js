@@ -15,8 +15,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true });
             })
             .catch((error) => {
-                console.error('Error playing sound:', error);
-                sendResponse({ success: false, error: error.message });
+                if (error.message && error.message.includes('interrupted by a call to pause')) {
+                    console.warn('Sound playback interrupted by pause');
+                    sendResponse({ success: true });
+                } else {
+                    console.error('Error playing sound:', error);
+                    sendResponse({ success: false, error: error.message });
+                }
             });
 
         // Return true to indicate we'll send a response asynchronously
@@ -33,7 +38,11 @@ async function playNotificationSound(soundUrl, volume = 1) {
     try {
         // Stop any currently playing audio
         if (currentAudio) {
-            currentAudio.pause();
+            try {
+                currentAudio.pause();
+            } catch {
+                // ignore pause errors
+            }
             currentAudio.currentTime = 0;
         }
 
