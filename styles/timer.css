@@ -190,6 +190,7 @@
 /* Ensure control buttons keep their rounded shape */
 .controls .btn {
   border-radius: var(--radius-lg);
+  min-width: 95px;
 }
 
 .cycle-progress {
@@ -199,11 +200,6 @@
   text-shadow: none;
   margin: 0;
   padding: var(--space-2) 0;
-}
-
-#startBtn,
-#pauseBtn {
-  min-width: 95px;
 }
 
 /* ===========================================
