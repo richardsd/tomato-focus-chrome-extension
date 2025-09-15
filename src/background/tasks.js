@@ -69,6 +69,22 @@ export class TaskManager {
         return true;
     }
 
+    static async deleteTasks(taskIds) {
+        const tasks = await this.getTasks();
+        if (!Array.isArray(taskIds) || taskIds.length === 0) {
+            return tasks;
+        }
+
+        const idsToDelete = new Set(taskIds.map(id => String(id)));
+        const filteredTasks = tasks.filter(task => !idsToDelete.has(task.id));
+
+        if (filteredTasks.length !== tasks.length) {
+            await this.saveTasks(filteredTasks);
+        }
+
+        return filteredTasks;
+    }
+
     static async incrementTaskPomodoros(taskId) {
         const tasks = await this.getTasks();
         const task = tasks.find(task => task.id === taskId);

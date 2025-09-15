@@ -424,6 +424,18 @@ export class TimerController {
                 await this.saveState();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
+            case 'deleteTasks': {
+                const taskIds = Array.isArray(request.taskIds) ? request.taskIds : [];
+                const deletedIds = new Set(taskIds.map(id => String(id)));
+                const updatedTasks = await TaskManager.deleteTasks(taskIds);
+                if (this.state.currentTaskId && deletedIds.has(String(this.state.currentTaskId))) {
+                    this.state.currentTaskId = null;
+                }
+                this.state.tasks = updatedTasks;
+                await this.saveState();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
             case 'getTasks':
                 const tasks = await TaskManager.getTasks();
                 sendResponse({ success: true, tasks });

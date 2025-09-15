@@ -1333,6 +1333,19 @@ select.settings-input {
 
 .task-item__header { display:flex; align-items:flex-start; justify-content:flex-start; margin-bottom:4px; gap:8px; }
 
+.task-item__selection { display:flex; align-items:center; flex-shrink:0; }
+
+.task-item__checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary, #dc2f02);
+  cursor: pointer;
+}
+
+.task-item.task-item--selected {
+  box-shadow: 0 0 0 2px rgba(220,47,2,0.25);
+}
+
 .task-item__title {
   font-weight: 600;
   font-size: var(--font-size-sm);
