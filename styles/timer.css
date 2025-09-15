@@ -190,9 +190,8 @@
 /* Ensure control buttons keep their rounded shape and spacing */
 .controls .btn {
   border-radius: var(--radius-lg);
-  min-width: 110px;
-  flex: 0 0 auto;
-  display: inline-flex;
+  flex: 1 1 0;
+  display: flex;
   align-items: center;
   gap: var(--space-2);
 }
