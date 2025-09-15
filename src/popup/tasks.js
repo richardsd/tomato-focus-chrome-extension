@@ -5,6 +5,7 @@ export class TaskUIManager {
         this.messageHandler = messageHandler;
         this.currentEditingTaskId = null;
         this.currentFilter = 'all';
+        this.setupJiraSyncButton();
     }
 
     /**
@@ -486,6 +487,19 @@ export class TaskUIManager {
         currentTaskName.textContent = currentTask.title;
         currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
     }
+};
+
+TaskUIManager.prototype.setupJiraSyncButton = function() {
+    const btn = utils.getElement(POPUP_CONSTANTS.SELECTORS.syncJiraBtn);
+    if (!btn) { return; }
+    btn.addEventListener('click', async () => {
+        try {
+            const state = await this.messageHandler.sendMessage('importJiraTasks');
+            this.renderTasksList(state.tasks || [], state.currentTaskId);
+        } catch (err) {
+            console.error('Failed to import Jira tasks:', err);
+        }
+    });
 };
 
 /**

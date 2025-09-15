@@ -18,7 +18,10 @@ export class SettingsManager {
             theme: document.getElementById('theme'),
             pauseOnIdle: document.getElementById('pauseOnIdle'),
             playSound: document.getElementById('playSound'),
-            volume: document.getElementById('volume')
+            volume: document.getElementById('volume'),
+            jiraUrl: document.getElementById('jiraUrl'),
+            jiraUsername: document.getElementById('jiraUsername'),
+            jiraToken: document.getElementById('jiraToken')
         };
 
         return { inputs };
@@ -39,7 +42,10 @@ export class SettingsManager {
             theme: inputs.theme?.value || 'system',
             pauseOnIdle: inputs.pauseOnIdle ? inputs.pauseOnIdle.checked : true,
             playSound: inputs.playSound ? inputs.playSound.checked : true,
-            volume: parseFloat(inputs.volume?.value) || 1
+            volume: parseFloat(inputs.volume?.value) || 1,
+            jiraUrl: inputs.jiraUrl?.value?.trim() || '',
+            jiraUsername: inputs.jiraUsername?.value?.trim() || '',
+            jiraToken: inputs.jiraToken?.value?.trim() || ''
         };
     }
 
@@ -64,6 +70,12 @@ export class SettingsManager {
 
         if (settings.volume < 0 || settings.volume > 1) {
             errors.push('Volume must be between 0 and 1');
+        }
+
+        const hasAnyJira = settings.jiraUrl || settings.jiraUsername || settings.jiraToken;
+        const hasAllJira = settings.jiraUrl && settings.jiraUsername && settings.jiraToken;
+        if (hasAnyJira && !hasAllJira) {
+            errors.push('Jira URL, username, and token are all required for Jira integration');
         }
 
         return { isValid: errors.length === 0, errors };

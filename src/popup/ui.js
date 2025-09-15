@@ -290,7 +290,10 @@ class UIManager {
             theme: state.settings.theme || 'system',
             pauseOnIdle: state.settings.pauseOnIdle,
             playSound: state.settings.playSound,
-            volume: state.settings.volume
+            volume: state.settings.volume,
+            jiraUrl: state.settings.jiraUrl || '',
+            jiraUsername: state.settings.jiraUsername || '',
+            jiraToken: state.settings.jiraToken || ''
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {
