@@ -187,10 +187,14 @@
   box-shadow: var(--shadow-lg);
 }
 
-/* Ensure control buttons keep their rounded shape */
+/* Ensure control buttons keep their rounded shape and spacing */
 .controls .btn {
   border-radius: var(--radius-lg);
-  min-width: 95px;
+  min-width: 110px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .cycle-progress {
