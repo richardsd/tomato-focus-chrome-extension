@@ -225,16 +225,12 @@
 
 .break-mode .btn--success,
 .break-mode .btn--neutral:not(:disabled) {
-  background: rgba(22, 163, 74, 0.8);
-  border-color: rgba(22, 163, 74, 0.9);
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+  background: var(--color-success);
 }
 
 .break-mode .btn--success:hover,
 .break-mode .btn--neutral:not(:disabled):hover {
-  background: rgba(22, 163, 74, 0.9);
-  border-color: rgba(22, 163, 74, 1);
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.4);
+  background: var(--color-success-dark);
   transform: translateY(-2px);
 }
 

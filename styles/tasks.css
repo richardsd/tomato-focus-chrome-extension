@@ -560,21 +560,8 @@
 .form-group textarea { resize:vertical; min-height:90px; max-height:150px; }
 
 .form-actions { display:flex; gap:14px; justify-content:flex-end; padding:20px 26px 26px; background:linear-gradient(to top, rgba(0,0,0,0.04), rgba(0,0,0,0)); flex-shrink:0; }
-.form-actions .btn { min-width:110px; }
-.form-actions .btn--secondary { background:#64748b; border:none; }
-.form-actions .btn--secondary:hover { background:#475569; }
-.form-actions .btn--success { background:var(--color-success); }
-.form-actions .btn--success:hover { background:var(--color-success-dark); }
+.form-actions .btn { min-width:110px; flex:0 0 auto; }
 
-.btn--secondary {
-  background: var(--color-neutral);
-  color: white;
-  border: 1px solid var(--color-neutral);
-}
-
-.btn--secondary:hover {
-  background: var(--color-neutral-dark);
-}
 
 /* Light theme adjustments */
 .light-theme .task-item {
