@@ -14,6 +14,10 @@ export const POPUP_CONSTANTS = {
         focusTime: '#focusTime',
         saveSettingsBtn: '#saveSettings',
         clearDataBtn: '#clearDataBtn',
+        jiraUrl: '#jiraUrl',
+        jiraUsername: '#jiraUsername',
+        jiraToken: '#jiraToken',
+        syncJiraBtn: '#syncJiraBtn',
         notificationStatus: '#notificationStatus',
         notificationMessage: '#notificationMessage',
         timerPanel: '#timerPanel',
@@ -74,7 +78,10 @@ export const POPUP_CONSTANTS = {
             theme: 'system',
             pauseOnIdle: true,
             playSound: true,
-            volume: 1
+            volume: 1,
+            jiraUrl: '',
+            jiraUsername: '',
+            jiraToken: ''
         }
     }
 };

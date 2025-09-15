@@ -14,7 +14,10 @@ export const CONSTANTS = {
         theme: 'system',
         pauseOnIdle: true,
         playSound: true,
-        volume: 0.7
+        volume: 0.7,
+        jiraUrl: '',
+        jiraUsername: '',
+        jiraToken: ''
     }
 };
 

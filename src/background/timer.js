@@ -4,6 +4,7 @@ import { TaskManager } from './tasks.js';
 import { NotificationManager } from './notifications.js';
 import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
+import { fetchAssignedIssues } from './jira.js';
 
 class TimerState {
     constructor() {
@@ -427,6 +428,26 @@ export class TimerController {
                 const tasks = await TaskManager.getTasks();
                 sendResponse({ success: true, tasks });
                 break;
+            case 'importJiraTasks': {
+                try {
+                    const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
+                    const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
+                    for (const issue of issues) {
+                        await TaskManager.createTask({
+                            title: issue.title,
+                            description: issue.description,
+                            estimatedPomodoros: 1
+                        });
+                    }
+                    this.state.tasks = await TaskManager.getTasks();
+                    await this.saveState();
+                    sendResponse({ success: true, state: this.state.getState() });
+                } catch (err) {
+                    console.error('Failed to import Jira tasks:', err);
+                    sendResponse({ error: err.message });
+                }
+                break;
+            }
             case 'setCurrentTask':
                 this.state.currentTaskId = request.taskId;
                 await this.saveState();
