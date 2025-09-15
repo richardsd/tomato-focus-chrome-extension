@@ -57,14 +57,11 @@ export class TaskUIManager {
         this.attachTaskEventListeners();
 
         // Toggle visibility of clear completed button
-        const hasCompleted = allTasks.some(t => t.isCompleted);
         const clearCompletedBtn = document.getElementById('clearCompletedBtn');
         if (clearCompletedBtn) {
-            if (hasCompleted) {
-                clearCompletedBtn.classList.remove('hidden');
-            } else {
-                clearCompletedBtn.classList.add('hidden');
-            }
+            const shouldShowClearCompleted = this.currentFilter === 'completed' && displayTasks.length > 0;
+            clearCompletedBtn.classList.toggle('hidden', !shouldShowClearCompleted);
+            clearCompletedBtn.disabled = !shouldShowClearCompleted;
         }
         this.updateBulkDeleteButton();
     }

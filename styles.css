@@ -1535,7 +1535,25 @@ body.compact-mode.has-current-task #timer { font-size:2.25rem; }
 }
 
 /* Tasks panel footer */
-.tasks-footer { margin-top: 4px; padding: 4px 0 8px; text-align: center; }
+.tasks-footer {
+  margin-top: 4px;
+  padding: 8px 0 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.tasks-footer #deleteSelectedBtn {
+  width: 100%;
+  max-width: 240px;
+  align-self: center;
+}
+
+.tasks-footer .tasks-clear-link {
+  align-self: center;
+}
 .tasks-clear-link {
   background: none;
   border: none;
