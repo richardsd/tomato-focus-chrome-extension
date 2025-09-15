@@ -1,5 +1,6 @@
 export const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
+    JIRA_SYNC_ALARM: 'jiraSyncAlarm',
     STORAGE_KEY: 'pomodoroState',
     STATISTICS_KEY: 'pomodoroStatistics',
     TASKS_KEY: 'pomodoroTasks',
@@ -17,7 +18,9 @@ export const CONSTANTS = {
         volume: 0.7,
         jiraUrl: '',
         jiraUsername: '',
-        jiraToken: ''
+        jiraToken: '',
+        autoSyncJira: false,
+        jiraSyncInterval: 30
     }
 };
 

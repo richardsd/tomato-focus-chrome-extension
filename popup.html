@@ -187,6 +187,14 @@
                             <input type="password" id="jiraToken" class="settings-input">
                         </div>
                         <div class="settings-row">
+                            <label class="settings-label" for="autoSyncJira">Enable periodic sync:</label>
+                            <input type="checkbox" id="autoSyncJira" class="settings-checkbox">
+                        </div>
+                        <div class="settings-row">
+                            <label class="settings-label" for="jiraSyncInterval">Sync interval (minutes):</label>
+                            <input type="number" id="jiraSyncInterval" min="5" max="720" value="30" class="settings-input">
+                        </div>
+                        <div class="settings-row">
                             <button id="syncJiraBtn" class="btn btn--secondary btn--full" type="button">Sync from Jira</button>
                         </div>
                     </div>

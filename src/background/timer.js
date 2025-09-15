@@ -94,6 +94,7 @@ export class TimerController {
     constructor() {
         this.state = new TimerState();
         this.alarmName = CONSTANTS.ALARM_NAME;
+        this.jiraAlarmName = CONSTANTS.JIRA_SYNC_ALARM;
         this.isInitialized = false;
 
         this.init();
@@ -106,6 +107,7 @@ export class TimerController {
         this.setupAlarmListener();
         this.setupMessageListener();
         this.setupIdleListener();
+        await this.configureJiraSyncAlarm();
         this.isInitialized = true;
         this.checkIdleResume();
         this.updateUI();
@@ -115,6 +117,10 @@ export class TimerController {
         const savedState = await StorageManager.loadState();
         if (savedState) {
             Object.assign(this.state, savedState);
+            this.state.settings = {
+                ...CONSTANTS.DEFAULT_SETTINGS,
+                ...(savedState.settings || {})
+            };
         } else {
             await this.saveState();
         }
@@ -130,6 +136,75 @@ export class TimerController {
 
     async loadTasks() {
         this.state.tasks = await TaskManager.getTasks();
+    }
+
+    async configureJiraSyncAlarm() {
+        const settings = this.state.settings || {};
+        await new Promise(resolve => chrome.alarms.clear(this.jiraAlarmName, resolve));
+
+        const { autoSyncJira, jiraSyncInterval, jiraUrl, jiraUsername, jiraToken } = settings;
+        if (!autoSyncJira) {
+            return;
+        }
+
+        if (!jiraUrl || !jiraUsername || !jiraToken) {
+            console.warn('Jira auto-sync is enabled but configuration is incomplete. Skipping alarm registration.');
+            return;
+        }
+
+        const interval = Number.parseInt(jiraSyncInterval, 10) || CONSTANTS.DEFAULT_SETTINGS.jiraSyncInterval;
+        const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
+        chrome.alarms.create(this.jiraAlarmName, { periodInMinutes: sanitizedInterval });
+    }
+
+    async performJiraSync() {
+        const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
+        const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
+        const existingTasks = await TaskManager.getTasks();
+        const existingTitles = new Set(existingTasks.map(task => (task.title || '').trim().toLowerCase()));
+        let createdCount = 0;
+
+        for (const issue of issues) {
+            const normalizedTitle = (issue.title || '').trim();
+            const fallbackTitle = normalizedTitle || issue.key || 'Jira Task';
+            const dedupeKey = fallbackTitle.toLowerCase();
+
+            if (existingTitles.has(dedupeKey)) {
+                continue;
+            }
+
+            await TaskManager.createTask({
+                title: fallbackTitle,
+                description: issue.description,
+                estimatedPomodoros: 1
+            });
+            existingTitles.add(dedupeKey);
+            createdCount++;
+        }
+
+        this.state.tasks = await TaskManager.getTasks();
+        await this.saveState();
+        this.sendMessageToPopup('updateTimer', this.state.getState());
+
+        return { importedCount: createdCount, totalIssues: issues.length };
+    }
+
+    async handleJiraSyncAlarm() {
+        try {
+            const { importedCount, totalIssues } = await this.performJiraSync();
+            let message;
+            if (importedCount > 0) {
+                message = `Imported ${importedCount} Jira ${importedCount === 1 ? 'task' : 'tasks'}.`;
+            } else if (totalIssues > 0) {
+                message = 'Jira sync complete – tasks are already up to date.';
+            } else {
+                message = 'Jira sync complete – no assigned issues found.';
+            }
+            await NotificationManager.show('Tomato Focus', message, this.state.settings);
+        } catch (error) {
+            console.error('Automatic Jira sync failed:', error);
+            await NotificationManager.show('Tomato Focus', `Jira sync failed: ${error.message}`, this.state.settings);
+        }
     }
 
     updateUI() {
@@ -159,6 +234,10 @@ export class TimerController {
         chrome.alarms.onAlarm.addListener(alarm => {
             if (alarm.name === this.alarmName) {
                 this.onTimerComplete();
+            } else if (alarm.name === this.jiraAlarmName) {
+                this.handleJiraSyncAlarm().catch(error => {
+                    console.error('Failed to handle Jira sync alarm:', error);
+                });
             }
         });
     }
@@ -396,6 +475,7 @@ export class TimerController {
                     await this.scheduleAlarm();
                 }
 
+                await this.configureJiraSyncAlarm();
                 this.updateUI();
                 sendResponse({ success: true, state: this.state.getState() });
                 break;
@@ -430,18 +510,13 @@ export class TimerController {
                 break;
             case 'importJiraTasks': {
                 try {
-                    const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
-                    const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
-                    for (const issue of issues) {
-                        await TaskManager.createTask({
-                            title: issue.title,
-                            description: issue.description,
-                            estimatedPomodoros: 1
-                        });
-                    }
-                    this.state.tasks = await TaskManager.getTasks();
-                    await this.saveState();
-                    sendResponse({ success: true, state: this.state.getState() });
+                    const result = await this.performJiraSync();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                        importedCount: result.importedCount,
+                        totalIssues: result.totalIssues
+                    });
                 } catch (err) {
                     console.error('Failed to import Jira tasks:', err);
                     sendResponse({ error: err.message });

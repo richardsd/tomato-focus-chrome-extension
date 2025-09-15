@@ -1,4 +1,5 @@
 import { POPUP_CONSTANTS, utils } from './common.js';
+import { notifyError, notifySuccess } from './notifications.js';
 
 export class TaskUIManager {
     constructor(messageHandler) {
@@ -493,11 +494,16 @@ TaskUIManager.prototype.setupJiraSyncButton = function() {
     const btn = utils.getElement(POPUP_CONSTANTS.SELECTORS.syncJiraBtn);
     if (!btn) { return; }
     btn.addEventListener('click', async () => {
+        btn.disabled = true;
         try {
             const state = await this.messageHandler.sendMessage('importJiraTasks');
             this.renderTasksList(state.tasks || [], state.currentTaskId);
+            notifySuccess('Jira tasks synced successfully.');
         } catch (err) {
             console.error('Failed to import Jira tasks:', err);
+            notifyError(`Jira sync failed: ${err?.message || 'Unknown error'}`);
+        } finally {
+            btn.disabled = false;
         }
     });
 };

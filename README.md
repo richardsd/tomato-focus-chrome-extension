@@ -41,6 +41,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Task Statistics**: Enhanced analytics showing task-based productivity metrics
 - **Task Filters**: View All, In Progress, or Completed tasks
 - **Clear Completed Tasks**: Remove all finished tasks in one click
+- **Jira Sync**: Import assignments on demand or enable automatic refreshes on a custom schedule
 
 <!-- Screenshot Placeholder: Tasks panel showing filters and clear completed button -->
 
@@ -64,6 +65,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Cross-Platform Support**: macOS, Windows, Linux
 - **Permission Hints**: Built-in help for enabling notifications
 - **Offscreen Audio**: Uses a hidden document to reliably play notification sounds
+- **Inline Feedback**: Popup toasts confirm Jira sync results or alert you when something goes wrong
 
 ### 🚀 Advanced Features
 - **Badge Display**: See time remaining on the extension icon
@@ -105,6 +107,7 @@ _Not yet published._
    - Sessions before a long break
    - Auto-start toggle
    - Theme preference
+   - Jira credentials, one-time sync, and optional periodic Jira syncing (interval in minutes)
 3. Click "Save Settings" to apply
 
 ### Context Menu Features
