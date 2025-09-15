@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "A configurable Tomato Focus to boost productivity",
   "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen"],
+  "host_permissions": ["*://*/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
