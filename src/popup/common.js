@@ -17,6 +17,8 @@ export const POPUP_CONSTANTS = {
         jiraUrl: '#jiraUrl',
         jiraUsername: '#jiraUsername',
         jiraToken: '#jiraToken',
+        autoSyncJira: '#autoSyncJira',
+        jiraSyncInterval: '#jiraSyncInterval',
         syncJiraBtn: '#syncJiraBtn',
         notificationStatus: '#notificationStatus',
         notificationMessage: '#notificationMessage',
@@ -81,7 +83,9 @@ export const POPUP_CONSTANTS = {
             volume: 1,
             jiraUrl: '',
             jiraUsername: '',
-            jiraToken: ''
+            jiraToken: '',
+            autoSyncJira: false,
+            jiraSyncInterval: 30
         }
     }
 };

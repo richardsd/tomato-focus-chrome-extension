@@ -293,7 +293,10 @@ class UIManager {
             volume: state.settings.volume,
             jiraUrl: state.settings.jiraUrl || '',
             jiraUsername: state.settings.jiraUsername || '',
-            jiraToken: state.settings.jiraToken || ''
+            jiraToken: state.settings.jiraToken || '',
+            autoSyncJira: Boolean(state.settings.autoSyncJira),
+            jiraSyncInterval: state.settings.jiraSyncInterval
+                ?? POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {

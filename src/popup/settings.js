@@ -21,7 +21,9 @@ export class SettingsManager {
             volume: document.getElementById('volume'),
             jiraUrl: document.getElementById('jiraUrl'),
             jiraUsername: document.getElementById('jiraUsername'),
-            jiraToken: document.getElementById('jiraToken')
+            jiraToken: document.getElementById('jiraToken'),
+            autoSyncJira: document.getElementById('autoSyncJira'),
+            jiraSyncInterval: document.getElementById('jiraSyncInterval')
         };
 
         return { inputs };
@@ -45,7 +47,10 @@ export class SettingsManager {
             volume: parseFloat(inputs.volume?.value) || 1,
             jiraUrl: inputs.jiraUrl?.value?.trim() || '',
             jiraUsername: inputs.jiraUsername?.value?.trim() || '',
-            jiraToken: inputs.jiraToken?.value?.trim() || ''
+            jiraToken: inputs.jiraToken?.value?.trim() || '',
+            autoSyncJira: inputs.autoSyncJira?.checked || false,
+            jiraSyncInterval: parseInt(inputs.jiraSyncInterval?.value, 10)
+                || POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval
         };
     }
 
@@ -76,6 +81,14 @@ export class SettingsManager {
         const hasAllJira = settings.jiraUrl && settings.jiraUsername && settings.jiraToken;
         if (hasAnyJira && !hasAllJira) {
             errors.push('Jira URL, username, and token are all required for Jira integration');
+        }
+
+        if (settings.autoSyncJira && !hasAllJira) {
+            errors.push('Enable periodic sync only after entering Jira URL, username, and token');
+        }
+
+        if (!Number.isFinite(settings.jiraSyncInterval) || settings.jiraSyncInterval < 5 || settings.jiraSyncInterval > 720) {
+            errors.push('Sync interval must be between 5 and 720 minutes');
         }
 
         return { isValid: errors.length === 0, errors };
