@@ -107,8 +107,13 @@ _Not yet published._
    - Sessions before a long break
    - Auto-start toggle
    - Theme preference
-   - Jira credentials, one-time sync, and optional periodic Jira syncing (interval in minutes)
+   - Jira credentials, one-time sync, optional project filters, and optional periodic Jira syncing (interval in minutes)
 3. Click "Save Settings" to apply
+
+### Jira Integration Tips
+
+- Imported issues now remember their Jira issue keys, so running another sync won't create duplicate tasks you've already pulled in.
+- To limit syncing to certain projects, open **Settings → Jira Integration** and enter comma-separated project keys (for example, `APP, CORE`). Only issues from those projects will be fetched on future imports.
 
 ### Context Menu Features
 Right-click the extension icon to:

@@ -19,6 +19,7 @@ export const CONSTANTS = {
         jiraUrl: '',
         jiraUsername: '',
         jiraToken: '',
+        jiraProjects: '',
         autoSyncJira: false,
         jiraSyncInterval: 30
     }

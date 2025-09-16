@@ -294,6 +294,7 @@ class UIManager {
             jiraUrl: state.settings.jiraUrl || '',
             jiraUsername: state.settings.jiraUsername || '',
             jiraToken: state.settings.jiraToken || '',
+            jiraProjects: state.settings.jiraProjects || '',
             autoSyncJira: Boolean(state.settings.autoSyncJira),
             jiraSyncInterval: state.settings.jiraSyncInterval
                 ?? POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval

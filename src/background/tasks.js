@@ -27,11 +27,15 @@ export class TaskManager {
 
     static async createTask(taskData) {
         const tasks = await this.getTasks();
+        const jiraKey = typeof taskData.jiraKey === 'string'
+            ? taskData.jiraKey.trim()
+            : '';
         const newTask = {
             id: this.generateId(),
             title: taskData.title || 'Untitled Task',
             description: taskData.description || '',
             estimatedPomodoros: taskData.estimatedPomodoros || 1,
+            jiraKey: jiraKey || null,
             completedPomodoros: 0,
             isCompleted: false,
             createdAt: new Date().toISOString(),

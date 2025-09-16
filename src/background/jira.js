@@ -1,12 +1,34 @@
+function parseProjects(jiraProjects) {
+    if (!jiraProjects) {
+        return [];
+    }
+
+    const projects = Array.isArray(jiraProjects)
+        ? jiraProjects
+        : String(jiraProjects).split(',');
+
+    const normalized = projects
+        .map(project => project && project.toString().trim())
+        .filter(Boolean)
+        .map(project => project.toUpperCase().replace(/"/g, '\\"'));
+
+    return Array.from(new Set(normalized));
+}
+
 export async function fetchAssignedIssues(settings) {
-    const { jiraUrl, jiraUsername, jiraToken } = settings || {};
+    const { jiraUrl, jiraUsername, jiraToken, jiraProjects } = settings || {};
     if (!jiraUrl || !jiraUsername || !jiraToken) {
         throw new Error('Missing Jira configuration');
     }
 
     const base = jiraUrl.replace(/\/$/, '');
     const escapedUsername = jiraUsername.replace(/"/g, '\\"');
-    const jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
+    const projects = parseProjects(jiraProjects);
+    let jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
+    if (projects.length > 0) {
+        const projectClause = projects.map(key => `"${key}"`).join(',');
+        jql += ` AND project in (${projectClause})`;
+    }
     const search = `${base}/rest/api/3/search?jql=${encodeURIComponent(jql)}`;
     const auth = btoa(`${jiraUsername}:${jiraToken}`);
 

@@ -22,6 +22,7 @@ export class SettingsManager {
             jiraUrl: document.getElementById('jiraUrl'),
             jiraUsername: document.getElementById('jiraUsername'),
             jiraToken: document.getElementById('jiraToken'),
+            jiraProjects: document.getElementById('jiraProjects'),
             autoSyncJira: document.getElementById('autoSyncJira'),
             jiraSyncInterval: document.getElementById('jiraSyncInterval')
         };
@@ -48,6 +49,16 @@ export class SettingsManager {
             jiraUrl: inputs.jiraUrl?.value?.trim() || '',
             jiraUsername: inputs.jiraUsername?.value?.trim() || '',
             jiraToken: inputs.jiraToken?.value?.trim() || '',
+            jiraProjects: (() => {
+                const rawValue = inputs.jiraProjects?.value ?? '';
+                const projects = rawValue
+                    .split(',')
+                    .map(value => value.trim())
+                    .filter(Boolean)
+                    .map(value => value.toUpperCase());
+                const uniqueProjects = Array.from(new Set(projects));
+                return uniqueProjects.length > 0 ? uniqueProjects.join(', ') : '';
+            })(),
             autoSyncJira: inputs.autoSyncJira?.checked || false,
             jiraSyncInterval: parseInt(inputs.jiraSyncInterval?.value, 10)
                 || POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval
@@ -89,6 +100,17 @@ export class SettingsManager {
 
         if (!Number.isFinite(settings.jiraSyncInterval) || settings.jiraSyncInterval < 5 || settings.jiraSyncInterval > 720) {
             errors.push('Sync interval must be between 5 and 720 minutes');
+        }
+
+        if (settings.jiraProjects) {
+            const invalidProjects = settings.jiraProjects
+                .split(',')
+                .map(value => value.trim())
+                .filter(Boolean)
+                .filter(value => !/^[A-Z][A-Z0-9_]*$/.test(value));
+            if (invalidProjects.length > 0) {
+                errors.push('Project keys must contain only letters, numbers, or underscores (e.g., APP, CORE).');
+            }
         }
 
         return { isValid: errors.length === 0, errors };

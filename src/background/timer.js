@@ -158,13 +158,26 @@ export class TimerController {
     }
 
     async performJiraSync() {
-        const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
-        const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
+        const { jiraUrl, jiraUsername, jiraToken, jiraProjects } = this.state.settings;
+        const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken, jiraProjects });
         const existingTasks = await TaskManager.getTasks();
         const existingTitles = new Set(existingTasks.map(task => (task.title || '').trim().toLowerCase()));
+        const existingJiraKeys = new Set(
+            existingTasks
+                .map(task => (typeof task.jiraKey === 'string' ? task.jiraKey.trim().toUpperCase() : ''))
+                .filter(Boolean)
+        );
         let createdCount = 0;
 
         for (const issue of issues) {
+            const normalizedIssueKey = typeof issue.key === 'string'
+                ? issue.key.trim().toUpperCase()
+                : '';
+
+            if (normalizedIssueKey && existingJiraKeys.has(normalizedIssueKey)) {
+                continue;
+            }
+
             const normalizedTitle = (issue.title || '').trim();
             const fallbackTitle = normalizedTitle || issue.key || 'Jira Task';
             const dedupeKey = fallbackTitle.toLowerCase();
@@ -176,9 +189,13 @@ export class TimerController {
             await TaskManager.createTask({
                 title: fallbackTitle,
                 description: issue.description,
-                estimatedPomodoros: 1
+                estimatedPomodoros: 1,
+                jiraKey: issue.key
             });
             existingTitles.add(dedupeKey);
+            if (normalizedIssueKey) {
+                existingJiraKeys.add(normalizedIssueKey);
+            }
             createdCount++;
         }
 
