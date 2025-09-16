@@ -24,7 +24,7 @@ export async function fetchAssignedIssues(settings) {
     const base = jiraUrl.replace(/\/$/, '');
     const escapedUsername = jiraUsername.replace(/"/g, '\\"');
     const projects = parseProjects(jiraProjects);
-    let jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
+    let jql = `status in ("Open","In Progress","Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
     if (projects.length > 0) {
         const projectClause = projects.map(key => `"${key}"`).join(',');
         jql += ` AND project in (${projectClause})`;
