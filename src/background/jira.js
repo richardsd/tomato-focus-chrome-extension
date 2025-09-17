@@ -29,16 +29,30 @@ export async function fetchAssignedIssues(settings) {
         const projectClause = projects.map(key => `"${key}"`).join(',');
         jql += ` AND project in (${projectClause})`;
     }
-    const search = `${base}/rest/api/3/search?jql=${encodeURIComponent(jql)}`;
+    const search = `${base}/rest/api/3/search/jql`;
     const auth = btoa(`${jiraUsername}:${jiraToken}`);
+
+    const requestBody = {
+        queries: [
+            {
+                query: jql,
+                jql,
+                fields: ['summary', 'description'],
+                startAt: 0
+            }
+        ]
+    };
 
     let response;
     try {
         response = await fetch(search, {
+            method: 'POST',
             headers: {
                 'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json'
-            }
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
     } catch (error) {
         throw new Error(`Failed to connect to Jira: ${error.message}`);
@@ -54,7 +68,20 @@ export async function fetchAssignedIssues(settings) {
     } catch (error) {
         throw new Error('Jira response was not valid JSON');
     }
-    const issues = data.issues || [];
+    let issues = [];
+    if (Array.isArray(data.issues)) {
+        issues = data.issues;
+    } else if (Array.isArray(data.queries)) {
+        issues = data.queries.flatMap(result => {
+            if (result && Array.isArray(result.issues)) {
+                return result.issues;
+            }
+            if (result && result.searchResults && Array.isArray(result.searchResults.issues)) {
+                return result.searchResults.issues;
+            }
+            return [];
+        });
+    }
     return issues.map(issue => {
         const fields = issue.fields || {};
         const summary = fields.summary || '';
