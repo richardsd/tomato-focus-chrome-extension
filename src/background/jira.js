@@ -33,14 +33,11 @@ export async function fetchAssignedIssues(settings) {
     const auth = btoa(`${jiraUsername}:${jiraToken}`);
 
     const requestBody = {
-        queries: [
-            {
-                query: jql,
-                jql,
-                fields: ['summary', 'description'],
-                startAt: 0
-            }
-        ]
+        jql,
+        fields: ['summary', 'description'],
+        fieldsByKeys: true,
+        maxResults: 50,
+        startAt: 0
     };
 
     let response;
@@ -68,20 +65,7 @@ export async function fetchAssignedIssues(settings) {
     } catch (error) {
         throw new Error('Jira response was not valid JSON');
     }
-    let issues = [];
-    if (Array.isArray(data.issues)) {
-        issues = data.issues;
-    } else if (Array.isArray(data.queries)) {
-        issues = data.queries.flatMap(result => {
-            if (result && Array.isArray(result.issues)) {
-                return result.issues;
-            }
-            if (result && result.searchResults && Array.isArray(result.searchResults.issues)) {
-                return result.searchResults.issues;
-            }
-            return [];
-        });
-    }
+    const issues = Array.isArray(data.issues) ? data.issues : [];
     return issues.map(issue => {
         const fields = issue.fields || {};
         const summary = fields.summary || '';
