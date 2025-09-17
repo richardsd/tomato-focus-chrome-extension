@@ -41,7 +41,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Task Statistics**: Enhanced analytics showing task-based productivity metrics
 - **Task Filters**: View All, In Progress, or Completed tasks
 - **Clear Completed Tasks**: Remove all finished tasks in one click
-- **Jira Sync**: Import assignments on demand or enable automatic refreshes on a custom schedule
+- **Jira Sync**: Connect with Atlassian OAuth, import assignments on demand, or enable automatic refreshes on a custom schedule
 
 <!-- Screenshot Placeholder: Tasks panel showing filters and clear completed button -->
 
@@ -107,7 +107,7 @@ _Not yet published._
    - Sessions before a long break
    - Auto-start toggle
    - Theme preference
-   - Jira credentials, one-time sync, and optional periodic Jira syncing (interval in minutes)
+   - Jira connection (OAuth), optional auto-sync schedule, and manual "Sync from Jira" imports
 3. Click "Save Settings" to apply
 
 ### Context Menu Features
@@ -116,6 +116,13 @@ Right-click the extension icon to:
 - Reset
 - Skip Break
 - Quick Start (5/15/25/45 min)
+
+### Jira Integration (OAuth)
+1. Open the **Settings** tab and click **Connect to Jira**.
+2. Sign in to Atlassian and approve the requested scopes (`offline_access`, `read:jira-user`, `read:jira-work`).
+3. Once connected, use **Sync from Jira** to import current assignments or enable automatic syncing on a custom schedule.
+4. Use **Disconnect** to revoke the stored tokens if you need to switch accounts or troubleshoot authentication errors.
+5. Automatic syncs require an active connection. If tokens expire or refresh fails you'll be prompted to reconnect.
 
 ### Notifications Setup
 
@@ -147,6 +154,15 @@ Right-click the extension icon to:
 2. Install dependencies: `npm install`
 3. Enable developer mode in Chrome at `chrome://extensions/`
 4. Load the unpacked extension
+
+### Atlassian OAuth configuration
+To enable Jira syncing you must supply an Atlassian OAuth (3LO) client:
+
+1. Create an OAuth 2.0 integration at [https://developer.atlassian.com/console/](https://developer.atlassian.com/console/).
+2. Add the callback URL `https://<EXTENSION_ID>.chromiumapp.org/atlassian` (you can find the extension ID after loading it in Chrome).
+3. Grant the scopes `offline_access`, `read:jira-user`, and `read:jira-work`.
+4. Update `CONSTANTS.ATLASSIAN_AUTH.CLIENT_ID` in `src/background/constants.js` with your Atlassian client ID.
+5. Reload the extension. Users can now connect via the popup without sharing credentials.
 
 ### Code Quality
 This project uses ESLint for code quality and consistency:

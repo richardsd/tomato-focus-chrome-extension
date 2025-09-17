@@ -4,6 +4,7 @@ export const CONSTANTS = {
     STORAGE_KEY: 'pomodoroState',
     STATISTICS_KEY: 'pomodoroStatistics',
     TASKS_KEY: 'pomodoroTasks',
+    JIRA_AUTH_STORAGE_KEY: 'jiraOAuthState',
     NOTIFICATION_ID: 'pomodoroNotification',
     BADGE_UPDATE_INTERVAL: 1000,
     DEFAULT_SETTINGS: {
@@ -17,10 +18,24 @@ export const CONSTANTS = {
         playSound: true,
         volume: 0.7,
         jiraUrl: '',
-        jiraUsername: '',
-        jiraToken: '',
+        jiraCloudId: '',
+        jiraSiteName: '',
+        jiraAccount: null,
+        jiraOAuth: null,
         autoSyncJira: false,
         jiraSyncInterval: 30
+    },
+    ATLASSIAN_AUTH: {
+        CLIENT_ID: 'YOUR_CLIENT_ID_HERE',
+        AUTHORIZATION_URL: 'https://auth.atlassian.com/authorize',
+        TOKEN_URL: 'https://auth.atlassian.com/oauth/token',
+        API_BASE_URL: 'https://api.atlassian.com',
+        SCOPES: [
+            'offline_access',
+            'read:jira-user',
+            'read:jira-work'
+        ],
+        TOKEN_REFRESH_SKEW_MS: 60000
     }
 };
 

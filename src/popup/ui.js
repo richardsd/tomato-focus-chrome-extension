@@ -291,9 +291,6 @@ class UIManager {
             pauseOnIdle: state.settings.pauseOnIdle,
             playSound: state.settings.playSound,
             volume: state.settings.volume,
-            jiraUrl: state.settings.jiraUrl || '',
-            jiraUsername: state.settings.jiraUsername || '',
-            jiraToken: state.settings.jiraToken || '',
             autoSyncJira: Boolean(state.settings.autoSyncJira),
             jiraSyncInterval: state.settings.jiraSyncInterval
                 ?? POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval
@@ -649,6 +646,7 @@ class PopupController {
             console.warn('Fast-path diff failed; falling back to full update', e);
         }
 
+        this.settingsManager.syncSettings(state.settings);
         this.uiManager.updateUI(state);
         this.themeManager.applyTheme(state);
 
@@ -1032,6 +1030,48 @@ class PopupController {
                 } catch (error) {
                     console.error('Failed to save settings:', error);
                     alert('Failed to save settings. Please try again.');
+                }
+            });
+        }
+
+        const connectBtn = this.settingsManager?.form?.elements?.jiraConnectBtn;
+        if (connectBtn) {
+            connectBtn.addEventListener('click', async () => {
+                try {
+                    this.settingsManager.setJiraLoading(true);
+                    const response = await this.messageHandler.sendMessage('connectJira');
+                    if (response?.state) {
+                        this.updateState(response.state);
+                        alert('Jira connected successfully.');
+                    }
+                } catch (error) {
+                    console.error('Failed to connect to Jira:', error);
+                    alert(`Failed to connect to Jira: ${error.message}`);
+                } finally {
+                    this.settingsManager.setJiraLoading(false);
+                }
+            });
+        }
+
+        const disconnectBtn = this.settingsManager?.form?.elements?.jiraDisconnectBtn;
+        if (disconnectBtn) {
+            disconnectBtn.addEventListener('click', async () => {
+                if (!window.confirm('Disconnect Jira? This will clear saved tokens.')) {
+                    return;
+                }
+
+                try {
+                    this.settingsManager.setJiraLoading(true);
+                    const response = await this.messageHandler.sendMessage('disconnectJira');
+                    if (response?.state) {
+                        this.updateState(response.state);
+                        alert('Jira has been disconnected.');
+                    }
+                } catch (error) {
+                    console.error('Failed to disconnect Jira:', error);
+                    alert(`Failed to disconnect Jira: ${error.message}`);
+                } finally {
+                    this.settingsManager.setJiraLoading(false);
                 }
             });
         }

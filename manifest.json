@@ -3,8 +3,12 @@
   "name": "Tomato Focus",
   "version": "1.0.0",
   "description": "A configurable Tomato Focus to boost productivity",
-  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen"],
-  "host_permissions": ["*://*/*"],
+  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen", "identity"],
+  "host_permissions": [
+    "https://auth.atlassian.com/*",
+    "https://api.atlassian.com/*",
+    "https://*.atlassian.net/*"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {

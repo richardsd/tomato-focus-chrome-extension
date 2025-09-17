@@ -174,20 +174,20 @@
                 <div class="settings-group-container">
                     <div class="settings-group">
                         <h3 class="settings-group-title">Jira Integration</h3>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraUrl">Jira URL:</label>
-                            <input type="text" id="jiraUrl" class="settings-input">
+                        <div class="settings-row settings-row--stacked">
+                            <div class="jira-connection">
+                                <div class="jira-connection__status">
+                                    <p id="jiraConnectionStatus" class="jira-status-text">Not connected</p>
+                                    <p id="jiraConnectionDetails" class="jira-status-details">Connect to Jira to import tasks and enable syncing.</p>
+                                </div>
+                                <div class="jira-connection__actions">
+                                    <button id="jiraConnectBtn" class="btn btn--secondary btn--full" type="button">Connect to Jira</button>
+                                    <button id="jiraDisconnectBtn" class="btn btn--danger btn--full hidden" type="button">Disconnect</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="settings-row">
-                            <label class="settings-label" for="jiraUsername">Username:</label>
-                            <input type="text" id="jiraUsername" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraToken">API Token:</label>
-                            <input type="password" id="jiraToken" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="autoSyncJira">Enable periodic sync:</label>
+                            <label class="settings-label" for="autoSyncJira">Enable periodic sync (requires connection):</label>
                             <input type="checkbox" id="autoSyncJira" class="settings-checkbox">
                         </div>
                         <div class="settings-row">

@@ -5,6 +5,7 @@ import { NotificationManager } from './notifications.js';
 import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
+import { startJiraOAuth, clearJiraAuth } from './jiraAuth.js';
 
 class TimerState {
     constructor() {
@@ -121,6 +122,26 @@ export class TimerController {
                 ...CONSTANTS.DEFAULT_SETTINGS,
                 ...(savedState.settings || {})
             };
+
+            delete this.state.settings.jiraUsername;
+            delete this.state.settings.jiraToken;
+
+            if (!Object.prototype.hasOwnProperty.call(this.state.settings, 'jiraOAuth')) {
+                this.state.settings.jiraOAuth = null;
+            }
+            if (!Object.prototype.hasOwnProperty.call(this.state.settings, 'jiraCloudId')) {
+                this.state.settings.jiraCloudId = '';
+            }
+            if (!Object.prototype.hasOwnProperty.call(this.state.settings, 'jiraSiteName')) {
+                this.state.settings.jiraSiteName = '';
+            }
+            if (!Object.prototype.hasOwnProperty.call(this.state.settings, 'jiraAccount')) {
+                this.state.settings.jiraAccount = null;
+            }
+
+            if (!this.hasActiveJiraSession(this.state.settings)) {
+                this.state.settings.autoSyncJira = false;
+            }
         } else {
             await this.saveState();
         }
@@ -142,13 +163,15 @@ export class TimerController {
         const settings = this.state.settings || {};
         await new Promise(resolve => chrome.alarms.clear(this.jiraAlarmName, resolve));
 
-        const { autoSyncJira, jiraSyncInterval, jiraUrl, jiraUsername, jiraToken } = settings;
+        const { autoSyncJira, jiraSyncInterval } = settings;
         if (!autoSyncJira) {
             return;
         }
 
-        if (!jiraUrl || !jiraUsername || !jiraToken) {
-            console.warn('Jira auto-sync is enabled but configuration is incomplete. Skipping alarm registration.');
+        if (!this.hasActiveJiraSession(settings)) {
+            console.warn('Jira auto-sync is enabled but authentication is missing. Skipping alarm registration.');
+            this.state.settings.autoSyncJira = false;
+            await this.saveState();
             return;
         }
 
@@ -158,8 +181,29 @@ export class TimerController {
     }
 
     async performJiraSync() {
-        const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
-        const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
+        if (!this.hasActiveJiraSession()) {
+            throw new Error('Jira is not connected.');
+        }
+
+        const { issues, authState } = await fetchAssignedIssues(this.state.settings);
+
+        if (authState) {
+            this.state.settings.jiraOAuth = authState;
+            if (authState.siteUrl) {
+                this.state.settings.jiraUrl = authState.siteUrl;
+            }
+            if (authState.resourceName) {
+                this.state.settings.jiraSiteName = authState.resourceName;
+            }
+            if (authState.accountId || authState.accountName || authState.accountEmail) {
+                this.state.settings.jiraAccount = {
+                    accountId: authState.accountId || null,
+                    name: authState.accountName || '',
+                    email: authState.accountEmail || ''
+                };
+            }
+        }
+
         const existingTasks = await TaskManager.getTasks();
         const existingTitles = new Set(existingTasks.map(task => (task.title || '').trim().toLowerCase()));
         let createdCount = 0;
@@ -459,6 +503,10 @@ export class TimerController {
             case 'saveSettings': {
                 this.state.updateSettings(request.settings);
 
+                if (!this.hasActiveJiraSession(this.state.settings)) {
+                    this.state.settings.autoSyncJira = false;
+                }
+
                 const newDuration = this.state.isWorkSession
                     ? this.state.settings.workDuration * 60
                     : (this.state.currentSession % this.state.settings.longBreakInterval === 0
@@ -523,6 +571,55 @@ export class TimerController {
                 }
                 break;
             }
+            case 'connectJira': {
+                try {
+                    const currentSite = this.state.settings.jiraUrl || '';
+                    const { authState, account } = await startJiraOAuth(currentSite);
+                    this.state.settings.jiraOAuth = authState;
+                    this.state.settings.jiraUrl = authState.siteUrl || this.state.settings.jiraUrl || '';
+                    this.state.settings.jiraSiteName = authState.resourceName || this.state.settings.jiraSiteName || '';
+                    this.state.settings.jiraCloudId = authState.cloudId || this.state.settings.jiraCloudId || '';
+                    this.state.settings.jiraAccount = account || this.state.settings.jiraAccount;
+                    await this.saveState();
+                    await this.configureJiraSyncAlarm();
+                    this.updateUI();
+                    sendResponse({ success: true, state: this.state.getState() });
+                } catch (error) {
+                    console.error('Failed to connect to Jira:', error);
+                    sendResponse({ error: error.message });
+                }
+                break;
+            }
+            case 'disconnectJira': {
+                try {
+                    await clearJiraAuth();
+                } catch (error) {
+                    console.warn('Failed to clear Jira auth cache:', error);
+                }
+
+                this.state.settings.jiraOAuth = null;
+                this.state.settings.jiraAccount = null;
+                this.state.settings.jiraCloudId = '';
+                this.state.settings.jiraSiteName = '';
+                this.state.settings.jiraUrl = '';
+                this.state.settings.autoSyncJira = false;
+                await this.saveState();
+                await this.configureJiraSyncAlarm();
+                this.updateUI();
+                sendResponse({ success: true, state: this.state.getState() });
+                break;
+            }
+            case 'getJiraAuthStatus': {
+                const connected = this.hasActiveJiraSession(this.state.settings);
+                sendResponse({
+                    success: true,
+                    connected,
+                    account: this.state.settings.jiraAccount || null,
+                    siteUrl: this.state.settings.jiraUrl || '',
+                    siteName: this.state.settings.jiraSiteName || ''
+                });
+                break;
+            }
             case 'setCurrentTask':
                 this.state.currentTaskId = request.taskId;
                 await this.saveState();
@@ -568,6 +665,12 @@ export class TimerController {
         }
     }
 }
+
+TimerController.prototype.hasActiveJiraSession = function(settings = this.state.settings) {
+    const context = settings || {};
+    const auth = context.jiraOAuth;
+    return Boolean(context.jiraCloudId && auth && (auth.refreshToken || auth.accessToken));
+};
 
 export function initializeBackground() {
     const timerController = new TimerController();

@@ -1,38 +1,18 @@
-export async function fetchAssignedIssues(settings) {
-    const { jiraUrl, jiraUsername, jiraToken } = settings || {};
-    if (!jiraUrl || !jiraUsername || !jiraToken) {
-        throw new Error('Missing Jira configuration');
-    }
+import { CONSTANTS } from './constants.js';
+import { ensureAccessToken } from './jiraAuth.js';
 
-    const base = jiraUrl.replace(/\/$/, '');
-    const escapedUsername = jiraUsername.replace(/"/g, '\\"');
-    const jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
-    const search = `${base}/rest/api/3/search?jql=${encodeURIComponent(jql)}`;
-    const auth = btoa(`${jiraUsername}:${jiraToken}`);
+function buildJql() {
+    return 'status in ("Open","In Progress","In Review","Verify") AND assignee = currentUser() AND resolution = Unresolved';
+}
 
-    let response;
-    try {
-        response = await fetch(search, {
-            headers: {
-                'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json'
-            }
-        });
-    } catch (error) {
-        throw new Error(`Failed to connect to Jira: ${error.message}`);
-    }
+function buildSearchUrl(cloudId) {
+    const base = `${CONSTANTS.ATLASSIAN_AUTH.API_BASE_URL}/ex/jira/${cloudId}/rest/api/3/search`;
+    const params = new URLSearchParams({ jql: buildJql() });
+    return `${base}?${params.toString()}`;
+}
 
-    if (!response.ok) {
-        throw new Error(`Jira request failed: ${response.status} ${response.statusText || ''}`.trim());
-    }
-
-    let data;
-    try {
-        data = await response.json();
-    } catch (error) {
-        throw new Error('Jira response was not valid JSON');
-    }
-    const issues = data.issues || [];
+function mapIssues(data) {
+    const issues = Array.isArray(data?.issues) ? data.issues : [];
     return issues.map(issue => {
         const fields = issue.fields || {};
         const summary = fields.summary || '';
@@ -45,6 +25,73 @@ export async function fetchAssignedIssues(settings) {
                 (block.content || []).map(c => c.text || '').join('')
             ).join('\n');
         }
-        return { key: issue.key, title: summary, description };
+
+        return {
+            key: issue.key,
+            title: summary,
+            description
+        };
     });
+}
+
+async function executeSearch(url, accessToken) {
+    try {
+        return await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/json'
+            }
+        });
+    } catch (error) {
+        throw new Error(`Failed to connect to Jira: ${error.message}`);
+    }
+}
+
+export async function fetchAssignedIssues(settings = {}) {
+    const { jiraCloudId, jiraOAuth } = settings;
+    if (!jiraCloudId || !jiraOAuth) {
+        throw new Error('Missing Jira authentication. Connect to Jira from the settings panel.');
+    }
+
+    let tokenResult;
+    try {
+        tokenResult = await ensureAccessToken(jiraOAuth);
+    } catch (error) {
+        throw new Error(`Jira authentication failed: ${error.message}`);
+    }
+
+    let { auth: authState, accessToken } = tokenResult;
+    const searchUrl = buildSearchUrl(jiraCloudId);
+
+    let response = await executeSearch(searchUrl, accessToken);
+    if (response.status === 401) {
+        try {
+            const refreshed = await ensureAccessToken(authState, { forceRefresh: true });
+            authState = refreshed.auth;
+            accessToken = refreshed.accessToken;
+        } catch (refreshError) {
+            throw new Error(`Jira authentication expired. Please reconnect. (${refreshError.message})`);
+        }
+
+        response = await executeSearch(searchUrl, accessToken);
+        if (response.status === 401) {
+            throw new Error('Jira rejected the request. Please reconnect the integration.');
+        }
+    }
+
+    if (!response.ok) {
+        throw new Error(`Jira request failed: ${response.status} ${response.statusText || ''}`.trim());
+    }
+
+    let data;
+    try {
+        data = await response.json();
+    } catch (error) {
+        throw new Error('Jira response was not valid JSON');
+    }
+
+    return {
+        issues: mapIssues(data),
+        authState
+    };
 }
