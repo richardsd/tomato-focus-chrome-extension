@@ -234,9 +234,18 @@
                     <span id="tasksSelectionCount" class="tasks-selection-bar__count" aria-live="polite">0 Selected</span>
                 </div>
                 <div class="tasks-selection-bar__actions">
-                    <button id="deleteSelectedBtn" class="tasks-selection-bar__action tasks-selection-bar__action--danger" type="button" aria-label="Delete selected tasks">🗑 Delete</button>
-                    <button id="completeSelectedBtn" class="tasks-selection-bar__action" type="button" aria-label="Mark selected tasks as complete">✔ Complete</button>
-                    <button id="selectAllTasksBtn" class="tasks-selection-bar__action" type="button" aria-label="Select all tasks">⬜ Select All</button>
+                    <button id="deleteSelectedBtn" class="tasks-selection-bar__action tasks-selection-bar__action--danger" type="button" aria-label="Delete selected tasks" title="Delete selected tasks">
+                        <span aria-hidden="true">🗑</span>
+                        <span class="visually-hidden">Delete selected tasks</span>
+                    </button>
+                    <button id="completeSelectedBtn" class="tasks-selection-bar__action" type="button" aria-label="Mark selected tasks as complete" title="Mark selected tasks as complete">
+                        <span aria-hidden="true">✔</span>
+                        <span class="visually-hidden">Mark selected tasks as complete</span>
+                    </button>
+                    <button id="selectAllTasksBtn" class="tasks-selection-bar__action" type="button" aria-label="Select all tasks" title="Select all tasks">
+                        <span aria-hidden="true">⬜</span>
+                        <span class="visually-hidden">Select all tasks</span>
+                    </button>
                 </div>
             </div>
 
