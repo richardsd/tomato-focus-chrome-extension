@@ -119,9 +119,8 @@ body {
   width: 300px;
   padding: var(--space-3);
   background: var(--theme-primary);
-  min-height: 420px;
-  /* Removed fixed max-height & overflow to let popup grow when current task shown */
-  height: auto;
+  min-height: 600px;
+  height: 600px;
   overflow: visible;
   display: flex;
   justify-content: center;
@@ -1134,11 +1133,14 @@ select.settings-input {
   display: flex;
   flex-direction: column;
   width: 100%;
+  flex: 1 1 auto;
+  min-height: 100%;
   overflow: visible; /* allow shadows (e.g., back button) to render fully */
 }
 
 /* Timer Panel adjustments: ensure no scrollbar appears while keeping stable sizing */
 #timerPanel.panel {
+  height: 100%;
   overflow: hidden; /* Prevent stray scrollbar after height stabilization changes */
   /* The internal sections already center content; this avoids vertical scroll caused by min-heights */
 }
@@ -1147,7 +1149,7 @@ select.settings-input {
 #tasksPanel {
   display: flex;
   flex-direction: column;
-  height: 500px; /* Fixed height for the entire panel */
+  height: 100%;
   overflow: visible; /* Keep internal layout stable; header shadows now escape parent (.panel) */
 }
 
@@ -1155,8 +1157,13 @@ select.settings-input {
 #statsPanel {
   display: flex;
   flex-direction: column;
-  height: 500px; /* Fixed height for the entire panel */
+  height: 100%;
   overflow: visible; /* Keep internal layout stable; header shadows now escape parent (.panel) */
+}
+
+/* Settings Panel styling */
+#settingsPanel {
+  height: 100%;
 }
 
 /* Quick Filters Bar */
