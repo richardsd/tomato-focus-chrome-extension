@@ -36,8 +36,7 @@ export async function fetchAssignedIssues(settings) {
         jql,
         fields: ['summary', 'description'],
         fieldsByKeys: true,
-        maxResults: 50,
-        startAt: 0
+        maxResults: 50
     };
 
     let response;
@@ -55,15 +54,16 @@ export async function fetchAssignedIssues(settings) {
         throw new Error(`Failed to connect to Jira: ${error.message}`);
     }
 
-    if (!response.ok) {
-        throw new Error(`Jira request failed: ${response.status} ${response.statusText || ''}`.trim());
-    }
-
     let data;
     try {
         data = await response.json();
     } catch (error) {
         throw new Error('Jira response was not valid JSON');
+    }
+
+    if (!response.ok) {
+        const errorMessage = data?.errorMessages?.join(', ') || response.statusText || 'Unknown Jira error';
+        throw new Error(`Jira request failed: ${response.status} ${errorMessage}`.trim());
     }
     const issues = Array.isArray(data.issues) ? data.issues : [];
     return issues.map(issue => {
