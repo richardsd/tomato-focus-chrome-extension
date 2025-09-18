@@ -218,13 +218,25 @@
 
         <!-- Tasks Panel -->
         <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
-            <div class="tasks-header header flex items-center justify-between mb-4">
+            <div id="tasksHeaderBar" class="tasks-header header flex items-center justify-between mb-4">
                 <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
                     ←
                 </button>
                 <h1 class="header__title">Tasks</h1>
                 <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
                     <button id="addTaskBtn" class="btn--add" aria-label="Add new task">+</button>
+                </div>
+            </div>
+
+            <div id="tasksSelectionBar" class="tasks-selection-bar hidden" role="toolbar" aria-label="Task selection actions">
+                <div class="tasks-selection-bar__left">
+                    <button id="cancelSelectionBtn" class="tasks-selection-bar__cancel" type="button" aria-label="Cancel task selection">✕ Cancel</button>
+                    <span id="tasksSelectionCount" class="tasks-selection-bar__count" aria-live="polite">0 Selected</span>
+                </div>
+                <div class="tasks-selection-bar__actions">
+                    <button id="deleteSelectedBtn" class="tasks-selection-bar__action tasks-selection-bar__action--danger" type="button" aria-label="Delete selected tasks">🗑 Delete</button>
+                    <button id="completeSelectedBtn" class="tasks-selection-bar__action" type="button" aria-label="Mark selected tasks as complete">✔ Complete</button>
+                    <button id="selectAllTasksBtn" class="tasks-selection-bar__action" type="button" aria-label="Select all tasks">⬜ Select All</button>
                 </div>
             </div>
 
@@ -246,7 +258,6 @@
                 </div>
             </div>
             <div class="tasks-footer">
-                <button id="deleteSelectedBtn" class="btn btn--danger hidden" type="button" aria-label="Delete selected tasks">Delete Selected</button>
                 <button id="clearCompletedBtn" class="tasks-clear-link hidden" aria-label="Clear completed tasks" title="Remove all completed tasks permanently">Clear completed tasks</button>
             </div>
         </div>

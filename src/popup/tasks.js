@@ -6,10 +6,16 @@ export class TaskUIManager {
         this.currentEditingTaskId = null;
         this.currentFilter = 'all';
         this.selectedTaskIds = [];
-        this.bulkDeleteBtn = null;
-        this.bulkDeleteBtnLabel = 'Delete Selected';
+        this.currentDisplayTaskIds = [];
+        this.tasksHeaderEl = null;
+        this.selectionBar = null;
+        this.selectionCountEl = null;
+        this.selectionCancelBtn = null;
+        this.deleteSelectedBtn = null;
+        this.completeSelectedBtn = null;
+        this.selectAllBtn = null;
         this.setupJiraSyncButton();
-        this.setupBulkDeleteButton();
+        this.setupSelectionBar();
     }
 
     /**
@@ -23,7 +29,6 @@ export class TaskUIManager {
             console.warn('tasksList element not found');
             return;
         }
-        this.selectedTaskIds = this.selectedTaskIds.filter(id => allTasks.some(task => task.id === id));
         // Apply filter
         let displayTasks = allTasks;
         if (this.currentFilter === 'in-progress') {
@@ -31,6 +36,9 @@ export class TaskUIManager {
         } else if (this.currentFilter === 'completed') {
             displayTasks = allTasks.filter(t => t.isCompleted);
         }
+
+        this.currentDisplayTaskIds = displayTasks.map(task => String(task.id));
+        this.selectedTaskIds = this.selectedTaskIds.filter(id => this.currentDisplayTaskIds.includes(id));
 
         console.log('Tasks list element found, rendering with filter:', this.currentFilter);
 
@@ -43,7 +51,7 @@ export class TaskUIManager {
                     <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
                 </div>
             `;
-            this.updateBulkDeleteButton();
+            this.updateSelectionBar();
             return;
         }
 
@@ -56,6 +64,8 @@ export class TaskUIManager {
         // Add event listeners for task items
         this.attachTaskEventListeners();
 
+        this.syncTaskSelectionCheckboxes();
+
         // Toggle visibility of clear completed button
         const clearCompletedBtn = document.getElementById('clearCompletedBtn');
         if (clearCompletedBtn) {
@@ -63,7 +73,7 @@ export class TaskUIManager {
             clearCompletedBtn.classList.toggle('hidden', !shouldShowClearCompleted);
             clearCompletedBtn.disabled = !shouldShowClearCompleted;
         }
-        this.updateBulkDeleteButton();
+        this.updateSelectionBar();
     }
 
     /**
@@ -189,19 +199,43 @@ export class TaskUIManager {
         this.setupMenus();
     }
 
-    setupBulkDeleteButton() {
-        const button = document.getElementById('deleteSelectedBtn');
-        if (!button) { return; }
-        this.bulkDeleteBtn = button;
-        const label = (button.textContent || '').trim();
-        if (label) {
-            this.bulkDeleteBtnLabel = label;
+    setupSelectionBar() {
+        this.tasksHeaderEl = document.getElementById('tasksHeaderBar');
+        this.selectionBar = document.getElementById('tasksSelectionBar');
+        this.selectionCountEl = document.getElementById('tasksSelectionCount');
+        this.selectionCancelBtn = document.getElementById('cancelSelectionBtn');
+        this.deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        this.completeSelectedBtn = document.getElementById('completeSelectedBtn');
+        this.selectAllBtn = document.getElementById('selectAllTasksBtn');
+
+        if (this.selectionCancelBtn) {
+            this.selectionCancelBtn.addEventListener('click', () => {
+                this.clearSelection();
+            });
         }
-        button.disabled = true;
-        button.addEventListener('click', async () => {
-            await this.deleteSelectedTasks();
-        });
-        this.updateBulkDeleteButton();
+
+        if (this.deleteSelectedBtn) {
+            this.deleteSelectedBtn.disabled = true;
+            this.deleteSelectedBtn.addEventListener('click', async () => {
+                await this.deleteSelectedTasks();
+            });
+        }
+
+        if (this.completeSelectedBtn) {
+            this.completeSelectedBtn.disabled = true;
+            this.completeSelectedBtn.addEventListener('click', async () => {
+                await this.completeSelectedTasks();
+            });
+        }
+
+        if (this.selectAllBtn) {
+            this.selectAllBtn.disabled = true;
+            this.selectAllBtn.addEventListener('click', () => {
+                this.selectAllDisplayedTasks();
+            });
+        }
+
+        this.updateSelectionBar();
     }
 
     toggleTaskSelection(taskId, explicitState = null) {
@@ -220,7 +254,7 @@ export class TaskUIManager {
         }
 
         this.updateTaskSelectionUI(id, shouldSelect);
-        this.updateBulkDeleteButton();
+        this.updateSelectionBar();
     }
 
     updateTaskSelectionUI(taskId, isSelected) {
@@ -233,20 +267,71 @@ export class TaskUIManager {
         }
     }
 
-    updateBulkDeleteButton() {
-        if (!this.bulkDeleteBtn) { return; }
+    updateSelectionBar() {
         const count = this.selectedTaskIds.length;
-        if (count > 0) {
-            this.bulkDeleteBtn.classList.remove('hidden');
-            this.bulkDeleteBtn.disabled = false;
-            this.bulkDeleteBtn.textContent = count > 1
-                ? `${this.bulkDeleteBtnLabel} (${count})`
-                : this.bulkDeleteBtnLabel;
-        } else {
-            this.bulkDeleteBtn.classList.add('hidden');
-            this.bulkDeleteBtn.disabled = true;
-            this.bulkDeleteBtn.textContent = this.bulkDeleteBtnLabel;
+        const displayCount = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds.length : 0;
+        const inSelectionMode = count > 0;
+
+        if (this.tasksHeaderEl) {
+            this.tasksHeaderEl.classList.toggle('hidden', inSelectionMode);
         }
+
+        if (this.selectionBar) {
+            this.selectionBar.classList.toggle('hidden', !inSelectionMode);
+        }
+
+        if (this.selectionCountEl) {
+            const label = count === 1 ? '1 Selected' : `${count} Selected`;
+            this.selectionCountEl.textContent = label;
+        }
+
+        if (this.deleteSelectedBtn) {
+            this.deleteSelectedBtn.disabled = count === 0;
+        }
+
+        if (this.completeSelectedBtn) {
+            this.completeSelectedBtn.disabled = count === 0;
+        }
+
+        if (this.selectAllBtn) {
+            const allSelected = inSelectionMode && displayCount > 0 && count === displayCount;
+            this.selectAllBtn.disabled = displayCount === 0 || allSelected;
+            this.selectAllBtn.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+        }
+    }
+
+    syncTaskSelectionCheckboxes() {
+        const selectedIds = new Set(this.selectedTaskIds);
+        document.querySelectorAll('.task-item').forEach(item => {
+            const taskId = item.dataset.taskId;
+            const isSelected = selectedIds.has(taskId);
+            item.classList.toggle('task-item--selected', isSelected);
+            const checkbox = item.querySelector('.task-item__checkbox');
+            if (checkbox) {
+                checkbox.checked = isSelected;
+            }
+        });
+    }
+
+    clearSelection() {
+        if (!this.selectedTaskIds.length) {
+            this.updateSelectionBar();
+            this.syncTaskSelectionCheckboxes();
+            return;
+        }
+
+        this.selectedTaskIds = [];
+        this.syncTaskSelectionCheckboxes();
+        this.updateSelectionBar();
+    }
+
+    selectAllDisplayedTasks() {
+        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
+        if (!displayIds.length) { return; }
+
+        this.selectedTaskIds = [...new Set(displayIds)];
+        this.syncTaskSelectionCheckboxes();
+        this.updateSelectionBar();
     }
 
     async deleteSelectedTasks() {
@@ -261,10 +346,12 @@ export class TaskUIManager {
             return;
         }
 
-        const button = this.bulkDeleteBtn;
-        if (button) {
-            button.disabled = true;
-        }
+        const deleteButton = this.deleteSelectedBtn;
+        const completeButton = this.completeSelectedBtn;
+        const selectAllButton = this.selectAllBtn;
+        if (deleteButton) { deleteButton.disabled = true; }
+        if (completeButton) { completeButton.disabled = true; }
+        if (selectAllButton) { selectAllButton.disabled = true; }
 
         const taskIds = [...this.selectedTaskIds];
 
@@ -277,7 +364,33 @@ export class TaskUIManager {
             console.error('Failed to delete selected tasks:', error);
             alert('Failed to delete selected tasks. Please try again.');
         } finally {
-            this.updateBulkDeleteButton();
+            this.updateSelectionBar();
+        }
+    }
+
+    async completeSelectedTasks() {
+        if (!this.selectedTaskIds.length) { return; }
+
+        const completeButton = this.completeSelectedBtn;
+        const deleteButton = this.deleteSelectedBtn;
+        const selectAllButton = this.selectAllBtn;
+
+        if (completeButton) { completeButton.disabled = true; }
+        if (deleteButton) { deleteButton.disabled = true; }
+        if (selectAllButton) { selectAllButton.disabled = true; }
+
+        const taskIds = [...this.selectedTaskIds];
+
+        try {
+            const state = await this.messageHandler.sendMessage('completeTasks', { taskIds });
+            this.selectedTaskIds = [];
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        } catch (error) {
+            console.error('Failed to complete selected tasks:', error);
+            alert('Failed to complete selected tasks. Please try again.');
+        } finally {
+            this.updateSelectionBar();
         }
     }
 
