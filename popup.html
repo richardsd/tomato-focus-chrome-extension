@@ -218,34 +218,36 @@
 
         <!-- Tasks Panel -->
         <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
-            <div id="tasksHeaderBar" class="tasks-header header flex items-center justify-between mb-4">
-                <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
-                    ←
-                </button>
-                <h1 class="header__title">Tasks</h1>
-                <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
-                    <button id="addTaskBtn" class="btn--add" aria-label="Add new task">+</button>
+            <div class="tasks-toolbar">
+                <div id="tasksHeaderBar" class="tasks-header header flex items-center justify-between">
+                    <button id="backFromTasksBtn" class="btn--back" aria-label="Back to timer">
+                        ←
+                    </button>
+                    <h1 class="header__title">Tasks</h1>
+                    <div class="tasks-header__actions" style="display:flex; gap:8px; align-items:center;">
+                        <button id="addTaskBtn" class="btn--add" aria-label="Add new task">+</button>
+                    </div>
                 </div>
-            </div>
 
-            <div id="tasksSelectionBar" class="tasks-selection-bar hidden" role="toolbar" aria-label="Task selection actions">
-                <div class="tasks-selection-bar__left">
-                    <button id="cancelSelectionBtn" class="tasks-selection-bar__cancel" type="button" aria-label="Cancel task selection" title="Cancel selection">✕</button>
-                    <span id="tasksSelectionCount" class="tasks-selection-bar__count" aria-live="polite">0 Selected</span>
-                </div>
-                <div class="tasks-selection-bar__actions">
-                    <button id="deleteSelectedBtn" class="tasks-selection-bar__action tasks-selection-bar__action--danger" type="button" aria-label="Delete selected tasks" title="Delete selected tasks">
-                        <span aria-hidden="true">🗑</span>
-                        <span class="visually-hidden">Delete selected tasks</span>
-                    </button>
-                    <button id="completeSelectedBtn" class="tasks-selection-bar__action" type="button" aria-label="Mark selected tasks as complete" title="Mark selected tasks as complete">
-                        <span aria-hidden="true">✔</span>
-                        <span class="visually-hidden">Mark selected tasks as complete</span>
-                    </button>
-                    <button id="selectAllTasksBtn" class="tasks-selection-bar__action" type="button" aria-label="Select all tasks" title="Select all tasks">
-                        <span aria-hidden="true">⬜</span>
-                        <span class="visually-hidden">Select all tasks</span>
-                    </button>
+                <div id="tasksSelectionBar" class="tasks-selection-bar hidden" role="toolbar" aria-label="Task selection actions">
+                    <div class="tasks-selection-bar__left">
+                        <button id="cancelSelectionBtn" class="tasks-selection-bar__cancel" type="button" aria-label="Cancel task selection" title="Cancel selection">✕</button>
+                        <span id="tasksSelectionCount" class="tasks-selection-bar__count" aria-live="polite">0 Selected</span>
+                    </div>
+                    <div class="tasks-selection-bar__actions">
+                        <button id="deleteSelectedBtn" class="tasks-selection-bar__action tasks-selection-bar__action--danger" type="button" aria-label="Delete selected tasks" title="Delete selected tasks">
+                            <span aria-hidden="true">🗑</span>
+                            <span class="visually-hidden">Delete selected tasks</span>
+                        </button>
+                        <button id="completeSelectedBtn" class="tasks-selection-bar__action" type="button" aria-label="Mark selected tasks as complete" title="Mark selected tasks as complete">
+                            <span aria-hidden="true">✔</span>
+                            <span class="visually-hidden">Mark selected tasks as complete</span>
+                        </button>
+                        <button id="selectAllTasksBtn" class="tasks-selection-bar__action" type="button" aria-label="Select all tasks" title="Select all tasks">
+                            <span aria-hidden="true">⬜</span>
+                            <span class="visually-hidden">Select all tasks</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 

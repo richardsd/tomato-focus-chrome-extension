@@ -1179,38 +1179,52 @@ select.settings-input {
 }
 
 /* Tasks Panel */
+.tasks-toolbar {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  margin-bottom: 16px;
+  min-height: 64px;
+}
+
+.tasks-toolbar > .tasks-header {
+  width: 100%;
+}
+
 .tasks-header {
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .tasks-selection-bar {
-  --selection-bar-bg: rgba(15, 23, 42, 0.92);
-  --selection-bar-border: rgba(148, 163, 184, 0.35);
-  --selection-bar-shadow: 0 12px 32px rgba(2, 6, 23, 0.5);
-  --selection-chip-bg: rgba(148, 163, 184, 0.2);
-  --selection-chip-hover: rgba(148, 163, 184, 0.34);
+  --selection-bar-bg: rgba(15, 23, 42, 0.94);
+  --selection-bar-border: rgba(148, 163, 184, 0.25);
+  --selection-bar-shadow: 0 18px 32px rgba(2, 6, 23, 0.45);
+  --selection-chip-bg: rgba(148, 163, 184, 0.16);
+  --selection-chip-hover: rgba(148, 163, 184, 0.28);
   --selection-chip-color: #f8fafc;
-  --selection-danger-bg: rgba(239, 68, 68, 0.32);
-  --selection-danger-hover: rgba(239, 68, 68, 0.44);
+  --selection-danger-bg: rgba(239, 68, 68, 0.34);
+  --selection-danger-hover: rgba(239, 68, 68, 0.48);
   --selection-count-color: #f8fafc;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 12px;
-  margin-bottom: 16px;
+  padding: 10px 18px;
   border-radius: 999px;
   background: var(--selection-bar-bg);
   border: 1px solid var(--selection-bar-border);
   box-shadow: var(--selection-bar-shadow);
+  max-width: 100%;
+  align-self: center;
 }
 
 .tasks-selection-bar__left,
 .tasks-selection-bar__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .tasks-selection-bar__actions {
@@ -1222,25 +1236,22 @@ select.settings-input {
   border: none;
   background: var(--selection-chip-bg);
   color: var(--selection-chip-color);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  padding: 6px 14px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 32px;
   line-height: 1;
-  letter-spacing: 0.01em;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 .tasks-selection-bar__cancel {
-  padding: 6px;
-  min-width: 32px;
+  font-size: var(--font-size-sm);
 }
 
 .tasks-selection-bar__cancel:hover,
@@ -1250,12 +1261,12 @@ select.settings-input {
   background: var(--selection-chip-hover);
   color: var(--selection-chip-color);
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.35);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.4);
 }
 
 .tasks-selection-bar__action--danger {
   background: var(--selection-danger-bg);
-  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.4);
 }
 
 .tasks-selection-bar__action--danger:hover,
@@ -1265,40 +1276,41 @@ select.settings-input {
 
 .tasks-selection-bar__action:disabled,
 .tasks-selection-bar__cancel:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .tasks-selection-bar__count {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--selection-count-color);
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 .dark-theme .tasks-selection-bar {
-  --selection-bar-bg: rgba(15, 23, 42, 0.94);
-  --selection-bar-border: rgba(148, 163, 184, 0.4);
-  --selection-bar-shadow: 0 14px 36px rgba(2, 6, 23, 0.6);
-  --selection-chip-bg: rgba(148, 163, 184, 0.22);
-  --selection-chip-hover: rgba(148, 163, 184, 0.36);
+  --selection-bar-bg: rgba(15, 23, 42, 0.96);
+  --selection-bar-border: rgba(148, 163, 184, 0.32);
+  --selection-bar-shadow: 0 20px 36px rgba(2, 6, 23, 0.55);
+  --selection-chip-bg: rgba(148, 163, 184, 0.2);
+  --selection-chip-hover: rgba(148, 163, 184, 0.34);
   --selection-chip-color: #f8fafc;
-  --selection-danger-bg: rgba(239, 68, 68, 0.36);
-  --selection-danger-hover: rgba(239, 68, 68, 0.48);
+  --selection-danger-bg: rgba(239, 68, 68, 0.38);
+  --selection-danger-hover: rgba(239, 68, 68, 0.52);
   --selection-count-color: #f8fafc;
 }
 
 .light-theme .tasks-selection-bar {
-  --selection-bar-bg: rgba(248, 250, 252, 0.95);
-  --selection-bar-border: rgba(203, 213, 225, 0.85);
-  --selection-bar-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
-  --selection-chip-bg: rgba(148, 163, 184, 0.18);
-  --selection-chip-hover: rgba(148, 163, 184, 0.3);
+  --selection-bar-bg: rgba(248, 250, 252, 0.96);
+  --selection-bar-border: rgba(203, 213, 225, 0.72);
+  --selection-bar-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+  --selection-chip-bg: rgba(148, 163, 184, 0.22);
+  --selection-chip-hover: rgba(148, 163, 184, 0.32);
   --selection-chip-color: #1f2937;
-  --selection-danger-bg: rgba(239, 68, 68, 0.22);
-  --selection-danger-hover: rgba(239, 68, 68, 0.32);
+  --selection-danger-bg: rgba(239, 68, 68, 0.3);
+  --selection-danger-hover: rgba(239, 68, 68, 0.44);
   --selection-count-color: #0f172a;
 }
 
