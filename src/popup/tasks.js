@@ -14,7 +14,6 @@ export class TaskUIManager {
         this.deleteSelectedButtons = [];
         this.completeSelectedButtons = [];
         this.selectAllButtons = [];
-        this.bulkActionsBar = null;
         this.setupJiraSyncButton();
         this.setupSelectionBar();
     }
@@ -205,11 +204,16 @@ export class TaskUIManager {
         this.selectionBar = document.getElementById('tasksSelectionBar');
         this.selectionCountEl = document.getElementById('tasksSelectionCount');
         this.selectionCancelBtn = document.getElementById('cancelSelectionBtn');
-        this.deleteSelectedButtons = Array.from(document.querySelectorAll('[data-action="delete-selected"]'));
-        this.completeSelectedButtons = Array.from(document.querySelectorAll('[data-action="complete-selected"]'));
-        this.selectAllButtons = Array.from(document.querySelectorAll('[data-action="select-all"]'));
-        this.bulkActionsBar = document.getElementById('tasksBulkActions');
-
+        const selectionBarRoot = document.getElementById('tasksSelectionBar');
+        this.deleteSelectedButtons = selectionBarRoot
+            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="delete-selected"]'))
+            : [];
+        this.completeSelectedButtons = selectionBarRoot
+            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="complete-selected"]'))
+            : [];
+        this.selectAllButtons = selectionBarRoot
+            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="select-all"]'))
+            : [];
         if (this.selectionCancelBtn) {
             this.selectionCancelBtn.addEventListener('click', () => {
                 this.clearSelection();
@@ -301,10 +305,6 @@ export class TaskUIManager {
             button.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
         });
 
-        if (this.bulkActionsBar) {
-            this.bulkActionsBar.classList.toggle('hidden', !inSelectionMode);
-            this.bulkActionsBar.setAttribute('aria-hidden', inSelectionMode ? 'false' : 'true');
-        }
     }
 
     syncTaskSelectionCheckboxes() {
