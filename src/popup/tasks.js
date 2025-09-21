@@ -11,9 +11,10 @@ export class TaskUIManager {
         this.selectionBar = null;
         this.selectionCountEl = null;
         this.selectionCancelBtn = null;
-        this.deleteSelectedBtn = null;
-        this.completeSelectedBtn = null;
-        this.selectAllBtn = null;
+        this.deleteSelectedButtons = [];
+        this.completeSelectedButtons = [];
+        this.selectAllButtons = [];
+        this.bulkActionsBar = null;
         this.setupJiraSyncButton();
         this.setupSelectionBar();
     }
@@ -204,9 +205,10 @@ export class TaskUIManager {
         this.selectionBar = document.getElementById('tasksSelectionBar');
         this.selectionCountEl = document.getElementById('tasksSelectionCount');
         this.selectionCancelBtn = document.getElementById('cancelSelectionBtn');
-        this.deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-        this.completeSelectedBtn = document.getElementById('completeSelectedBtn');
-        this.selectAllBtn = document.getElementById('selectAllTasksBtn');
+        this.deleteSelectedButtons = Array.from(document.querySelectorAll('[data-action="delete-selected"]'));
+        this.completeSelectedButtons = Array.from(document.querySelectorAll('[data-action="complete-selected"]'));
+        this.selectAllButtons = Array.from(document.querySelectorAll('[data-action="select-all"]'));
+        this.bulkActionsBar = document.getElementById('tasksBulkActions');
 
         if (this.selectionCancelBtn) {
             this.selectionCancelBtn.addEventListener('click', () => {
@@ -214,26 +216,26 @@ export class TaskUIManager {
             });
         }
 
-        if (this.deleteSelectedBtn) {
-            this.deleteSelectedBtn.disabled = true;
-            this.deleteSelectedBtn.addEventListener('click', async () => {
+        this.deleteSelectedButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', async () => {
                 await this.deleteSelectedTasks();
             });
-        }
+        });
 
-        if (this.completeSelectedBtn) {
-            this.completeSelectedBtn.disabled = true;
-            this.completeSelectedBtn.addEventListener('click', async () => {
+        this.completeSelectedButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', async () => {
                 await this.completeSelectedTasks();
             });
-        }
+        });
 
-        if (this.selectAllBtn) {
-            this.selectAllBtn.disabled = true;
-            this.selectAllBtn.addEventListener('click', () => {
+        this.selectAllButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', () => {
                 this.selectAllDisplayedTasks();
             });
-        }
+        });
 
         this.updateSelectionBar();
     }
@@ -285,18 +287,23 @@ export class TaskUIManager {
             this.selectionCountEl.textContent = label;
         }
 
-        if (this.deleteSelectedBtn) {
-            this.deleteSelectedBtn.disabled = count === 0;
-        }
+        this.deleteSelectedButtons.forEach(button => {
+            button.disabled = count === 0;
+        });
 
-        if (this.completeSelectedBtn) {
-            this.completeSelectedBtn.disabled = count === 0;
-        }
+        this.completeSelectedButtons.forEach(button => {
+            button.disabled = count === 0;
+        });
 
-        if (this.selectAllBtn) {
-            const allSelected = inSelectionMode && displayCount > 0 && count === displayCount;
-            this.selectAllBtn.disabled = displayCount === 0 || allSelected;
-            this.selectAllBtn.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+        const allSelected = inSelectionMode && displayCount > 0 && count === displayCount;
+        this.selectAllButtons.forEach(button => {
+            button.disabled = displayCount === 0 || allSelected;
+            button.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+        });
+
+        if (this.bulkActionsBar) {
+            this.bulkActionsBar.classList.toggle('hidden', !inSelectionMode);
+            this.bulkActionsBar.setAttribute('aria-hidden', inSelectionMode ? 'false' : 'true');
         }
     }
 
@@ -346,12 +353,9 @@ export class TaskUIManager {
             return;
         }
 
-        const deleteButton = this.deleteSelectedBtn;
-        const completeButton = this.completeSelectedBtn;
-        const selectAllButton = this.selectAllBtn;
-        if (deleteButton) { deleteButton.disabled = true; }
-        if (completeButton) { completeButton.disabled = true; }
-        if (selectAllButton) { selectAllButton.disabled = true; }
+        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
+        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
+        this.selectAllButtons.forEach(button => { button.disabled = true; });
 
         const taskIds = [...this.selectedTaskIds];
 
@@ -371,13 +375,9 @@ export class TaskUIManager {
     async completeSelectedTasks() {
         if (!this.selectedTaskIds.length) { return; }
 
-        const completeButton = this.completeSelectedBtn;
-        const deleteButton = this.deleteSelectedBtn;
-        const selectAllButton = this.selectAllBtn;
-
-        if (completeButton) { completeButton.disabled = true; }
-        if (deleteButton) { deleteButton.disabled = true; }
-        if (selectAllButton) { selectAllButton.disabled = true; }
+        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
+        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
+        this.selectAllButtons.forEach(button => { button.disabled = true; });
 
         const taskIds = [...this.selectedTaskIds];
 
