@@ -397,16 +397,51 @@ export class TaskUIManager {
 
         const taskIds = [...this.selectedTaskIds];
 
+        let state = null;
+
         try {
-            const state = await this.messageHandler.sendMessage('completeTasks', { taskIds });
-            this.selectedTaskIds = [];
-            this.renderTasksList(state.tasks, state.currentTaskId);
-            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            state = await this.performBulkCompleteRequest(taskIds);
         } catch (error) {
             console.error('Failed to complete selected tasks:', error);
             alert('Failed to complete selected tasks. Please try again.');
-        } finally {
             this.updateSelectionBar();
+            return;
+        }
+
+        this.selectedTaskIds = [];
+
+        if (!state || !Array.isArray(state.tasks)) {
+            try {
+                state = await this.messageHandler.sendMessage('getState');
+            } catch (stateError) {
+                console.error('Failed to refresh state after completion:', stateError);
+            }
+        }
+
+        if (state && Array.isArray(state.tasks)) {
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        }
+
+        this.updateSelectionBar();
+    }
+
+    async performBulkCompleteRequest(taskIds) {
+        try {
+            return await this.messageHandler.sendMessage('completeTasks', { taskIds });
+        } catch (error) {
+            if (error && error.message === 'Unknown action') {
+                console.warn('Bulk complete action unsupported; falling back to sequential updates.');
+                let latestState = null;
+                for (const taskId of taskIds) {
+                    latestState = await this.messageHandler.sendMessage('updateTask', {
+                        taskId,
+                        updates: { isCompleted: true }
+                    });
+                }
+                return latestState;
+            }
+            throw error;
         }
     }
 
