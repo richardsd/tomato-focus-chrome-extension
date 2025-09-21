@@ -359,17 +359,33 @@ export class TaskUIManager {
 
         const taskIds = [...this.selectedTaskIds];
 
+        let state = null;
+
         try {
-            const state = await this.messageHandler.sendMessage('deleteTasks', { taskIds });
-            this.selectedTaskIds = [];
-            this.renderTasksList(state.tasks, state.currentTaskId);
-            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            state = await this.performBulkDeleteRequest(taskIds);
         } catch (error) {
             console.error('Failed to delete selected tasks:', error);
             alert('Failed to delete selected tasks. Please try again.');
-        } finally {
             this.updateSelectionBar();
+            return;
         }
+
+        this.selectedTaskIds = [];
+
+        if (!state || !Array.isArray(state.tasks)) {
+            try {
+                state = await this.messageHandler.sendMessage('getState');
+            } catch (stateError) {
+                console.error('Failed to refresh state after deletion:', stateError);
+            }
+        }
+
+        if (state && Array.isArray(state.tasks)) {
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        }
+
+        this.updateSelectionBar();
     }
 
     async completeSelectedTasks() {
@@ -391,6 +407,22 @@ export class TaskUIManager {
             alert('Failed to complete selected tasks. Please try again.');
         } finally {
             this.updateSelectionBar();
+        }
+    }
+
+    async performBulkDeleteRequest(taskIds) {
+        try {
+            return await this.messageHandler.sendMessage('deleteTasks', { taskIds });
+        } catch (error) {
+            if (error && error.message === 'Unknown action') {
+                console.warn('Bulk delete action unsupported; falling back to sequential deletions.');
+                let latestState = null;
+                for (const taskId of taskIds) {
+                    latestState = await this.messageHandler.sendMessage('deleteTask', { taskId });
+                }
+                return latestState;
+            }
+            throw error;
         }
     }
 
