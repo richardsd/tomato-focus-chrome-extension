@@ -211,9 +211,7 @@ export class TaskUIManager {
         this.completeSelectedButtons = selectionBarRoot
             ? Array.from(selectionBarRoot.querySelectorAll('[data-action="complete-selected"]'))
             : [];
-        this.selectAllButtons = selectionBarRoot
-            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="select-all"]'))
-            : [];
+        this.selectAllButtons = Array.from(document.querySelectorAll('[data-action="select-all"]'));
         if (this.selectionCancelBtn) {
             this.selectionCancelBtn.addEventListener('click', () => {
                 this.clearSelection();
