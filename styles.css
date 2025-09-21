@@ -1218,6 +1218,7 @@ select.settings-input {
   box-shadow: var(--selection-bar-shadow);
   max-width: 100%;
   align-self: center;
+  margin-bottom: 11px;
 }
 
 .tasks-selection-bar__left,
