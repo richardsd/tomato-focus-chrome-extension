@@ -1260,7 +1260,7 @@ select.settings-input {
   --selection-danger-bg: rgba(239, 68, 68, 0.34);
   --selection-danger-hover: rgba(239, 68, 68, 0.48);
   --selection-count-color: #f8fafc;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1269,8 +1269,10 @@ select.settings-input {
   background: var(--selection-bar-bg);
   border: 1px solid var(--selection-bar-border);
   box-shadow: var(--selection-bar-shadow);
+  width: 100%;
+  box-sizing: border-box;
   max-width: 100%;
-  align-self: center;
+  align-self: stretch;
   margin-bottom: 11px;
 }
 

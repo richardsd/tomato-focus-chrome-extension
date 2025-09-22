@@ -273,7 +273,6 @@ export class TaskUIManager {
 
     updateSelectionBar() {
         const count = this.selectedTaskIds.length;
-        const displayCount = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds.length : 0;
         const inSelectionMode = count > 0;
 
         if (this.tasksHeaderEl) {
@@ -297,10 +296,28 @@ export class TaskUIManager {
             button.disabled = count === 0;
         });
 
-        const allSelected = inSelectionMode && displayCount > 0 && count === displayCount;
+        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
+        const selectedIdsSet = new Set(this.selectedTaskIds.map(id => String(id)));
+        const allSelected = displayIds.length > 0 && displayIds.every(id => selectedIdsSet.has(String(id)));
         this.selectAllButtons.forEach(button => {
-            button.disabled = displayCount === 0 || allSelected;
-            button.setAttribute('aria-pressed', allSelected ? 'true' : 'false');
+            const isPressed = allSelected;
+            const hasTasks = displayIds.length > 0;
+            const label = isPressed ? 'Unselect all tasks' : 'Select all tasks';
+
+            button.disabled = !hasTasks;
+            button.setAttribute('aria-pressed', isPressed ? 'true' : 'false');
+            button.setAttribute('aria-label', label);
+            button.title = label;
+
+            const srLabel = button.querySelector('[data-select-all-label]');
+            if (srLabel) {
+                srLabel.textContent = label;
+            }
+
+            const icon = button.querySelector('[data-select-all-icon]');
+            if (icon) {
+                icon.textContent = isPressed ? '✅' : '⬜';
+            }
         });
 
     }
@@ -334,7 +351,18 @@ export class TaskUIManager {
         const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
         if (!displayIds.length) { return; }
 
-        this.selectedTaskIds = [...new Set(displayIds)];
+        const normalizedDisplayIds = displayIds.map(id => String(id));
+        const displaySet = new Set(normalizedDisplayIds);
+        const selectedSet = new Set(this.selectedTaskIds.map(id => String(id)));
+        const allSelected = normalizedDisplayIds.every(id => selectedSet.has(id));
+
+        if (allSelected) {
+            this.selectedTaskIds = this.selectedTaskIds.filter(id => !displaySet.has(String(id)));
+        } else {
+            const combined = new Set(this.selectedTaskIds.map(id => String(id)));
+            normalizedDisplayIds.forEach(id => combined.add(id));
+            this.selectedTaskIds = Array.from(combined);
+        }
         this.syncTaskSelectionCheckboxes();
         this.updateSelectionBar();
     }
