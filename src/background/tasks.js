@@ -69,6 +69,59 @@ export class TaskManager {
         return true;
     }
 
+    static async deleteTasks(taskIds) {
+        const tasks = await this.getTasks();
+        if (!Array.isArray(taskIds) || taskIds.length === 0) {
+            return tasks;
+        }
+
+        const idsToDelete = new Set(taskIds.map(id => String(id)));
+        const filteredTasks = tasks.filter(task => !idsToDelete.has(task.id));
+
+        if (filteredTasks.length !== tasks.length) {
+            await this.saveTasks(filteredTasks);
+        }
+
+        return filteredTasks;
+    }
+
+    static async completeTasks(taskIds) {
+        const tasks = await this.getTasks();
+        if (!Array.isArray(taskIds) || taskIds.length === 0) {
+            return tasks;
+        }
+
+        const idsToComplete = new Set(taskIds.map(id => String(id)));
+        const nowIso = new Date().toISOString();
+        let changed = false;
+
+        const updatedTasks = tasks.map(task => {
+            if (!idsToComplete.has(task.id)) {
+                return task;
+            }
+
+            const nextTask = { ...task };
+
+            if (!nextTask.isCompleted) {
+                nextTask.isCompleted = true;
+                nextTask.completedAt = nowIso;
+                changed = true;
+            } else if (!nextTask.completedAt) {
+                nextTask.completedAt = nowIso;
+                changed = true;
+            }
+
+            return nextTask;
+        });
+
+        if (changed) {
+            await this.saveTasks(updatedTasks);
+            return updatedTasks;
+        }
+
+        return tasks;
+    }
+
     static async incrementTaskPomodoros(taskId) {
         const tasks = await this.getTasks();
         const task = tasks.find(task => task.id === taskId);

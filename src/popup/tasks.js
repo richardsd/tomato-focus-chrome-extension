@@ -6,26 +6,40 @@ export class TaskUIManager {
         this.messageHandler = messageHandler;
         this.currentEditingTaskId = null;
         this.currentFilter = 'all';
+        this.selectedTaskIds = [];
+        this.currentDisplayTaskIds = [];
+        this.tasksHeaderEl = null;
+        this.selectionBar = null;
+        this.selectionCountEl = null;
+        this.selectionCancelBtn = null;
+        this.deleteSelectedButtons = [];
+        this.completeSelectedButtons = [];
+        this.selectAllButtons = [];
         this.setupJiraSyncButton();
+        this.setupSelectionBar();
     }
 
     /**
      * Render the tasks list
      */
     renderTasksList(tasks, currentTaskId) {
-        console.log('renderTasksList called with:', { tasks, currentTaskId });
+        const allTasks = Array.isArray(tasks) ? tasks : [];
+        console.log('renderTasksList called with:', { tasks: allTasks, currentTaskId });
         const tasksList = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksList);
         if (!tasksList) {
             console.warn('tasksList element not found');
             return;
         }
         // Apply filter
-        let displayTasks = tasks;
+        let displayTasks = allTasks;
         if (this.currentFilter === 'in-progress') {
-            displayTasks = tasks.filter(t => !t.isCompleted);
+            displayTasks = allTasks.filter(t => !t.isCompleted);
         } else if (this.currentFilter === 'completed') {
-            displayTasks = tasks.filter(t => t.isCompleted);
+            displayTasks = allTasks.filter(t => t.isCompleted);
         }
+
+        this.currentDisplayTaskIds = displayTasks.map(task => String(task.id));
+        this.selectedTaskIds = this.selectedTaskIds.filter(id => this.currentDisplayTaskIds.includes(id));
 
         console.log('Tasks list element found, rendering with filter:', this.currentFilter);
 
@@ -38,6 +52,7 @@ export class TaskUIManager {
                     <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
                 </div>
             `;
+            this.updateSelectionBar();
             return;
         }
 
@@ -50,16 +65,16 @@ export class TaskUIManager {
         // Add event listeners for task items
         this.attachTaskEventListeners();
 
+        this.syncTaskSelectionCheckboxes();
+
         // Toggle visibility of clear completed button
-        const hasCompleted = tasks.some(t => t.isCompleted);
         const clearCompletedBtn = document.getElementById('clearCompletedBtn');
         if (clearCompletedBtn) {
-            if (hasCompleted) {
-                clearCompletedBtn.classList.remove('hidden');
-            } else {
-                clearCompletedBtn.classList.add('hidden');
-            }
+            const shouldShowClearCompleted = this.currentFilter === 'completed' && displayTasks.length > 0;
+            clearCompletedBtn.classList.toggle('hidden', !shouldShowClearCompleted);
+            clearCompletedBtn.disabled = !shouldShowClearCompleted;
         }
+        this.updateSelectionBar();
     }
 
     /**
@@ -70,14 +85,22 @@ export class TaskUIManager {
         const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
         const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
         const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
+        const isSelected = this.selectedTaskIds.includes(task.id);
+        const itemClasses = ['task-item'];
+        if (isCurrentTask) { itemClasses.push('task-item--current'); }
+        if (task.isCompleted) { itemClasses.push('task-item--completed'); }
+        if (isSelected) { itemClasses.push('task-item--selected'); }
 
         // Truncate title if it's too long (max 50 characters)
         const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
 
         return `
-            <div class="task-item ${isCurrentTask ? 'task-item--current' : ''} ${task.isCompleted ? 'task-item--completed' : ''}"
+            <div class="${itemClasses.join(' ')}"
                  data-task-id="${task.id}" aria-label="Task: ${this.escapeHtml(task.title)}. ${statusText}. Progress ${progress} pomodoros." tabindex="0">
                 <div class="task-item__header">
+                    <div class="task-item__selection">
+                        <input type="checkbox" class="task-item__checkbox" data-task-id="${task.id}" ${isSelected ? 'checked' : ''} aria-label="Select task ${this.escapeHtml(task.title)}">
+                    </div>
                     <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">
                         ${this.escapeHtml(truncatedTitle)}
                     </div>
@@ -101,10 +124,21 @@ export class TaskUIManager {
                 </div>
             </div>
         `;
-    }    /**
+    }
+
+    /**
      * Attach event listeners to task items
      */
     attachTaskEventListeners() {
+        document.querySelectorAll('.task-item__checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                const taskId = checkbox.dataset.taskId;
+                this.toggleTaskSelection(taskId, checkbox.checked);
+            });
+            checkbox.addEventListener('click', (e) => e.stopPropagation());
+        });
+
         // Select task buttons
         document.querySelectorAll('.task-select').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -164,6 +198,299 @@ export class TaskUIManager {
         // Setup expandable descriptions & menus after tasks render
         this.setupDescriptionToggles();
         this.setupMenus();
+    }
+
+    setupSelectionBar() {
+        this.tasksHeaderEl = document.getElementById('tasksHeaderBar');
+        this.selectionBar = document.getElementById('tasksSelectionBar');
+        this.selectionCountEl = document.getElementById('tasksSelectionCount');
+        this.selectionCancelBtn = document.getElementById('cancelSelectionBtn');
+        const selectionBarRoot = document.getElementById('tasksSelectionBar');
+        this.deleteSelectedButtons = selectionBarRoot
+            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="delete-selected"]'))
+            : [];
+        this.completeSelectedButtons = selectionBarRoot
+            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="complete-selected"]'))
+            : [];
+        this.selectAllButtons = Array.from(document.querySelectorAll('[data-action="select-all"]'));
+        if (this.selectionCancelBtn) {
+            this.selectionCancelBtn.addEventListener('click', () => {
+                this.clearSelection();
+            });
+        }
+
+        this.deleteSelectedButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', async () => {
+                await this.deleteSelectedTasks();
+            });
+        });
+
+        this.completeSelectedButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', async () => {
+                await this.completeSelectedTasks();
+            });
+        });
+
+        this.selectAllButtons.forEach(button => {
+            button.disabled = true;
+            button.addEventListener('click', () => {
+                // Behaves like toggle: if all selected -> clear, else select remaining
+                this.selectAllDisplayedTasks();
+            });
+        });
+
+        this.updateSelectionBar();
+    }
+
+    toggleTaskSelection(taskId, explicitState = null) {
+        if (!taskId) { return; }
+        const id = String(taskId);
+        const currentlySelected = this.selectedTaskIds.includes(id);
+        let shouldSelect = explicitState;
+        if (shouldSelect === null) {
+            shouldSelect = !currentlySelected;
+        }
+
+        if (shouldSelect && !currentlySelected) {
+            this.selectedTaskIds.push(id);
+        } else if (!shouldSelect && currentlySelected) {
+            this.selectedTaskIds = this.selectedTaskIds.filter(existingId => existingId !== id);
+        }
+
+        this.updateTaskSelectionUI(id, shouldSelect);
+        this.updateSelectionBar();
+    }
+
+    updateTaskSelectionUI(taskId, isSelected) {
+        const taskElement = Array.from(document.querySelectorAll('.task-item')).find(item => item.dataset.taskId === taskId);
+        if (!taskElement) { return; }
+        taskElement.classList.toggle('task-item--selected', !!isSelected);
+        const checkbox = taskElement.querySelector('.task-item__checkbox');
+        if (checkbox) {
+            checkbox.checked = !!isSelected;
+        }
+    }
+
+    updateSelectionBar() {
+        const count = this.selectedTaskIds.length;
+        const inSelectionMode = count > 0;
+
+        if (this.tasksHeaderEl) {
+            this.tasksHeaderEl.classList.toggle('hidden', inSelectionMode);
+        }
+
+        if (this.selectionBar) {
+            this.selectionBar.classList.toggle('hidden', !inSelectionMode);
+        }
+
+        if (this.selectionCountEl) {
+            const label = count === 1 ? '1 Selected' : `${count} Selected`;
+            this.selectionCountEl.textContent = label;
+        }
+
+        this.deleteSelectedButtons.forEach(button => {
+            button.disabled = count === 0;
+        });
+
+        this.completeSelectedButtons.forEach(button => {
+            button.disabled = count === 0;
+        });
+
+        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
+        const selectedIdsSet = new Set(this.selectedTaskIds.map(id => String(id)));
+        const allSelected = displayIds.length > 0 && displayIds.every(id => selectedIdsSet.has(String(id)));
+        const someSelected = !allSelected && displayIds.some(id => selectedIdsSet.has(String(id)));
+        this.selectAllButtons.forEach(button => {
+            const hasTasks = displayIds.length > 0;
+            let ariaChecked = 'false';
+            let ariaLabel = 'Select all tasks';
+            let iconChar = '⬜';
+            if (allSelected) {
+                ariaChecked = 'true';
+                ariaLabel = 'Clear selection';
+                iconChar = '✔';
+            } else if (someSelected) {
+                ariaChecked = 'mixed';
+                ariaLabel = 'Select remaining tasks';
+                iconChar = '➖';
+            }
+            button.disabled = !hasTasks;
+            button.setAttribute('aria-checked', ariaChecked);
+            button.setAttribute('aria-label', ariaLabel);
+            button.title = ariaLabel;
+            const srLabel = button.querySelector('[data-select-all-label]');
+            if (srLabel) { srLabel.textContent = ariaLabel; }
+            const icon = button.querySelector('[data-select-all-icon]');
+            if (icon) { icon.textContent = iconChar; }
+        });
+
+    }
+
+    syncTaskSelectionCheckboxes() {
+        const selectedIds = new Set(this.selectedTaskIds);
+        document.querySelectorAll('.task-item').forEach(item => {
+            const taskId = item.dataset.taskId;
+            const isSelected = selectedIds.has(taskId);
+            item.classList.toggle('task-item--selected', isSelected);
+            const checkbox = item.querySelector('.task-item__checkbox');
+            if (checkbox) {
+                checkbox.checked = isSelected;
+            }
+        });
+    }
+
+    clearSelection() {
+        if (!this.selectedTaskIds.length) {
+            this.updateSelectionBar();
+            this.syncTaskSelectionCheckboxes();
+            return;
+        }
+
+        this.selectedTaskIds = [];
+        this.syncTaskSelectionCheckboxes();
+        this.updateSelectionBar();
+    }
+
+    selectAllDisplayedTasks() {
+        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
+        if (!displayIds.length) { return; }
+
+        const normalizedDisplayIds = displayIds.map(id => String(id));
+        const displaySet = new Set(normalizedDisplayIds);
+        const selectedSet = new Set(this.selectedTaskIds.map(id => String(id)));
+        const allSelected = normalizedDisplayIds.every(id => selectedSet.has(id));
+
+        if (allSelected) {
+            this.selectedTaskIds = this.selectedTaskIds.filter(id => !displaySet.has(String(id)));
+        } else {
+            const combined = new Set(this.selectedTaskIds.map(id => String(id)));
+            normalizedDisplayIds.forEach(id => combined.add(id));
+            this.selectedTaskIds = Array.from(combined);
+        }
+        this.syncTaskSelectionCheckboxes();
+        this.updateSelectionBar();
+    }
+
+    async deleteSelectedTasks() {
+        if (!this.selectedTaskIds.length) { return; }
+
+        const count = this.selectedTaskIds.length;
+        const confirmationMessage = count === 1
+            ? 'Are you sure you want to delete the selected task?'
+            : `Are you sure you want to delete the ${count} selected tasks?`;
+
+        if (!window.confirm(confirmationMessage)) {
+            return;
+        }
+
+        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
+        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
+        this.selectAllButtons.forEach(button => { button.disabled = true; });
+
+        const taskIds = [...this.selectedTaskIds];
+
+        let state = null;
+
+        try {
+            state = await this.performBulkDeleteRequest(taskIds);
+        } catch (error) {
+            console.error('Failed to delete selected tasks:', error);
+            alert('Failed to delete selected tasks. Please try again.');
+            this.updateSelectionBar();
+            return;
+        }
+
+        this.selectedTaskIds = [];
+
+        if (!state || !Array.isArray(state.tasks)) {
+            try {
+                state = await this.messageHandler.sendMessage('getState');
+            } catch (stateError) {
+                console.error('Failed to refresh state after deletion:', stateError);
+            }
+        }
+
+        if (state && Array.isArray(state.tasks)) {
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        }
+
+        this.updateSelectionBar();
+    }
+
+    async completeSelectedTasks() {
+        if (!this.selectedTaskIds.length) { return; }
+
+        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
+        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
+        this.selectAllButtons.forEach(button => { button.disabled = true; });
+
+        const taskIds = [...this.selectedTaskIds];
+
+        let state = null;
+
+        try {
+            state = await this.performBulkCompleteRequest(taskIds);
+        } catch (error) {
+            console.error('Failed to complete selected tasks:', error);
+            alert('Failed to complete selected tasks. Please try again.');
+            this.updateSelectionBar();
+            return;
+        }
+
+        this.selectedTaskIds = [];
+
+        if (!state || !Array.isArray(state.tasks)) {
+            try {
+                state = await this.messageHandler.sendMessage('getState');
+            } catch (stateError) {
+                console.error('Failed to refresh state after completion:', stateError);
+            }
+        }
+
+        if (state && Array.isArray(state.tasks)) {
+            this.renderTasksList(state.tasks, state.currentTaskId);
+            this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+        }
+
+        this.updateSelectionBar();
+    }
+
+    async performBulkCompleteRequest(taskIds) {
+        try {
+            return await this.messageHandler.sendMessage('completeTasks', { taskIds });
+        } catch (error) {
+            if (error && error.message === 'Unknown action') {
+                console.warn('Bulk complete action unsupported; falling back to sequential updates.');
+                let latestState = null;
+                for (const taskId of taskIds) {
+                    latestState = await this.messageHandler.sendMessage('updateTask', {
+                        taskId,
+                        updates: { isCompleted: true }
+                    });
+                }
+                return latestState;
+            }
+            throw error;
+        }
+    }
+
+    async performBulkDeleteRequest(taskIds) {
+        try {
+            return await this.messageHandler.sendMessage('deleteTasks', { taskIds });
+        } catch (error) {
+            if (error && error.message === 'Unknown action') {
+                console.warn('Bulk delete action unsupported; falling back to sequential deletions.');
+                let latestState = null;
+                for (const taskId of taskIds) {
+                    latestState = await this.messageHandler.sendMessage('deleteTask', { taskId });
+                }
+                return latestState;
+            }
+            throw error;
+        }
     }
 
     /**
