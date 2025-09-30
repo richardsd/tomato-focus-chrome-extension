@@ -707,8 +707,12 @@ class PopupController {
         // Update hideCompleted toggle button state if present
         if (state.uiPreferences) {
             if (this.taskUIManager && state.uiPreferences.tasksFilter) {
-                this.taskUIManager.currentFilter = state.uiPreferences.tasksFilter;
-                this.syncFilterButtons(state.uiPreferences.tasksFilter);
+                const incomingFilter = state.uiPreferences.tasksFilter;
+                if (this.taskUIManager.currentFilter !== incomingFilter) {
+                    this.taskUIManager.clearSelection();
+                }
+                this.taskUIManager.currentFilter = incomingFilter;
+                this.syncFilterButtons(incomingFilter);
             }
         }
 
@@ -890,6 +894,9 @@ class PopupController {
                 if (!selected) {return;}
                 // If already active, ignore
                 if (btn.classList.contains('is-active')) {return;}
+                if (this.taskUIManager) {
+                    this.taskUIManager.clearSelection();
+                }
                 try {
                     const state = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { tasksFilter: selected } });
                     if (state && this.taskUIManager) {
