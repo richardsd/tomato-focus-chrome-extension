@@ -235,6 +235,7 @@ export class TaskUIManager {
         this.selectAllButtons.forEach(button => {
             button.disabled = true;
             button.addEventListener('click', () => {
+                // Behaves like toggle: if all selected -> clear, else select remaining
                 this.selectAllDisplayedTasks();
             });
         });
@@ -299,25 +300,29 @@ export class TaskUIManager {
         const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
         const selectedIdsSet = new Set(this.selectedTaskIds.map(id => String(id)));
         const allSelected = displayIds.length > 0 && displayIds.every(id => selectedIdsSet.has(String(id)));
+        const someSelected = !allSelected && displayIds.some(id => selectedIdsSet.has(String(id)));
         this.selectAllButtons.forEach(button => {
-            const isPressed = allSelected;
             const hasTasks = displayIds.length > 0;
-            const label = isPressed ? 'Unselect all tasks' : 'Select all tasks';
-
+            let ariaChecked = 'false';
+            let ariaLabel = 'Select all tasks';
+            let iconChar = '⬜';
+            if (allSelected) {
+                ariaChecked = 'true';
+                ariaLabel = 'Clear selection';
+                iconChar = '✔';
+            } else if (someSelected) {
+                ariaChecked = 'mixed';
+                ariaLabel = 'Select remaining tasks';
+                iconChar = '➖';
+            }
             button.disabled = !hasTasks;
-            button.setAttribute('aria-pressed', isPressed ? 'true' : 'false');
-            button.setAttribute('aria-label', label);
-            button.title = label;
-
+            button.setAttribute('aria-checked', ariaChecked);
+            button.setAttribute('aria-label', ariaLabel);
+            button.title = ariaLabel;
             const srLabel = button.querySelector('[data-select-all-label]');
-            if (srLabel) {
-                srLabel.textContent = label;
-            }
-
+            if (srLabel) { srLabel.textContent = ariaLabel; }
             const icon = button.querySelector('[data-select-all-icon]');
-            if (icon) {
-                icon.textContent = isPressed ? '✅' : '⬜';
-            }
+            if (icon) { icon.textContent = iconChar; }
         });
 
     }

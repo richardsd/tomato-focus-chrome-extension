@@ -249,10 +249,11 @@
 
             <!-- Quick Filters Bar -->
             <div id="tasksFilters" class="tasks-filters" role="toolbar" aria-label="Task filters">
-                <button class="tasks-select-all" type="button" data-action="select-all" aria-label="Select all tasks" title="Select all tasks" aria-pressed="false">
+                <button id="selectAllBtn" class="tasks-select-all" type="button" data-action="select-all" role="checkbox" aria-checked="false" aria-label="Select all tasks" title="Select all tasks">
                     <span aria-hidden="true" data-select-all-icon>⬜</span>
                     <span class="visually-hidden" data-select-all-label>Select all tasks</span>
                 </button>
+                <span class="tasks-filters__divider" aria-hidden="true"></span>
                 <button class="tasks-filter is-active" data-filter="all" aria-pressed="true">All</button>
                 <button class="tasks-filter" data-filter="in-progress" aria-pressed="false">In Progress</button>
                 <button class="tasks-filter" data-filter="completed" aria-pressed="false">Completed</button>

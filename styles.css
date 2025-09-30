@@ -1122,7 +1122,7 @@ select.settings-input {
 .tasks-filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   padding: 0 4px 10px 4px;
   margin-top: -4px; /* tighten spacing below header */
   flex-wrap: nowrap;
@@ -1195,98 +1195,24 @@ select.settings-input {
   .dark-theme .tasks-filter[aria-pressed="true"] { background: var(--color-primary-light); }
 }
 
-.tasks-select-all {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.32);
-  color: var(--color-white);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.18), 0 0 0 1px rgba(255,255,255,0.18) inset;
-  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
-}
-
-.tasks-select-all span[aria-hidden="true"] {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.tasks-select-all:hover {
-  background: rgba(255, 255, 255, 0.26);
-}
-
-.tasks-select-all:active {
-  transform: translateY(1px);
-}
-
-.tasks-select-all[aria-pressed="true"] {
-  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-  border-color: rgba(255,255,255,0.6);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.45) inset, 0 2px 6px rgba(0,0,0,0.30);
-  color: #fff;
-}
-
-.tasks-select-all:focus-visible {
-  outline: 2px solid #ffffff;
-  outline-offset: 2px;
-}
-
-.tasks-select-all[disabled] {
-  cursor: not-allowed;
-  opacity: 0.55;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.25) inset;
-}
-
-.dark-theme .tasks-select-all {
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255,255,255,0.24);
-  color: #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.12) inset;
-}
-
-.dark-theme .tasks-select-all:hover {
-  background: rgba(255,255,255,0.2);
-}
-
-.dark-theme .tasks-select-all[aria-pressed="true"] {
-  background: linear-gradient(135deg, var(--color-primary-light), var(--color-primary));
-  border-color: rgba(255,255,255,0.5);
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.35) inset, 0 2px 6px rgba(0,0,0,0.4);
-}
-
-.dark-theme .tasks-select-all[disabled] {
-  opacity: 0.5;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.18) inset;
-}
-
-@media (prefers-contrast: more) {
-  .tasks-select-all {
-    background: #ffffff;
-    color: #111;
-    border-color: #666;
-  }
-
-  .tasks-select-all[aria-pressed="true"] {
-    background: var(--color-primary);
-    color: #fff;
-  }
-
-  .dark-theme .tasks-select-all {
-    background: #222;
-    color: #fff;
-    border-color: #555;
-  }
-
-  .dark-theme .tasks-select-all[aria-pressed="true"] {
-    background: var(--color-primary-light);
-    color: #000;
-  }
-}
+/* Select All (Mode Toggle) Option 2 */
+.tasks-select-all { --sa-bg: rgba(255,255,255,0.14); --sa-border: rgba(255,255,255,0.28); --sa-hover: rgba(255,255,255,0.22); --sa-active-border: rgba(255,255,255,0.55); flex:0 0 auto; display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; padding:0; border-radius:12px; background:var(--sa-bg); border:1px solid var(--sa-border); color:#fff; cursor:pointer; font-size:15px; line-height:1; backdrop-filter:blur(8px) saturate(140%); box-shadow:0 1px 2px rgba(0,0,0,0.35),0 0 0 1px rgba(255,255,255,0.15) inset; transition:background .18s, border-color .18s, transform .18s, box-shadow .25s; }
+.tasks-select-all:hover { background:var(--sa-hover); }
+.tasks-select-all:active { transform:translateY(1px); }
+.tasks-select-all[aria-checked="true"],
+.tasks-select-all[aria-checked="mixed"] { background:linear-gradient(135deg, var(--color-primary-light), var(--color-primary)); border-color:var(--sa-active-border); box-shadow:0 4px 14px -4px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.35) inset; animation:saPop .35s ease; }
+.tasks-select-all:focus-visible { outline:2px solid #ffffff; outline-offset:2px; }
+.tasks-select-all[disabled] { cursor:not-allowed; opacity:.5; box-shadow:0 0 0 1px rgba(255,255,255,0.22) inset; }
+@keyframes saPop { 0%{transform:scale(1);} 55%{transform:scale(1.09);} 100%{transform:scale(1);} }
+.tasks-select-all span[aria-hidden="true"] { font-size:16px; line-height:1; }
+/* (Removed labeled variant styles; reverted to icon-only Option 2) */
+.dark-theme .tasks-select-all { --sa-bg:rgba(255,255,255,0.12); --sa-border:rgba(255,255,255,0.24); --sa-hover:rgba(255,255,255,0.20); }
+.light-theme .tasks-select-all { --sa-bg:rgba(0,0,0,0.08); --sa-border:rgba(0,0,0,0.18); --sa-hover:rgba(0,0,0,0.16); color:#1f2937; }
+.light-theme .tasks-select-all[aria-checked="true"],
+.light-theme .tasks-select-all[aria-checked="mixed"] { color:#fff; }
+@media (prefers-contrast: more) { .tasks-select-all { background:#ffffff; color:#111; border-color:#666; } .tasks-select-all[aria-checked="true"], .tasks-select-all[aria-checked="mixed"] { background:var(--color-primary); color:#fff; } .dark-theme .tasks-select-all { background:#222; color:#fff; border-color:#555; } .dark-theme .tasks-select-all[aria-checked="true"], .dark-theme .tasks-select-all[aria-checked="mixed"] { background:var(--color-primary-light); color:#000; } }
+.tasks-filters__divider { width:1px; height:18px; background:linear-gradient(to bottom, rgba(255,255,255,0.5), rgba(255,255,255,0.15)); margin:0 2px 0 4px; border-radius:1px; }
+/* (Removed previous alignment overrides that pushed select-all to the right) */
 
 /* Tasks Panel */
 .tasks-toolbar {
