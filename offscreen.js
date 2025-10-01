@@ -15,7 +15,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true });
             })
             .catch((error) => {
-                if (error.message && error.message.includes('interrupted by a call to pause')) {
+                if (
+                    error.message &&
+                    error.message.includes('interrupted by a call to pause')
+                ) {
                     console.warn('Sound playback interrupted by pause');
                     sendResponse({ success: true });
                 } else {

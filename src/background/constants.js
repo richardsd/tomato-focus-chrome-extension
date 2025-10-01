@@ -20,28 +20,38 @@ export const CONSTANTS = {
         jiraUsername: '',
         jiraToken: '',
         autoSyncJira: false,
-        jiraSyncInterval: 30
-    }
+        jiraSyncInterval: 30,
+    },
 };
 
 // Utility function to promisify Chrome APIs
 export const chromePromise = {
     storage: {
         local: {
-            get: (keys) => new Promise(resolve => chrome.storage.local.get(keys, resolve)),
-            set: (items) => new Promise(resolve => chrome.storage.local.set(items, resolve))
-        }
+            get: (keys) =>
+                new Promise((resolve) =>
+                    chrome.storage.local.get(keys, resolve)
+                ),
+            set: (items) =>
+                new Promise((resolve) =>
+                    chrome.storage.local.set(items, resolve)
+                ),
+        },
     },
     notifications: {
-        getPermissionLevel: () => new Promise(resolve => chrome.notifications.getPermissionLevel(resolve)),
-        create: (id, options) => new Promise((resolve, reject) => {
-            chrome.notifications.create(id, options, (notificationId) => {
-                if (chrome.runtime.lastError) {
-                    reject(new Error(chrome.runtime.lastError.message));
-                } else {
-                    resolve(notificationId);
-                }
-            });
-        })
-    }
+        getPermissionLevel: () =>
+            new Promise((resolve) =>
+                chrome.notifications.getPermissionLevel(resolve)
+            ),
+        create: (id, options) =>
+            new Promise((resolve, reject) => {
+                chrome.notifications.create(id, options, (notificationId) => {
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message));
+                    } else {
+                        resolve(notificationId);
+                    }
+                });
+            }),
+    },
 };

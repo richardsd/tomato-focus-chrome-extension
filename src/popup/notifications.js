@@ -17,21 +17,29 @@ function ensureContainer() {
 
 function removeToast(toast) {
     const container = toast?.parentElement;
-    if (!toast || !container) { return; }
+    if (!toast || !container) {
+        return;
+    }
 
     toast.classList.remove('popup-toast--visible');
     toast.classList.add('popup-toast--closing');
 
-    toast.addEventListener('transitionend', () => {
-        toast.remove();
-        if (!container.hasChildNodes()) {
-            container.remove();
-        }
-    }, { once: true });
+    toast.addEventListener(
+        'transitionend',
+        () => {
+            toast.remove();
+            if (!container.hasChildNodes()) {
+                container.remove();
+            }
+        },
+        { once: true }
+    );
 }
 
 function showToast(message, type) {
-    if (!message) { return; }
+    if (!message) {
+        return;
+    }
 
     const container = ensureContainer();
     const toast = document.createElement('div');
@@ -46,12 +54,19 @@ function showToast(message, type) {
         toast.classList.add('popup-toast--visible');
     });
 
-    const timeout = setTimeout(() => removeToast(toast), type === 'error' ? ERROR_DURATION : SUCCESS_DURATION);
+    const timeout = setTimeout(
+        () => removeToast(toast),
+        type === 'error' ? ERROR_DURATION : SUCCESS_DURATION
+    );
 
-    toast.addEventListener('click', () => {
-        clearTimeout(timeout);
-        removeToast(toast);
-    }, { once: true });
+    toast.addEventListener(
+        'click',
+        () => {
+            clearTimeout(timeout);
+            removeToast(toast);
+        },
+        { once: true }
+    );
 }
 
 export function notifySuccess(message) {

@@ -149,11 +149,13 @@ Right-click the extension icon to:
 4. Load the unpacked extension
 
 ### Code Quality
-This project uses ESLint for code quality and consistency:
-- **Configuration**: `eslint.config.js` with `eslint:recommended` base
-- **Run linting**: `npm run lint`
+This project uses a combination of ESLint, Stylelint, and Prettier for code quality and consistency:
+- **Configuration**: `eslint.config.js`, `.stylelintrc`, and `.prettierrc`
+- **Run linting**: `npm run lint` to check JavaScript, HTML, and CSS files
 - **Auto-fix issues**: `npm run lint:fix`
-- **IDE Integration**: Install the ESLint extension for real-time feedback
+- **Format code**: `npm run format` (or verify with `npm run format:check`)
+- **Offline support**: Linting and formatting scripts bundle local fallbacks for required plugins so they can run without internet access.
+- **IDE Integration**: Install ESLint, Stylelint, and Prettier extensions for real-time feedback
 
 ### Coding Standards
 - **Indentation**: 4 spaces (enforced by EditorConfig and ESLint)
