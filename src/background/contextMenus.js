@@ -51,13 +51,16 @@ export class ContextMenuManager {
                     parentId: 'quick-times',
                     title: '45 minutes',
                     contexts: ['action'],
-                }
+                },
             ];
 
-            menuItems.forEach(item => {
+            menuItems.forEach((item) => {
                 chrome.contextMenus.create(item, () => {
                     if (chrome.runtime.lastError) {
-                        console.error('Error creating context menu:', chrome.runtime.lastError);
+                        console.error(
+                            'Error creating context menu:',
+                            chrome.runtime.lastError
+                        );
                     }
                 });
             });
@@ -67,18 +70,32 @@ export class ContextMenuManager {
     static update(isRunning, isWorkSession, timeLeft) {
         const startPauseTitle = isRunning ? 'Pause Timer' : 'Start Timer';
 
-        chrome.contextMenus.update('start-pause', { title: startPauseTitle }, () => {
-            if (chrome.runtime.lastError) {
-                console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
+        chrome.contextMenus.update(
+            'start-pause',
+            { title: startPauseTitle },
+            () => {
+                if (chrome.runtime.lastError) {
+                    console.log(
+                        'Context menu not ready yet:',
+                        chrome.runtime.lastError.message
+                    );
+                }
             }
-        });
+        );
 
-        chrome.contextMenus.update('skip-break', {
-            enabled: !isWorkSession && timeLeft > 0,
-        }, () => {
-            if (chrome.runtime.lastError) {
-                console.log('Context menu not ready yet:', chrome.runtime.lastError.message);
+        chrome.contextMenus.update(
+            'skip-break',
+            {
+                enabled: !isWorkSession && timeLeft > 0,
+            },
+            () => {
+                if (chrome.runtime.lastError) {
+                    console.log(
+                        'Context menu not ready yet:',
+                        chrome.runtime.lastError.message
+                    );
+                }
             }
-        });
+        );
     }
 }

@@ -1,228 +1,464 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tomato Focus</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <!-- Main Timer Panel -->
-        <div id="timerPanel" class="panel" role="main" aria-labelledby="sessionTitle">
-            <div class="header mb-3">
-                <div id="sessionIcon" class="header__icon">
-                    <img src="icons/icon.svg" alt="Tomato" width="32" height="32">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tomato Focus</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <div class="container">
+            <!-- Main Timer Panel -->
+            <div
+                id="timerPanel"
+                class="panel"
+                role="main"
+                aria-labelledby="sessionTitle"
+            >
+                <div class="header mb-3">
+                    <div id="sessionIcon" class="header__icon">
+                        <img
+                            src="icons/icon.svg"
+                            alt="Tomato"
+                            width="32"
+                            height="32"
+                        />
+                    </div>
+                    <h1
+                        id="sessionTitle"
+                        class="header__title header__title--centered"
+                    >
+                        Tomato Focus
+                    </h1>
+                    <div class="header__actions">
+                        <button
+                            id="settingsBtn"
+                            class="header__settings"
+                            aria-label="Open settings"
+                        >
+                            <img
+                                src="icons/settings-icon.svg"
+                                alt="Settings"
+                                width="32"
+                                height="32"
+                            />
+                        </button>
+                    </div>
                 </div>
-                <h1 id="sessionTitle" class="header__title header__title--centered">Tomato Focus</h1>
-                <div class="header__actions">
-                    <button id="settingsBtn" class="header__settings" aria-label="Open settings">
-                        <img src="icons/settings-icon.svg" alt="Settings" width="32" height="32">
+
+                <!-- Secondary toolbar (Tasks access moved here) -->
+                <div class="toolbar-secondary" aria-label="Secondary actions">
+                    <button
+                        id="tasksBtn"
+                        class="toolbar-btn"
+                        aria-label="View tasks"
+                        title="View tasks list"
+                    >
+                        <span class="toolbar-btn__icon" aria-hidden="true"
+                            >📋</span
+                        >
+                        <span class="toolbar-btn__label">Tasks</span>
+                        <span
+                            id="tasksCount"
+                            class="badge hidden"
+                            aria-hidden="true"
+                            >0</span
+                        >
+                    </button>
+                    <button
+                        id="statsBtn"
+                        class="toolbar-btn"
+                        aria-label="View statistics"
+                        title="Open statistics panel"
+                    >
+                        <span class="toolbar-btn__icon" aria-hidden="true"
+                            >📊</span
+                        >
+                        <span class="toolbar-btn__label">Statistics</span>
                     </button>
                 </div>
-            </div>
 
-            <!-- Secondary toolbar (Tasks access moved here) -->
-            <div class="toolbar-secondary" aria-label="Secondary actions">
-                <button id="tasksBtn" class="toolbar-btn" aria-label="View tasks" title="View tasks list">
-                    <span class="toolbar-btn__icon" aria-hidden="true">📋</span>
-                    <span class="toolbar-btn__label">Tasks</span>
-                    <span id="tasksCount" class="badge hidden" aria-hidden="true">0</span>
-                </button>
-                <button id="statsBtn" class="toolbar-btn" aria-label="View statistics" title="Open statistics panel">
-                    <span class="toolbar-btn__icon" aria-hidden="true">📊</span>
-                    <span class="toolbar-btn__label">Statistics</span>
-                </button>
-            </div>
-
-            <!-- Current Task Display -->
-            <div id="currentTask" class="current-task hidden">
-                <div class="current-task__content">
-                    <div class="current-task__title">Current Task</div>
-                    <div id="currentTaskName" class="current-task__name">No task selected</div>
-                    <div id="currentTaskProgress" class="current-task__progress">0/0 🍅</div>
-                </div>
-                <button id="clearTaskBtn" class="current-task__clear" aria-label="Clear current task">×</button>
-            </div>
-
-            <div class="timer">
-                <div class="timer__circle">
-                    <svg class="timer__progress-ring" width="180" height="180">
-                        <circle class="timer__progress-ring-background" cx="90" cy="90" r="80" fill="transparent" stroke="rgba(255, 255, 255, 0.2)" stroke-width="4"/>
-                        <circle class="timer__progress-ring-progress" cx="90" cy="90" r="80" fill="transparent" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-dashoffset="0"/>
-                    </svg>
-                    <div id="timer" class="timer__display">25:00</div>
-                </div>
-            </div>
-
-            <div class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg">
-                <div class="controls flex justify-center gap-2 mb-4">
-                    <button id="startBtn" class="btn btn--success" aria-label="Start timer">
-                        <span class="btn-icon">▶</span>
-                        <span class="btn-text">Start</span>
-                    </button>
-                    <button id="pauseBtn" class="btn btn--warning hidden" aria-label="Pause timer">
-                        <span class="btn-icon">⏸</span>
-                        <span class="btn-text">Pause</span>
-                    </button>
-                    <button id="resetBtn" class="btn btn--danger" aria-label="Reset timer">
-                        <span class="btn-icon">↻</span>
-                        <span class="btn-text">Reset</span>
-                    </button>
-                    <button id="skipBreakBtn" class="btn btn--neutral" aria-label="Skip break" disabled>
-                        <span class="btn-icon">⏭</span>
-                        <span class="btn-text">Skip</span>
+                <!-- Current Task Display -->
+                <div id="currentTask" class="current-task hidden">
+                    <div class="current-task__content">
+                        <div class="current-task__title">Current Task</div>
+                        <div id="currentTaskName" class="current-task__name">
+                            No task selected
+                        </div>
+                        <div
+                            id="currentTaskProgress"
+                            class="current-task__progress"
+                        >
+                            0/0 🍅
+                        </div>
+                    </div>
+                    <button
+                        id="clearTaskBtn"
+                        class="current-task__clear"
+                        aria-label="Clear current task"
+                    >
+                        ×
                     </button>
                 </div>
 
-                <div id="cycleProgress" class="cycle-progress">Focus 1 of 4</div>
-            </div>
+                <div class="timer">
+                    <div class="timer__circle">
+                        <svg
+                            class="timer__progress-ring"
+                            width="180"
+                            height="180"
+                        >
+                            <circle
+                                class="timer__progress-ring-background"
+                                cx="90"
+                                cy="90"
+                                r="80"
+                                fill="transparent"
+                                stroke="rgba(255, 255, 255, 0.2)"
+                                stroke-width="4"
+                            />
+                            <circle
+                                class="timer__progress-ring-progress"
+                                cx="90"
+                                cy="90"
+                                r="80"
+                                fill="transparent"
+                                stroke="#ffffff"
+                                stroke-width="4"
+                                stroke-linecap="round"
+                                stroke-dashoffset="0"
+                            />
+                        </svg>
+                        <div id="timer" class="timer__display">25:00</div>
+                    </div>
+                </div>
 
-            <!-- Statistics Section -->
-            <div class="stats-section">
-                <div class="stats-container">
-                    <div class="stats-item">
-                        <div id="completedToday" class="stats-number">0</div>
-                        <div class="stats-label">Completed Today</div>
+                <div
+                    class="controls-container bg-white bg-opacity-90 rounded-lg shadow-lg"
+                >
+                    <div class="controls flex justify-center gap-2 mb-4">
+                        <button
+                            id="startBtn"
+                            class="btn btn--success"
+                            aria-label="Start timer"
+                        >
+                            <span class="btn-icon">▶</span>
+                            <span class="btn-text">Start</span>
+                        </button>
+                        <button
+                            id="pauseBtn"
+                            class="btn btn--warning hidden"
+                            aria-label="Pause timer"
+                        >
+                            <span class="btn-icon">⏸</span>
+                            <span class="btn-text">Pause</span>
+                        </button>
+                        <button
+                            id="resetBtn"
+                            class="btn btn--danger"
+                            aria-label="Reset timer"
+                        >
+                            <span class="btn-icon">↻</span>
+                            <span class="btn-text">Reset</span>
+                        </button>
+                        <button
+                            id="skipBreakBtn"
+                            class="btn btn--neutral"
+                            aria-label="Skip break"
+                            disabled
+                        >
+                            <span class="btn-icon">⏭</span>
+                            <span class="btn-text">Skip</span>
+                        </button>
                     </div>
-                    <div class="stats-item">
-                        <div id="focusTime" class="stats-number">0m</div>
-                        <div class="stats-label">Focus Time</div>
+
+                    <div id="cycleProgress" class="cycle-progress">
+                        Focus 1 of 4
                     </div>
+                </div>
+
+                <!-- Statistics Section -->
+                <div class="stats-section">
+                    <div class="stats-container">
+                        <div class="stats-item">
+                            <div id="completedToday" class="stats-number">
+                                0
+                            </div>
+                            <div class="stats-label">Completed Today</div>
+                        </div>
+                        <div class="stats-item">
+                            <div id="focusTime" class="stats-number">0m</div>
+                            <div class="stats-label">Focus Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="notificationStatus" class="notification-status hidden">
+                    <div id="notificationMessage"></div>
                 </div>
             </div>
 
-            <div id="notificationStatus" class="notification-status hidden">
-                <div id="notificationMessage"></div>
-            </div>
-        </div>
-
-        <!-- Settings Panel -->
-        <div id="settingsPanel" class="panel hidden" role="region" aria-label="Settings panel">
-            <div class="settings-header flex items-center justify-between mb-4">
-                <button id="backBtn" class="btn--back" aria-label="Back to timer">
-                    ←
-                </button>
-                <h1 class="header__title">Settings</h1>
-                <div class="settings-header__spacer"></div> <!-- Spacer matching back button width -->
-            </div>
-
-            <div class="settings-content">
-                <!-- Timer Settings Group -->
-                <div class="settings-group-container">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Timer Settings</h3>
-                        <div class="settings-row">
-                            <label class="settings-label">Work Duration (min):</label>
-                            <input type="number" id="workDuration" min="1" max="60" value="25" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Short Break (min):</label>
-                            <input type="number" id="shortBreak" min="1" max="30" value="5" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Long Break (min):</label>
-                            <input type="number" id="longBreak" min="1" max="60" value="15" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Sessions before Long Break:</label>
-                            <input type="number" id="longBreakInterval" min="1" max="10" value="4" class="settings-input">
-                        </div>
-                    </div>
+            <!-- Settings Panel -->
+            <div
+                id="settingsPanel"
+                class="panel hidden"
+                role="region"
+                aria-label="Settings panel"
+            >
+                <div
+                    class="settings-header flex items-center justify-between mb-4"
+                >
+                    <button
+                        id="backBtn"
+                        class="btn--back"
+                        aria-label="Back to timer"
+                    >
+                        ←
+                    </button>
+                    <h1 class="header__title">Settings</h1>
+                    <div class="settings-header__spacer"></div>
+                    <!-- Spacer matching back button width -->
                 </div>
 
-                <!-- Behavior Settings Group -->
-                <div class="settings-group-container">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Behavior</h3>
-                        <div class="settings-row">
-                            <label class="settings-label">Auto-start next period:</label>
-                            <input type="checkbox" id="autoStart" class="settings-checkbox">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Pause timer when idle:</label>
-                            <input type="checkbox" id="pauseOnIdle" class="settings-checkbox">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Audio & Visual Settings Group -->
-                <div class="settings-group-container">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Audio & Visual</h3>
-                        <div class="settings-row">
-                            <label class="settings-label">Play sound:</label>
-                            <input type="checkbox" id="playSound" class="settings-checkbox">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Volume:</label>
-                            <input type="range" id="volume" min="0" max="1" step="0.1" value="1" class="settings-input settings-slider">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label">Theme:</label>
-                            <select id="theme" class="settings-input">
-                                <option value="system">System</option>
-                                <option value="light">Light</option>
-                                <option value="dark">Dark</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Jira Integration Settings Group -->
-                <div class="settings-group-container">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Jira Integration</h3>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraUrl">Jira URL:</label>
-                            <input type="text" id="jiraUrl" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraUsername">Username:</label>
-                            <input type="text" id="jiraUsername" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraToken">API Token:</label>
-                            <input type="password" id="jiraToken" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="autoSyncJira">Enable periodic sync:</label>
-                            <input type="checkbox" id="autoSyncJira" class="settings-checkbox">
-                        </div>
-                        <div class="settings-row">
-                            <label class="settings-label" for="jiraSyncInterval">Sync interval (minutes):</label>
-                            <input type="number" id="jiraSyncInterval" min="5" max="720" value="30" class="settings-input">
-                        </div>
-                        <div class="settings-row">
-                            <button id="syncJiraBtn" class="btn btn--secondary btn--full" type="button">Sync from Jira</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Data Management Settings Group -->
-                <div class="settings-group-container">
-                    <div class="settings-group">
-                        <h3 class="settings-group-title">Data Management</h3>
-                        <div class="settings-row">
-                            <div class="settings-description">
-                                <p>Clear all your statistics data including completed sessions and focus time. This action cannot be undone.</p>
+                <div class="settings-content">
+                    <!-- Timer Settings Group -->
+                    <div class="settings-group-container">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Timer Settings</h3>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Work Duration (min):</label
+                                >
+                                <input
+                                    type="number"
+                                    id="workDuration"
+                                    min="1"
+                                    max="60"
+                                    value="25"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Short Break (min):</label
+                                >
+                                <input
+                                    type="number"
+                                    id="shortBreak"
+                                    min="1"
+                                    max="30"
+                                    value="5"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Long Break (min):</label
+                                >
+                                <input
+                                    type="number"
+                                    id="longBreak"
+                                    min="1"
+                                    max="60"
+                                    value="15"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Sessions before Long Break:</label
+                                >
+                                <input
+                                    type="number"
+                                    id="longBreakInterval"
+                                    min="1"
+                                    max="10"
+                                    value="4"
+                                    class="settings-input"
+                                />
                             </div>
                         </div>
-                        <div class="settings-row">
-                            <button id="clearDataBtn" class="btn btn--danger btn--full" type="button">
-                                Clear All Statistics
-                            </button>
+                    </div>
+
+                    <!-- Behavior Settings Group -->
+                    <div class="settings-group-container">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Behavior</h3>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Auto-start next period:</label
+                                >
+                                <input
+                                    type="checkbox"
+                                    id="autoStart"
+                                    class="settings-checkbox"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Pause timer when idle:</label
+                                >
+                                <input
+                                    type="checkbox"
+                                    id="pauseOnIdle"
+                                    class="settings-checkbox"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Audio & Visual Settings Group -->
+                    <div class="settings-group-container">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">Audio & Visual</h3>
+                            <div class="settings-row">
+                                <label class="settings-label"
+                                    >Play sound:</label
+                                >
+                                <input
+                                    type="checkbox"
+                                    id="playSound"
+                                    class="settings-checkbox"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label">Volume:</label>
+                                <input
+                                    type="range"
+                                    id="volume"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value="1"
+                                    class="settings-input settings-slider"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label">Theme:</label>
+                                <select id="theme" class="settings-input">
+                                    <option value="system">System</option>
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Jira Integration Settings Group -->
+                    <div class="settings-group-container">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">
+                                Jira Integration
+                            </h3>
+                            <div class="settings-row">
+                                <label class="settings-label" for="jiraUrl"
+                                    >Jira URL:</label
+                                >
+                                <input
+                                    type="text"
+                                    id="jiraUrl"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label" for="jiraUsername"
+                                    >Username:</label
+                                >
+                                <input
+                                    type="text"
+                                    id="jiraUsername"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label" for="jiraToken"
+                                    >API Token:</label
+                                >
+                                <input
+                                    type="password"
+                                    id="jiraToken"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label class="settings-label" for="autoSyncJira"
+                                    >Enable periodic sync:</label
+                                >
+                                <input
+                                    type="checkbox"
+                                    id="autoSyncJira"
+                                    class="settings-checkbox"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <label
+                                    class="settings-label"
+                                    for="jiraSyncInterval"
+                                    >Sync interval (minutes):</label
+                                >
+                                <input
+                                    type="number"
+                                    id="jiraSyncInterval"
+                                    min="5"
+                                    max="720"
+                                    value="30"
+                                    class="settings-input"
+                                />
+                            </div>
+                            <div class="settings-row">
+                                <button
+                                    id="syncJiraBtn"
+                                    class="btn btn--secondary btn--full"
+                                    type="button"
+                                >
+                                    Sync from Jira
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Management Settings Group -->
+                    <div class="settings-group-container">
+                        <div class="settings-group">
+                            <h3 class="settings-group-title">
+                                Data Management
+                            </h3>
+                            <div class="settings-row">
+                                <div class="settings-description">
+                                    <p>
+                                        Clear all your statistics data including
+                                        completed sessions and focus time. This
+                                        action cannot be undone.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="settings-row">
+                                <button
+                                    id="clearDataBtn"
+                                    class="btn btn--danger btn--full"
+                                    type="button"
+                                >
+                                    Clear All Statistics
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Sticky Save Button -->
-            <div class="settings-footer">
-                <button id="saveSettings" class="btn btn--primary btn--full">Save Settings</button>
+                <!-- Sticky Save Button -->
+                <div class="settings-footer">
+                    <button
+                        id="saveSettings"
+                        class="btn btn--primary btn--full"
+                    >
+                        Save Settings
+                    </button>
+                </div>
             </div>
-        </div>
 
         <!-- Tasks Panel -->
         <div id="tasksPanel" class="panel hidden" role="region" aria-label="Tasks panel">
@@ -267,69 +503,144 @@
                 <button class="tasks-filter" data-filter="completed" aria-pressed="false">Completed</button>
             </div>
 
-            <div class="tasks-content">
-                <!-- Task List -->
-                <div id="tasksList" class="tasks-list">
-                    <div class="tasks-empty">
-                        <div class="tasks-empty__icon">📋</div>
-                        <div class="tasks-empty__text">No tasks yet</div>
-                        <div class="tasks-empty__subtext">Add a task to start tracking your focus sessions</div>
+                <div class="tasks-content">
+                    <!-- Task List -->
+                    <div id="tasksList" class="tasks-list">
+                        <div class="tasks-empty">
+                            <div class="tasks-empty__icon">📋</div>
+                            <div class="tasks-empty__text">No tasks yet</div>
+                            <div class="tasks-empty__subtext">
+                                Add a task to start tracking your focus sessions
+                            </div>
+                        </div>
                     </div>
                 </div>
+                <div class="tasks-footer">
+                    <button
+                        id="clearCompletedBtn"
+                        class="tasks-clear-link hidden"
+                        aria-label="Clear completed tasks"
+                        title="Remove all completed tasks permanently"
+                    >
+                        Clear completed tasks
+                    </button>
+                </div>
             </div>
-            <div class="tasks-footer">
-                <button id="clearCompletedBtn" class="tasks-clear-link hidden" aria-label="Clear completed tasks" title="Remove all completed tasks permanently">Clear completed tasks</button>
-            </div>
-        </div>
 
-        <!-- Statistics Panel -->
-        <div id="statsPanel" class="panel hidden" role="region" aria-label="Statistics panel">
-            <div class="tasks-header header flex items-center justify-between mb-4">
-                <button id="backFromStatsBtn" class="btn--back" aria-label="Back to timer">←</button>
-                <h1 class="header__title">Statistics</h1>
-                <div style="width:40px;height:40px;"></div>
-            </div>
-            <div id="statsPanelContent" class="stats-panel-content">
-                <div id="statsSummary" class="stat-grid" aria-label="Today summary">
-                    <!-- Populated dynamically -->
+            <!-- Statistics Panel -->
+            <div
+                id="statsPanel"
+                class="panel hidden"
+                role="region"
+                aria-label="Statistics panel"
+            >
+                <div
+                    class="tasks-header header flex items-center justify-between mb-4"
+                >
+                    <button
+                        id="backFromStatsBtn"
+                        class="btn--back"
+                        aria-label="Back to timer"
+                    >
+                        ←
+                    </button>
+                    <h1 class="header__title">Statistics</h1>
+                    <div style="width: 40px; height: 40px"></div>
                 </div>
-                <section id="statsHistorySection" class="stats-history-section hidden" aria-label="Last 7 days" >
-                    <h3 class="stats-section__title">Last 7 Days</h3>
-                    <div id="stats7DayChart" class="stats-chart" role="group" aria-label="7 day sessions chart"></div>
-                </section>
+                <div id="statsPanelContent" class="stats-panel-content">
+                    <div
+                        id="statsSummary"
+                        class="stat-grid"
+                        aria-label="Today summary"
+                    >
+                        <!-- Populated dynamically -->
+                    </div>
+                    <section
+                        id="statsHistorySection"
+                        class="stats-history-section hidden"
+                        aria-label="Last 7 days"
+                    >
+                        <h3 class="stats-section__title">Last 7 Days</h3>
+                        <div
+                            id="stats7DayChart"
+                            class="stats-chart"
+                            role="group"
+                            aria-label="7 day sessions chart"
+                        ></div>
+                    </section>
+                </div>
             </div>
-        </div>
 
-        <!-- Task Form Modal -->
-        <div id="taskFormModal" class="modal hidden">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="taskFormTitle">Add Task</h2>
-                    <button id="closeTaskFormBtn" class="modal-close" aria-label="Close">×</button>
+            <!-- Task Form Modal -->
+            <div id="taskFormModal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="taskFormTitle">Add Task</h2>
+                        <button
+                            id="closeTaskFormBtn"
+                            class="modal-close"
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <form id="taskForm" class="task-form">
+                        <div class="task-form-content">
+                            <div class="form-group">
+                                <label for="taskTitle">Task Title *</label>
+                                <input
+                                    type="text"
+                                    id="taskTitle"
+                                    name="taskTitle"
+                                    placeholder="What do you want to focus on?"
+                                    required
+                                />
+                            </div>
+                            <div class="form-group">
+                                <label for="taskDescription"
+                                    >Description (optional)</label
+                                >
+                                <textarea
+                                    id="taskDescription"
+                                    name="taskDescription"
+                                    placeholder="Add details about this task..."
+                                    rows="3"
+                                ></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="taskEstimate"
+                                    >Estimated Focus Sessions</label
+                                >
+                                <input
+                                    type="number"
+                                    id="taskEstimate"
+                                    name="taskEstimate"
+                                    min="1"
+                                    max="20"
+                                    value="1"
+                                />
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button
+                                type="button"
+                                id="cancelTaskBtn"
+                                class="btn btn--secondary"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                id="saveTaskBtn"
+                                class="btn btn--success"
+                            >
+                                Save Task
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <form id="taskForm" class="task-form">
-                    <div class="task-form-content">
-                        <div class="form-group">
-                            <label for="taskTitle">Task Title *</label>
-                            <input type="text" id="taskTitle" name="taskTitle" placeholder="What do you want to focus on?" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="taskDescription">Description (optional)</label>
-                            <textarea id="taskDescription" name="taskDescription" placeholder="Add details about this task..." rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="taskEstimate">Estimated Focus Sessions</label>
-                            <input type="number" id="taskEstimate" name="taskEstimate" min="1" max="20" value="1">
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="button" id="cancelTaskBtn" class="btn btn--secondary">Cancel</button>
-                        <button type="submit" id="saveTaskBtn" class="btn btn--success">Save Task</button>
-                    </div>
-                </form>
             </div>
         </div>
-    </div>
-    <script type="module" src="popup.js"></script>
-</body>
+        <script type="module" src="popup.js"></script>
+    </body>
 </html>

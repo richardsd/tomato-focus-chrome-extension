@@ -35,7 +35,7 @@ class TimerState {
             statistics: this.statistics,
             currentTaskId: this.currentTaskId,
             tasks: this.tasks,
-            uiPreferences: { ...this.uiPreferences }
+            uiPreferences: { ...this.uiPreferences },
         };
     }
 
@@ -72,7 +72,7 @@ class StorageManager {
     static async saveState(state) {
         try {
             await chromePromise.storage.local.set({
-                [CONSTANTS.STORAGE_KEY]: state
+                [CONSTANTS.STORAGE_KEY]: state,
             });
         } catch (error) {
             console.error('Failed to save state:', error);
@@ -81,7 +81,9 @@ class StorageManager {
 
     static async loadState() {
         try {
-            const result = await chromePromise.storage.local.get([CONSTANTS.STORAGE_KEY]);
+            const result = await chromePromise.storage.local.get([
+                CONSTANTS.STORAGE_KEY,
+            ]);
             return result[CONSTANTS.STORAGE_KEY] || null;
         } catch (error) {
             console.error('Failed to load state:', error);
@@ -119,7 +121,7 @@ export class TimerController {
             Object.assign(this.state, savedState);
             this.state.settings = {
                 ...CONSTANTS.DEFAULT_SETTINGS,
-                ...(savedState.settings || {})
+                ...(savedState.settings || {}),
             };
         } else {
             await this.saveState();
@@ -140,28 +142,48 @@ export class TimerController {
 
     async configureJiraSyncAlarm() {
         const settings = this.state.settings || {};
-        await new Promise(resolve => chrome.alarms.clear(this.jiraAlarmName, resolve));
+        await new Promise((resolve) =>
+            chrome.alarms.clear(this.jiraAlarmName, resolve)
+        );
 
-        const { autoSyncJira, jiraSyncInterval, jiraUrl, jiraUsername, jiraToken } = settings;
+        const {
+            autoSyncJira,
+            jiraSyncInterval,
+            jiraUrl,
+            jiraUsername,
+            jiraToken,
+        } = settings;
         if (!autoSyncJira) {
             return;
         }
 
         if (!jiraUrl || !jiraUsername || !jiraToken) {
-            console.warn('Jira auto-sync is enabled but configuration is incomplete. Skipping alarm registration.');
+            console.warn(
+                'Jira auto-sync is enabled but configuration is incomplete. Skipping alarm registration.'
+            );
             return;
         }
 
-        const interval = Number.parseInt(jiraSyncInterval, 10) || CONSTANTS.DEFAULT_SETTINGS.jiraSyncInterval;
+        const interval =
+            Number.parseInt(jiraSyncInterval, 10) ||
+            CONSTANTS.DEFAULT_SETTINGS.jiraSyncInterval;
         const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
-        chrome.alarms.create(this.jiraAlarmName, { periodInMinutes: sanitizedInterval });
+        chrome.alarms.create(this.jiraAlarmName, {
+            periodInMinutes: sanitizedInterval,
+        });
     }
 
     async performJiraSync() {
         const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
-        const issues = await fetchAssignedIssues({ jiraUrl, jiraUsername, jiraToken });
+        const issues = await fetchAssignedIssues({
+            jiraUrl,
+            jiraUsername,
+            jiraToken,
+        });
         const existingTasks = await TaskManager.getTasks();
-        const existingTitles = new Set(existingTasks.map(task => (task.title || '').trim().toLowerCase()));
+        const existingTitles = new Set(
+            existingTasks.map((task) => (task.title || '').trim().toLowerCase())
+        );
         let createdCount = 0;
 
         for (const issue of issues) {
@@ -176,7 +198,7 @@ export class TimerController {
             await TaskManager.createTask({
                 title: fallbackTitle,
                 description: issue.description,
-                estimatedPomodoros: 1
+                estimatedPomodoros: 1,
             });
             existingTitles.add(dedupeKey);
             createdCount++;
@@ -200,10 +222,18 @@ export class TimerController {
             } else {
                 message = 'Jira sync complete – no assigned issues found.';
             }
-            await NotificationManager.show('Tomato Focus', message, this.state.settings);
+            await NotificationManager.show(
+                'Tomato Focus',
+                message,
+                this.state.settings
+            );
         } catch (error) {
             console.error('Automatic Jira sync failed:', error);
-            await NotificationManager.show('Tomato Focus', `Jira sync failed: ${error.message}`, this.state.settings);
+            await NotificationManager.show(
+                'Tomato Focus',
+                `Jira sync failed: ${error.message}`,
+                this.state.settings
+            );
         }
     }
 
@@ -220,22 +250,20 @@ export class TimerController {
     }
 
     sendMessageToPopup(action, data) {
-        chrome.runtime
-            .sendMessage({ action, state: data })
-            .catch((error) => {
-                // Ignore connection errors when no popup is open
-                if (!error.message.includes('Receiving end does not exist')) {
-                    console.warn('Failed to send message to popup:', error.message);
-                }
-            });
+        chrome.runtime.sendMessage({ action, state: data }).catch((error) => {
+            // Ignore connection errors when no popup is open
+            if (!error.message.includes('Receiving end does not exist')) {
+                console.warn('Failed to send message to popup:', error.message);
+            }
+        });
     }
 
     setupAlarmListener() {
-        chrome.alarms.onAlarm.addListener(alarm => {
+        chrome.alarms.onAlarm.addListener((alarm) => {
             if (alarm.name === this.alarmName) {
                 this.onTimerComplete();
             } else if (alarm.name === this.jiraAlarmName) {
-                this.handleJiraSyncAlarm().catch(error => {
+                this.handleJiraSyncAlarm().catch((error) => {
                     console.error('Failed to handle Jira sync alarm:', error);
                 });
             }
@@ -243,15 +271,21 @@ export class TimerController {
     }
 
     setupMessageListener() {
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            this.handleMessage(request, sender, sendResponse);
-            return true; // Keep the message channel open for async responses
-        });
+        chrome.runtime.onMessage.addListener(
+            (request, sender, sendResponse) => {
+                this.handleMessage(request, sender, sendResponse);
+                return true; // Keep the message channel open for async responses
+            }
+        );
     }
 
     setupIdleListener() {
         chrome.idle.onStateChanged.addListener(async (newState) => {
-            if (newState === 'idle' && this.state.isRunning && this.state.settings.pauseOnIdle) {
+            if (
+                newState === 'idle' &&
+                this.state.isRunning &&
+                this.state.settings.pauseOnIdle
+            ) {
                 console.log('Auto-pausing due to idle state');
                 this.pause();
                 this.state.wasPausedForIdle = true;
@@ -274,26 +308,38 @@ export class TimerController {
     }
 
     async start() {
-        if (this.state.isRunning) return;
+        if (this.state.isRunning) {
+            return;
+        }
 
         this.state.isRunning = true;
         await this.saveState();
         await this.scheduleAlarm();
         this.startBadgeUpdater();
         this.updateBadge();
-        ContextMenuManager.update(true, this.state.isWorkSession, this.state.timeLeft);
+        ContextMenuManager.update(
+            true,
+            this.state.isWorkSession,
+            this.state.timeLeft
+        );
         this.updateUI();
     }
 
     async pause() {
-        if (!this.state.isRunning) return;
+        if (!this.state.isRunning) {
+            return;
+        }
 
         this.state.isRunning = false;
         await chrome.alarms.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
         this.updateBadge();
-        ContextMenuManager.update(false, this.state.isWorkSession, this.state.timeLeft);
+        ContextMenuManager.update(
+            false,
+            this.state.isWorkSession,
+            this.state.timeLeft
+        );
         this.updateUI();
     }
 
@@ -305,7 +351,11 @@ export class TimerController {
         await this.saveState();
         this.stopBadgeUpdater();
         this.updateBadge();
-        ContextMenuManager.update(false, this.state.isWorkSession, this.state.timeLeft);
+        ContextMenuManager.update(
+            false,
+            this.state.isWorkSession,
+            this.state.timeLeft
+        );
         this.updateUI();
     }
 
@@ -321,10 +371,14 @@ export class TimerController {
 
         if (this.state.isWorkSession) {
             await StatisticsManager.incrementCompleted();
-            await StatisticsManager.addFocusTime(this.state.settings.workDuration);
+            await StatisticsManager.addFocusTime(
+                this.state.settings.workDuration
+            );
             this.state.statistics = await StatisticsManager.getStatistics();
             if (this.state.currentTaskId) {
-                await TaskManager.incrementTaskPomodoros(this.state.currentTaskId);
+                await TaskManager.incrementTaskPomodoros(
+                    this.state.currentTaskId
+                );
                 this.state.tasks = await TaskManager.getTasks();
             }
 
@@ -358,7 +412,11 @@ export class TimerController {
         }
 
         this.updateBadge();
-        ContextMenuManager.update(this.state.isRunning, this.state.isWorkSession, this.state.timeLeft);
+        ContextMenuManager.update(
+            this.state.isRunning,
+            this.state.isWorkSession,
+            this.state.timeLeft
+        );
         this.updateUI();
     }
 
@@ -374,7 +432,8 @@ export class TimerController {
         if (!this.state.isWorkSession) {
             this.state.incrementSession();
             this.state.startWork();
-            this.state.isRunning = this.state.settings.autoStart || this.state.isRunning;
+            this.state.isRunning =
+                this.state.settings.autoStart || this.state.isRunning;
             await chrome.alarms.clear(this.alarmName);
             if (this.state.isRunning) {
                 await this.scheduleAlarm();
@@ -384,7 +443,11 @@ export class TimerController {
             }
             await this.saveState();
             this.updateBadge();
-            ContextMenuManager.update(this.state.isRunning, this.state.isWorkSession, this.state.timeLeft);
+            ContextMenuManager.update(
+                this.state.isRunning,
+                this.state.isWorkSession,
+                this.state.timeLeft
+            );
             this.updateUI();
         }
     }
@@ -401,22 +464,34 @@ export class TimerController {
     }
 
     updateBadge() {
-        BadgeManager.update(this.state.timeLeft, this.state.isRunning, this.state.isWorkSession);
+        BadgeManager.update(
+            this.state.timeLeft,
+            this.state.isRunning,
+            this.state.isWorkSession
+        );
     }
 
     startBadgeUpdater() {
-        if (this.badgeInterval) return;
+        if (this.badgeInterval) {
+            return;
+        }
         this.badgeInterval = setInterval(() => {
             if (this.state.isRunning) {
                 this.state.timeLeft--;
                 if (this.state.timeLeft <= 0) {
                     this.state.timeLeft = 0;
                     this.updateBadge();
-                    this.sendMessageToPopup('updateTimer', this.state.getState());
+                    this.sendMessageToPopup(
+                        'updateTimer',
+                        this.state.getState()
+                    );
                     this.stopBadgeUpdater();
                 } else {
                     this.updateBadge();
-                    this.sendMessageToPopup('updateTimer', this.state.getState());
+                    this.sendMessageToPopup(
+                        'updateTimer',
+                        this.state.getState()
+                    );
                 }
             }
         }, CONSTANTS.BADGE_UPDATE_INTERVAL);
@@ -432,48 +507,65 @@ export class TimerController {
     async handleMessage(request, sender, sendResponse) {
         try {
             switch (request.action) {
-            case 'getState':
-                sendResponse({ state: this.state.getState() });
-                break;
-            case 'start':
-                await this.start();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'pause':
-                await this.pause();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'reset':
-            case 'resetTimer':
-                await this.reset();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'skipBreak':
-                await this.skipBreak();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'toggleTimer':
-                await this.toggle();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'saveSettings': {
-                this.state.updateSettings(request.settings);
+                case 'getState':
+                    sendResponse({ state: this.state.getState() });
+                    break;
+                case 'start':
+                    await this.start();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'pause':
+                    await this.pause();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'reset':
+                case 'resetTimer':
+                    await this.reset();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'skipBreak':
+                    await this.skipBreak();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'toggleTimer':
+                    await this.toggle();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'saveSettings': {
+                    this.state.updateSettings(request.settings);
 
-                const newDuration = this.state.isWorkSession
-                    ? this.state.settings.workDuration * 60
-                    : (this.state.currentSession % this.state.settings.longBreakInterval === 0
-                        ? this.state.settings.longBreak * 60
-                        : this.state.settings.shortBreak * 60);
+                    const newDuration = this.state.isWorkSession
+                        ? this.state.settings.workDuration * 60
+                        : this.state.currentSession %
+                                this.state.settings.longBreakInterval ===
+                            0
+                          ? this.state.settings.longBreak * 60
+                          : this.state.settings.shortBreak * 60;
 
-                // Reset remaining time to the newly selected duration rather than
-                // adjusting by the previously elapsed amount which was causing the
-                // timer to grow instead of updating to the expected value.
-                this.state.timeLeft = newDuration;
+                    // Reset remaining time to the newly selected duration rather than
+                    // adjusting by the previously elapsed amount which was causing the
+                    // timer to grow instead of updating to the expected value.
+                    this.state.timeLeft = newDuration;
 
-                if (this.state.isRunning) {
-                    await chrome.alarms.clear(this.alarmName);
-                    await this.scheduleAlarm();
-                }
+                    if (this.state.isRunning) {
+                        await chrome.alarms.clear(this.alarmName);
+                        await this.scheduleAlarm();
+                    }
 
                 await this.configureJiraSyncAlarm();
                 this.updateUI();
@@ -599,29 +691,29 @@ export function initializeBackground() {
     chrome.contextMenus.onClicked.addListener((info) => {
         const { menuItemId } = info;
         switch (menuItemId) {
-        case 'start-pause':
-            timerController.toggle();
-            break;
-        case 'reset':
-            timerController.reset();
-            break;
-        case 'skip-break':
-            timerController.skipBreak();
-            break;
-        case 'quick-5':
-            timerController.startQuickTimer(5);
-            break;
-        case 'quick-15':
-            timerController.startQuickTimer(15);
-            break;
-        case 'quick-25':
-            timerController.startQuickTimer(25);
-            break;
-        case 'quick-45':
-            timerController.startQuickTimer(45);
-            break;
-        default:
-            console.warn('Unknown context menu item:', menuItemId);
+            case 'start-pause':
+                timerController.toggle();
+                break;
+            case 'reset':
+                timerController.reset();
+                break;
+            case 'skip-break':
+                timerController.skipBreak();
+                break;
+            case 'quick-5':
+                timerController.startQuickTimer(5);
+                break;
+            case 'quick-15':
+                timerController.startQuickTimer(15);
+                break;
+            case 'quick-25':
+                timerController.startQuickTimer(25);
+                break;
+            case 'quick-45':
+                timerController.startQuickTimer(45);
+                break;
+            default:
+                console.warn('Unknown context menu item:', menuItemId);
         }
     });
 
@@ -632,7 +724,7 @@ export function initializeBackground() {
     chrome.runtime.onInstalled.addListener((details) => {
         console.log('Extension installed/updated:', details.reason);
         ContextMenuManager.create();
-        NotificationManager.checkPermissions().then(level => {
+        NotificationManager.checkPermissions().then((level) => {
             console.log('Notification permission level:', level);
             if (level !== 'granted') {
                 console.warn('Notifications may not work properly');

@@ -48,21 +48,21 @@ export const POPUP_CONSTANTS = {
         taskFormModal: '#taskFormModal',
         taskForm: '#taskForm',
         closeTaskFormBtn: '#closeTaskFormBtn',
-        cancelTaskBtn: '#cancelTaskBtn'
+        cancelTaskBtn: '#cancelTaskBtn',
     },
     THEMES: {
         WORK: {
             iconSrc: 'icons/icon.svg',
             iconAlt: 'Tomato',
             title: 'Tomato Focus',
-            className: ''
+            className: '',
         },
         BREAK: {
             iconSrc: 'icons/green-icon.svg',
             iconAlt: 'Green Tomato Break',
             title: 'Break Time',
-            className: 'break-mode'
-        }
+            className: 'break-mode',
+        },
     },
     DEFAULT_STATE: {
         isRunning: false,
@@ -85,9 +85,9 @@ export const POPUP_CONSTANTS = {
             jiraUsername: '',
             jiraToken: '',
             autoSyncJira: false,
-            jiraSyncInterval: 30
-        }
-    }
+            jiraSyncInterval: 30,
+        },
+    },
 };
 
 export const utils = {
@@ -102,7 +102,9 @@ export const utils = {
         } else {
             const hours = Math.floor(minutes / 60);
             const remainingMinutes = minutes % 60;
-            return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
+            return remainingMinutes > 0
+                ? `${hours}h ${remainingMinutes}m`
+                : `${hours}h`;
         }
     },
     getCircumference(radius = POPUP_CONSTANTS.PROGRESS_RING_RADIUS) {
@@ -123,12 +125,15 @@ export const utils = {
         return element;
     },
     validateState(state) {
-        return state &&
-               typeof state.isRunning === 'boolean' &&
-               typeof state.timeLeft === 'number' &&
-               typeof state.currentSession === 'number' &&
-               typeof state.isWorkSession === 'boolean' &&
-               state.settings && typeof state.settings === 'object';
+        return (
+            state &&
+            typeof state.isRunning === 'boolean' &&
+            typeof state.timeLeft === 'number' &&
+            typeof state.currentSession === 'number' &&
+            typeof state.isWorkSession === 'boolean' &&
+            state.settings &&
+            typeof state.settings === 'object'
+        );
         // Note: statistics, tasks, and currentTaskId are optional and may be null during initialization
-    }
+    },
 };

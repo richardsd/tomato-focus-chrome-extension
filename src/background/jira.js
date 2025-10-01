@@ -15,26 +15,28 @@ export async function fetchAssignedIssues(settings) {
     try {
         response = await fetch(search, {
             headers: {
-                'Authorization': `Basic ${auth}`,
-                'Accept': 'application/json'
-            }
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+            },
         });
     } catch (error) {
         throw new Error(`Failed to connect to Jira: ${error.message}`);
     }
 
     if (!response.ok) {
-        throw new Error(`Jira request failed: ${response.status} ${response.statusText || ''}`.trim());
+        throw new Error(
+            `Jira request failed: ${response.status} ${response.statusText || ''}`.trim()
+        );
     }
 
     let data;
     try {
         data = await response.json();
-    } catch (error) {
+    } catch {
         throw new Error('Jira response was not valid JSON');
     }
     const issues = data.issues || [];
-    return issues.map(issue => {
+    return issues.map((issue) => {
         const fields = issue.fields || {};
         const summary = fields.summary || '';
         let description = '';
@@ -42,9 +44,11 @@ export async function fetchAssignedIssues(settings) {
         if (typeof rawDesc === 'string') {
             description = rawDesc;
         } else if (rawDesc && Array.isArray(rawDesc.content)) {
-            description = rawDesc.content.map(block =>
-                (block.content || []).map(c => c.text || '').join('')
-            ).join('\n');
+            description = rawDesc.content
+                .map((block) =>
+                    (block.content || []).map((c) => c.text || '').join('')
+                )
+                .join('\n');
         }
         return { key: issue.key, title: summary, description };
     });

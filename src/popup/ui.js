@@ -14,7 +14,10 @@ class MessageHandler {
         return new Promise((resolve, reject) => {
             const handleResponse = (resp) => {
                 if (chrome.runtime.lastError) {
-                    console.warn('Message failed:', chrome.runtime.lastError.message);
+                    console.warn(
+                        'Message failed:',
+                        chrome.runtime.lastError.message
+                    );
                     if (action === 'getState') {
                         resolve(POPUP_CONSTANTS.DEFAULT_STATE);
                     } else {
@@ -29,7 +32,10 @@ class MessageHandler {
                 }
 
                 // Unwrap state responses for convenience
-                if (resp && Object.prototype.hasOwnProperty.call(resp, 'state')) {
+                if (
+                    resp &&
+                    Object.prototype.hasOwnProperty.call(resp, 'state')
+                ) {
                     resolve(resp.state);
                 } else {
                     resolve(resp);
@@ -40,12 +46,18 @@ class MessageHandler {
                 if (chrome.runtime.lastError) {
                     // Retry once after a short delay
                     setTimeout(() => {
-                        chrome.runtime.sendMessage({ action, ...data }, (retryResponse) => {
-                            if (chrome.runtime.lastError) {
-                                console.error('Retry failed:', chrome.runtime.lastError.message);
+                        chrome.runtime.sendMessage(
+                            { action, ...data },
+                            (retryResponse) => {
+                                if (chrome.runtime.lastError) {
+                                    console.error(
+                                        'Retry failed:',
+                                        chrome.runtime.lastError.message
+                                    );
+                                }
+                                handleResponse(retryResponse);
                             }
-                            handleResponse(retryResponse);
-                        });
+                        );
                     }, POPUP_CONSTANTS.RETRY_DELAY);
                 } else {
                     handleResponse(response);
@@ -61,9 +73,11 @@ class MessageHandler {
         chrome.runtime.onMessage.addListener((request) => {
             if (request.action === 'updateTimer' && request.state) {
                 // Emit custom event for state updates
-                document.dispatchEvent(new CustomEvent('timerUpdate', {
-                    detail: request.state
-                }));
+                document.dispatchEvent(
+                    new CustomEvent('timerUpdate', {
+                        detail: request.state,
+                    })
+                );
             }
         });
     }
@@ -82,9 +96,9 @@ class ThemeManager {
      */
     applyTheme(state) {
         // Handle work/break mode
-        const theme = state.isWorkSession ?
-            POPUP_CONSTANTS.THEMES.WORK :
-            POPUP_CONSTANTS.THEMES.BREAK;
+        const theme = state.isWorkSession
+            ? POPUP_CONSTANTS.THEMES.WORK
+            : POPUP_CONSTANTS.THEMES.BREAK;
 
         // Update body class
         this.body.className = '';
@@ -95,7 +109,10 @@ class ThemeManager {
         // Apply user-selected or system theme
         let selectedTheme = state.settings.theme;
         if (!selectedTheme || selectedTheme === 'system') {
-            selectedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            selectedTheme = window.matchMedia('(prefers-color-scheme: dark)')
+                .matches
+                ? 'dark'
+                : 'light';
         }
         this.body.classList.add(`${selectedTheme}-theme`);
 
@@ -107,8 +124,12 @@ class ThemeManager {
      * Update session icon and title
      */
     updateSessionDisplay(state, theme) {
-        const sessionIcon = utils.getElement(POPUP_CONSTANTS.SELECTORS.sessionIcon);
-        const sessionTitle = utils.getElement(POPUP_CONSTANTS.SELECTORS.sessionTitle);
+        const sessionIcon = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.sessionIcon
+        );
+        const sessionTitle = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.sessionTitle
+        );
 
         if (sessionIcon) {
             const img = sessionIcon.querySelector('img');
@@ -122,8 +143,12 @@ class ThemeManager {
             if (!state.isWorkSession) {
                 // During break, determine if it's long or short based on current session count
                 // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
-                const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
-                sessionTitle.textContent = isLongBreak ? 'Long Break' : 'Short Break';
+                const isLongBreak =
+                    state.currentSession % state.settings.longBreakInterval ===
+                    0;
+                sessionTitle.textContent = isLongBreak
+                    ? 'Long Break'
+                    : 'Short Break';
             } else {
                 sessionTitle.textContent = theme.title;
             }
@@ -139,7 +164,10 @@ class UIManager {
         this.elements = this.cacheElements();
         this.circumference = utils.getCircumference();
         this.setProgressRingDasharray();
-        this.debouncedUpdate = utils.debounce(this.updateProgressRing.bind(this), POPUP_CONSTANTS.UPDATE_DEBOUNCE);
+        this.debouncedUpdate = utils.debounce(
+            this.updateProgressRing.bind(this),
+            POPUP_CONSTANTS.UPDATE_DEBOUNCE
+        );
         this._lastProgressOffset = null; // cache last applied strokeDashoffset to prevent redundant paints
         this._rafPending = false; // track scheduled rAF update
     }
@@ -202,7 +230,8 @@ class UIManager {
         if (this.elements.cycleProgress) {
             const longBreakInterval = state.settings.longBreakInterval;
             // Calculate current position in the cycle (1-based)
-            const currentInCycle = ((state.currentSession - 1) % longBreakInterval) + 1;
+            const currentInCycle =
+                ((state.currentSession - 1) % longBreakInterval) + 1;
             this.elements.cycleProgress.textContent = `Focus ${currentInCycle} of ${longBreakInterval}`;
         }
     }
@@ -213,11 +242,13 @@ class UIManager {
     updateStatistics(state) {
         if (state.statistics) {
             if (this.elements.completedToday) {
-                this.elements.completedToday.textContent = state.statistics.completedToday || 0;
+                this.elements.completedToday.textContent =
+                    state.statistics.completedToday || 0;
             }
             if (this.elements.focusTime) {
                 const focusTimeMinutes = state.statistics.focusTimeToday || 0;
-                this.elements.focusTime.textContent = utils.formatFocusTime(focusTimeMinutes);
+                this.elements.focusTime.textContent =
+                    utils.formatFocusTime(focusTimeMinutes);
             }
         }
     }
@@ -226,7 +257,10 @@ class UIManager {
      * Update button states and visibility
      */
     updateButtons(state) {
-        console.log('updateButtons called with state:', { isRunning: state.isRunning, autoStart: state.settings.autoStart });
+        console.log('updateButtons called with state:', {
+            isRunning: state.isRunning,
+            autoStart: state.settings.autoStart,
+        });
 
         // Update start/pause buttons
         if (state.isRunning) {
@@ -241,9 +275,11 @@ class UIManager {
             // Update start button text (Start/Resume)
             if (this.elements.startBtn) {
                 const fullDuration = this.calculateFullDuration(state);
-                const isResuming = state.timeLeft < fullDuration && state.timeLeft > 0;
+                const isResuming =
+                    state.timeLeft < fullDuration && state.timeLeft > 0;
                 const buttonText = isResuming ? 'Resume' : 'Start';
-                const buttonTextElement = this.elements.startBtn.querySelector('.btn-text');
+                const buttonTextElement =
+                    this.elements.startBtn.querySelector('.btn-text');
                 if (buttonTextElement) {
                     buttonTextElement.textContent = buttonText;
                 } else {
@@ -295,8 +331,9 @@ class UIManager {
             jiraUsername: state.settings.jiraUsername || '',
             jiraToken: state.settings.jiraToken || '',
             autoSyncJira: Boolean(state.settings.autoSyncJira),
-            jiraSyncInterval: state.settings.jiraSyncInterval
-                ?? POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval
+            jiraSyncInterval:
+                state.settings.jiraSyncInterval ??
+                POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval,
         };
 
         Object.entries(settingsInputs).forEach(([id, value]) => {
@@ -316,24 +353,31 @@ class UIManager {
      */
     updateProgressRing(state) {
         const progressRing = this.elements.progressRing;
-        if (!progressRing) {return;}
+        if (!progressRing) {
+            return;
+        }
 
         const totalDuration = this.calculateFullDuration(state);
         const progress = state.timeLeft / totalDuration;
         const offset = this.circumference * (1 - progress);
         // Batch DOM write in next animation frame to avoid mid-frame layout flashes
-        if (this._lastProgressOffset !== null && Math.abs(offset - this._lastProgressOffset) < 0.25) {
+        if (
+            this._lastProgressOffset !== null &&
+            Math.abs(offset - this._lastProgressOffset) < 0.25
+        ) {
             // Change is too small to matter visually; skip
             return;
         }
-        	if (this._rafPending) { return; }
-        	this._rafPending = true;
-        	(window.requestAnimationFrame || window.setTimeout)(() => {
+        if (this._rafPending) {
+            return;
+        }
+        this._rafPending = true;
+        (window.requestAnimationFrame || window.setTimeout)(() => {
             // Recompute just in case (elapsed time could change). We'll trust cached offset for simplicity.
             progressRing.style.strokeDashoffset = offset;
             this._lastProgressOffset = offset;
             this._rafPending = false;
-        	});
+        });
     }
 
     /**
@@ -346,8 +390,11 @@ class UIManager {
 
         // During break, determine duration based on current session count
         // This matches the logic in background.js where long breaks happen after sessions 4, 8, 12, etc.
-        const isLongBreak = state.currentSession % state.settings.longBreakInterval === 0;
-        return isLongBreak ? state.settings.longBreak * 60 : state.settings.shortBreak * 60;
+        const isLongBreak =
+            state.currentSession % state.settings.longBreakInterval === 0;
+        return isLongBreak
+            ? state.settings.longBreak * 60
+            : state.settings.shortBreak * 60;
     }
 
     /**
@@ -367,7 +414,9 @@ class UIManager {
             return;
         }
 
-        const currentTask = state.tasks.find(t => t.id === state.currentTaskId);
+        const currentTask = state.tasks.find(
+            (t) => t.id === state.currentTaskId
+        );
         if (!currentTask) {
             currentTaskElement.classList.add('hidden');
             return;
@@ -401,8 +450,12 @@ class UIManager {
  */
 class NotificationController {
     constructor() {
-        this.statusElement = utils.getElement(POPUP_CONSTANTS.SELECTORS.notificationStatus);
-        this.messageElement = utils.getElement(POPUP_CONSTANTS.SELECTORS.notificationMessage);
+        this.statusElement = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.notificationStatus
+        );
+        this.messageElement = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.notificationMessage
+        );
     }
 
     /**
@@ -411,7 +464,8 @@ class NotificationController {
     async checkPermissions() {
         try {
             const messageHandler = new MessageHandler();
-            const response = await messageHandler.sendMessage('checkNotifications');
+            const response =
+                await messageHandler.sendMessage('checkNotifications');
             if (response && response.permissionLevel) {
                 this.showNotificationStatus(response.permissionLevel);
             }
@@ -424,14 +478,19 @@ class NotificationController {
      * Display notification permission status to user
      */
     showNotificationStatus(permissionLevel) {
-        if (!this.statusElement || !this.messageElement) {return;}
+        if (!this.statusElement || !this.messageElement) {
+            return;
+        }
 
         if (permissionLevel !== 'granted') {
             this.statusElement.style.display = 'block';
-            this.statusElement.className = 'mt-4 p-3 rounded-lg text-sm bg-yellow-100 border border-yellow-400';
+            this.statusElement.className =
+                'mt-4 p-3 rounded-lg text-sm bg-yellow-100 border border-yellow-400';
 
             const isMac = navigator.platform.includes('Mac');
-            this.messageElement.innerHTML = isMac ? this.getMacInstructions() : this.getGeneralInstructions();
+            this.messageElement.innerHTML = isMac
+                ? this.getMacInstructions()
+                : this.getGeneralInstructions();
         } else {
             this.statusElement.style.display = 'none';
         }
@@ -472,7 +531,7 @@ class NavigationManager {
             timer: utils.getElement(POPUP_CONSTANTS.SELECTORS.timerPanel),
             settings: utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsPanel),
             tasks: utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksPanel),
-            stats: utils.getElement(POPUP_CONSTANTS.SELECTORS.statsPanel)
+            stats: utils.getElement(POPUP_CONSTANTS.SELECTORS.statsPanel),
         };
     }
 
@@ -531,10 +590,18 @@ class NavigationManager {
      * Show stats panel
      */
     showStatsPanel() {
-        if (this.panels.timer) { this.panels.timer.classList.add('hidden'); }
-        if (this.panels.settings) { this.panels.settings.classList.add('hidden'); }
-        if (this.panels.tasks) { this.panels.tasks.classList.add('hidden'); }
-        if (this.panels.stats) { this.panels.stats.classList.remove('hidden'); }
+        if (this.panels.timer) {
+            this.panels.timer.classList.add('hidden');
+        }
+        if (this.panels.settings) {
+            this.panels.settings.classList.add('hidden');
+        }
+        if (this.panels.tasks) {
+            this.panels.tasks.classList.add('hidden');
+        }
+        if (this.panels.stats) {
+            this.panels.stats.classList.remove('hidden');
+        }
     }
 }
 /**
@@ -574,7 +641,10 @@ class PopupController {
             // Make sure the tasks list is rendered with empty state if no tasks
             const state = await this.messageHandler.sendMessage('getState');
             if (this.taskUIManager) {
-                this.taskUIManager.renderTasksList(state.tasks || [], state.currentTaskId);
+                this.taskUIManager.renderTasksList(
+                    state.tasks || [],
+                    state.currentTaskId
+                );
             }
 
             console.log('Popup initialization complete');
@@ -618,26 +688,56 @@ class PopupController {
 
         // Migration: map legacy uiPreferences.tasksFilter 'active' -> 'in-progress'
         try {
-            if (state.uiPreferences && state.uiPreferences.tasksFilter === 'active') {
+            if (
+                state.uiPreferences &&
+                state.uiPreferences.tasksFilter === 'active'
+            ) {
                 state.uiPreferences.tasksFilter = 'in-progress';
                 // Persist updated preference
-                chrome.runtime.sendMessage({ action: 'updateUiPreferences', updates: { tasksFilter: 'in-progress' } });
+                chrome.runtime.sendMessage({
+                    action: 'updateUiPreferences',
+                    updates: { tasksFilter: 'in-progress' },
+                });
             }
-        } catch (e) { console.warn('Failed migrating tasksFilter preference', e); }
+        } catch (e) {
+            console.warn('Failed migrating tasksFilter preference', e);
+        }
 
         // Fast path: if only timeLeft changed (normal ticking), avoid updating unrelated UI to prevent layout thrash/flicker
         try {
             if (this._lastState) {
                 const prev = this._lastState;
-                const fieldsToCompare = ['isRunning','currentSession','isWorkSession','currentTaskId'];
-                const structuralUnchanged = fieldsToCompare.every(k => prev[k] === state[k]);
-                const settingsUnchanged = prev.settings === state.settings || (
-                    prev.settings && state.settings &&
-                    ['workDuration','shortBreak','longBreak','longBreakInterval','autoStart','theme','pauseOnIdle','playSound','volume']
-                        .every(k => prev.settings[k] === state.settings[k])
+                const fieldsToCompare = [
+                    'isRunning',
+                    'currentSession',
+                    'isWorkSession',
+                    'currentTaskId',
+                ];
+                const structuralUnchanged = fieldsToCompare.every(
+                    (k) => prev[k] === state[k]
                 );
+                const settingsUnchanged =
+                    prev.settings === state.settings ||
+                    (prev.settings &&
+                        state.settings &&
+                        [
+                            'workDuration',
+                            'shortBreak',
+                            'longBreak',
+                            'longBreakInterval',
+                            'autoStart',
+                            'theme',
+                            'pauseOnIdle',
+                            'playSound',
+                            'volume',
+                        ].every((k) => prev.settings[k] === state.settings[k]));
                 const tasksSameRef = prev.tasks === state.tasks; // tasks array not reallocated
-                if (structuralUnchanged && settingsUnchanged && tasksSameRef && prev.timeLeft !== state.timeLeft) {
+                if (
+                    structuralUnchanged &&
+                    settingsUnchanged &&
+                    tasksSameRef &&
+                    prev.timeLeft !== state.timeLeft
+                ) {
                     // Only timeLeft is different -> update just timer + progress ring
                     this.uiManager.updateTimer(state);
                     this.uiManager.updateProgressRing(state);
@@ -646,7 +746,10 @@ class PopupController {
                 }
             }
         } catch (e) {
-            console.warn('Fast-path diff failed; falling back to full update', e);
+            console.warn(
+                'Fast-path diff failed; falling back to full update',
+                e
+            );
         }
 
         this.uiManager.updateUI(state);
@@ -655,13 +758,20 @@ class PopupController {
         // Update task-related UI
         if (state.tasks && this.taskUIManager) {
             const tasksPanelEl = this.navigationManager?.panels?.tasks;
-            const tasksPanelVisible = tasksPanelEl && !tasksPanelEl.classList.contains('hidden');
+            const tasksPanelVisible =
+                tasksPanelEl && !tasksPanelEl.classList.contains('hidden');
             const shouldSkip = state.isRunning && tasksPanelVisible; // prevent flicker while viewing tasks during active countdown
             if (!shouldSkip) {
-                this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+                this.taskUIManager.renderTasksList(
+                    state.tasks,
+                    state.currentTaskId
+                );
             }
             // Always update current task summary strip (small top display) regardless
-            this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            this.taskUIManager.updateCurrentTaskDisplay(
+                state.currentTaskId,
+                state.tasks
+            );
 
             // Update tasks count badge
             try {
@@ -684,17 +794,28 @@ class PopupController {
                         }
                     } else {
                         countEl.classList.add('hidden');
-                        countEl.classList.remove('badge--accent','badge--pulse');
+                        countEl.classList.remove(
+                            'badge--accent',
+                            'badge--pulse'
+                        );
                     }
                 }
-            } catch (e) { console.warn('Failed updating tasks count badge', e); }
+            } catch (e) {
+                console.warn('Failed updating tasks count badge', e);
+            }
         }
 
         // Toggle compact mode (smaller timer & tighter spacing) when a current task is active
         try {
-            const hasCurrent = !!(state.currentTaskId && state.tasks && state.tasks.some(t => t.id === state.currentTaskId));
+            const hasCurrent = !!(
+                state.currentTaskId &&
+                state.tasks &&
+                state.tasks.some((t) => t.id === state.currentTaskId)
+            );
             // Only toggle if changed to avoid unnecessary layout / transition churn
-            if (document.body.classList.contains('compact-mode') !== hasCurrent) {
+            if (
+                document.body.classList.contains('compact-mode') !== hasCurrent
+            ) {
                 document.body.classList.toggle('compact-mode', hasCurrent);
             }
             // Always manage has-current-task class
@@ -720,12 +841,16 @@ class PopupController {
         try {
             const statsPanelEl = this.navigationManager?.panels?.stats;
             if (statsPanelEl && !statsPanelEl.classList.contains('hidden')) {
-                this.ensureStatisticsHistory().then(() => this.renderStatisticsPanel(state));
+                this.ensureStatisticsHistory().then(() =>
+                    this.renderStatisticsPanel(state)
+                );
             }
-        } catch (e) { console.warn('Failed updating statistics panel', e); }
+        } catch (e) {
+            console.warn('Failed updating statistics panel', e);
+        }
 
-        	// Store last state for diffing
-        	this._lastState = state;
+        // Store last state for diffing
+        this._lastState = state;
     }
 
     /**
@@ -739,7 +864,9 @@ class PopupController {
             try {
                 const overflow = document.documentElement.scrollHeight > 600;
                 document.body.classList.toggle('hide-stats', overflow);
-            } catch (e) { console.warn('syncCurrentTaskLayout failed', e); }
+            } catch (e) {
+                console.warn('syncCurrentTaskLayout failed', e);
+            }
         });
     }
 
@@ -765,12 +892,14 @@ class PopupController {
      * Setup timer control event listeners
      */
     setupTimerEvents() {
-        const { startBtn, pauseBtn, resetBtn, skipBreakBtn } = this.uiManager.elements;
+        const { startBtn, pauseBtn, resetBtn, skipBreakBtn } =
+            this.uiManager.elements;
 
         if (startBtn) {
             startBtn.addEventListener('click', async () => {
                 try {
-                    const state = await this.messageHandler.sendMessage('toggleTimer');
+                    const state =
+                        await this.messageHandler.sendMessage('toggleTimer');
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to start timer:', error);
@@ -781,7 +910,8 @@ class PopupController {
         if (pauseBtn) {
             pauseBtn.addEventListener('click', async () => {
                 try {
-                    const state = await this.messageHandler.sendMessage('toggleTimer');
+                    const state =
+                        await this.messageHandler.sendMessage('toggleTimer');
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to pause timer:', error);
@@ -792,7 +922,8 @@ class PopupController {
         if (resetBtn) {
             resetBtn.addEventListener('click', async () => {
                 try {
-                    const state = await this.messageHandler.sendMessage('resetTimer');
+                    const state =
+                        await this.messageHandler.sendMessage('resetTimer');
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to reset timer:', error);
@@ -803,7 +934,8 @@ class PopupController {
         if (skipBreakBtn) {
             skipBreakBtn.addEventListener('click', async () => {
                 try {
-                    const state = await this.messageHandler.sendMessage('skipBreak');
+                    const state =
+                        await this.messageHandler.sendMessage('skipBreak');
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to skip break:', error);
@@ -816,12 +948,18 @@ class PopupController {
      * Setup navigation event listeners
      */
     setupNavigationEvents() {
-        const settingsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.settingsBtn);
+        const settingsBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.settingsBtn
+        );
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
         const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
-        const backFromTasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromTasksBtn);
-        const backFromStatsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backFromStatsBtn);
+        const backFromTasksBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.backFromTasksBtn
+        );
+        const backFromStatsBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.backFromStatsBtn
+        );
         const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
@@ -830,7 +968,8 @@ class PopupController {
 
                 // Load current settings when showing the settings panel
                 try {
-                    const state = await this.messageHandler.sendMessage('getState');
+                    const state =
+                        await this.messageHandler.sendMessage('getState');
                     // Force update settings form when navigating to settings panel
                     this.uiManager.forceUpdateSettings(state);
                 } catch (error) {
@@ -846,10 +985,14 @@ class PopupController {
 
                 // Refresh the task list when showing the tasks panel
                 try {
-                    const state = await this.messageHandler.sendMessage('getState');
+                    const state =
+                        await this.messageHandler.sendMessage('getState');
                     console.log('Refreshed state for tasks panel:', state);
                     if (state.tasks && this.taskUIManager) {
-                        this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+                        this.taskUIManager.renderTasksList(
+                            state.tasks,
+                            state.currentTaskId
+                        );
                     }
                 } catch (error) {
                     console.error('Failed to refresh tasks:', error);
@@ -861,10 +1004,13 @@ class PopupController {
             statsBtn.addEventListener('click', async () => {
                 this.navigationManager.showStatsPanel();
                 try {
-                    const state = await this.messageHandler.sendMessage('getState');
+                    const state =
+                        await this.messageHandler.sendMessage('getState');
                     await this.ensureStatisticsHistory();
                     this.renderStatisticsPanel(state);
-                } catch (e) { console.error('Failed to open statistics panel', e); }
+                } catch (e) {
+                    console.error('Failed to open statistics panel', e);
+                }
             });
         }
 
@@ -889,20 +1035,30 @@ class PopupController {
         if (filtersBar) {
             filtersBar.addEventListener('click', async (e) => {
                 const btn = e.target.closest('.tasks-filter');
-                if (!btn) {return;}
+                if (!btn) {
+                    return;
+                }
                 const selected = btn.getAttribute('data-filter');
-                if (!selected) {return;}
+                if (!selected) {
+                    return;
+                }
                 // If already active, ignore
                 if (btn.classList.contains('is-active')) {return;}
                 if (this.taskUIManager) {
                     this.taskUIManager.clearSelection();
                 }
                 try {
-                    const state = await this.messageHandler.sendMessage('updateUiPreferences', { uiPreferences: { tasksFilter: selected } });
+                    const state = await this.messageHandler.sendMessage(
+                        'updateUiPreferences',
+                        { uiPreferences: { tasksFilter: selected } }
+                    );
                     if (state && this.taskUIManager) {
                         this.taskUIManager.currentFilter = selected;
                         this.syncFilterButtons(selected);
-                        this.taskUIManager.renderTasksList(state.tasks, state.currentTaskId);
+                        this.taskUIManager.renderTasksList(
+                            state.tasks,
+                            state.currentTaskId
+                        );
                     }
                 } catch (err) {
                     console.error('Failed to set tasks filter', err);
@@ -913,8 +1069,10 @@ class PopupController {
 
     syncFilterButtons(activeFilter) {
         const bar = document.getElementById('tasksFilters');
-        if (!bar) {return;}
-        bar.querySelectorAll('.tasks-filter').forEach(btn => {
+        if (!bar) {
+            return;
+        }
+        bar.querySelectorAll('.tasks-filter').forEach((btn) => {
             const isActive = btn.getAttribute('data-filter') === activeFilter;
             btn.classList.toggle('is-active', isActive);
             btn.setAttribute('aria-pressed', isActive.toString());
@@ -925,12 +1083,22 @@ class PopupController {
      * Setup task event listeners
      */
     setupTaskEvents() {
-        const addTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.addTaskBtn);
-        const closeTaskFormBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.closeTaskFormBtn);
-        const cancelTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.cancelTaskBtn);
+        const addTaskBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.addTaskBtn
+        );
+        const closeTaskFormBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.closeTaskFormBtn
+        );
+        const cancelTaskBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.cancelTaskBtn
+        );
         const taskForm = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskForm);
-        const clearTaskBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.clearTaskBtn);
-        const taskFormModal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+        const clearTaskBtn = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.clearTaskBtn
+        );
+        const taskFormModal = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.taskFormModal
+        );
         const clearCompletedBtn = document.getElementById('clearCompletedBtn');
 
         if (addTaskBtn) {
@@ -954,15 +1122,24 @@ class PopupController {
         if (clearTaskBtn) {
             clearTaskBtn.addEventListener('click', async () => {
                 try {
-                    const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                    const state = await this.messageHandler.sendMessage(
+                        'setCurrentTask',
+                        { taskId: null }
+                    );
 
                     // Update UI immediately with the response
                     this.updateState(state);
 
                     // Also update task UI components if available
                     if (this.taskUIManager) {
-                        this.taskUIManager.renderTasksList(state.tasks || [], state.currentTaskId);
-                        this.taskUIManager.updateCurrentTaskDisplay(state.currentTaskId, state.tasks || []);
+                        this.taskUIManager.renderTasksList(
+                            state.tasks || [],
+                            state.currentTaskId
+                        );
+                        this.taskUIManager.updateCurrentTaskDisplay(
+                            state.currentTaskId,
+                            state.tasks || []
+                        );
                     }
                     document.body.classList.remove('compact-mode');
                     document.body.classList.remove('has-current-task');
@@ -975,14 +1152,18 @@ class PopupController {
             });
         }
 
-
         if (taskForm) {
             taskForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const taskData = {
                     title: document.getElementById('taskTitle').value.trim(),
-                    description: document.getElementById('taskDescription').value.trim(),
-                    estimatedPomodoros: parseInt(document.getElementById('taskEstimate').value) || 1
+                    description: document
+                        .getElementById('taskDescription')
+                        .value.trim(),
+                    estimatedPomodoros:
+                        parseInt(
+                            document.getElementById('taskEstimate').value
+                        ) || 1,
                 };
 
                 if (!taskData.title) {
@@ -1005,9 +1186,17 @@ class PopupController {
 
         if (clearCompletedBtn) {
             clearCompletedBtn.addEventListener('click', async () => {
-                if (!window.confirm('Remove all completed tasks? This cannot be undone.')) { return; }
+                if (
+                    !window.confirm(
+                        'Remove all completed tasks? This cannot be undone.'
+                    )
+                ) {
+                    return;
+                }
                 try {
-                    const state = await this.messageHandler.sendMessage('clearCompletedTasks');
+                    const state = await this.messageHandler.sendMessage(
+                        'clearCompletedTasks'
+                    );
                     this.updateState(state);
                 } catch (e) {
                     console.error('Failed to clear completed tasks', e);
@@ -1026,14 +1215,23 @@ class PopupController {
             saveBtn.addEventListener('click', async () => {
                 try {
                     const settings = this.settingsManager.getSettings();
-                    const validation = this.settingsManager.validateSettings(settings);
+                    const validation =
+                        this.settingsManager.validateSettings(settings);
 
                     if (!validation.isValid) {
-                        alert('Settings validation failed:\n' + validation.errors.join('\n'));
+                        alert(
+                            'Settings validation failed:\n' +
+                                validation.errors.join('\n')
+                        );
                         return;
                     }
 
-                    const state = await this.messageHandler.sendMessage('saveSettings', { settings });
+                    const state = await this.messageHandler.sendMessage(
+                        'saveSettings',
+                        {
+                            settings,
+                        }
+                    );
                     this.updateState(state);
                     this.navigationManager.showTimerPanel();
                 } catch (error) {
@@ -1049,24 +1247,34 @@ class PopupController {
             clearDataBtn.addEventListener('click', async () => {
                 const confirmed = window.confirm(
                     'Are you sure you want to clear all statistics data?\n\n' +
-                    'This will permanently delete:\n' +
-                    '• All completed session counts\n' +
-                    '• All focus time records\n' +
-                    '• Historical data for all dates\n\n' +
-                    'This action cannot be undone.'
+                        'This will permanently delete:\n' +
+                        '• All completed session counts\n' +
+                        '• All focus time records\n' +
+                        '• Historical data for all dates\n\n' +
+                        'This action cannot be undone.'
                 );
 
                 if (confirmed) {
                     try {
-                        await this.messageHandler.sendMessage('clearStatistics');
-                        alert('All statistics data has been cleared successfully.');
+                        await this.messageHandler.sendMessage(
+                            'clearStatistics'
+                        );
+                        alert(
+                            'All statistics data has been cleared successfully.'
+                        );
 
                         // Refresh the UI to show updated statistics
-                        const state = await this.messageHandler.sendMessage('getState');
+                        const state =
+                            await this.messageHandler.sendMessage('getState');
                         this.updateState(state);
                     } catch (error) {
-                        console.error('Failed to clear statistics data:', error);
-                        alert('Failed to clear statistics data. Please try again.');
+                        console.error(
+                            'Failed to clear statistics data:',
+                            error
+                        );
+                        alert(
+                            'Failed to clear statistics data. Please try again.'
+                        );
                     }
                 }
             });
@@ -1093,15 +1301,21 @@ class PopupController {
      */
     handleKeyboardShortcuts(event) {
         // Spacebar to toggle timer
-        if (event.code === 'Space' && !event.target.matches('input, textarea')) {
+        if (
+            event.code === 'Space' &&
+            !event.target.matches('input, textarea')
+        ) {
             event.preventDefault();
-            this.uiManager.elements.startBtn?.click() || this.uiManager.elements.pauseBtn?.click();
+            this.uiManager.elements.startBtn?.click() ||
+                this.uiManager.elements.pauseBtn?.click();
         }
 
         // Escape to go back to timer panel
         if (event.code === 'Escape') {
             // Close modal first if open
-            const modal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
+            const modal = utils.getElement(
+                POPUP_CONSTANTS.SELECTORS.taskFormModal
+            );
             if (modal && !modal.classList.contains('hidden')) {
                 this.taskUIManager.hideTaskForm();
             } else {
@@ -1126,10 +1340,14 @@ class PopupController {
      * Fetch & cache statistics history (once per popup session)
      */
     async ensureStatisticsHistory() {
-        if (this._statsHistoryCache) { return this._statsHistoryCache; }
+        if (this._statsHistoryCache) {
+            return this._statsHistoryCache;
+        }
         try {
-            const resp = await this.messageHandler.sendMessage('getStatisticsHistory');
-            this._statsHistoryCache = (resp && resp.history) ? resp.history : {};
+            const resp = await this.messageHandler.sendMessage(
+                'getStatisticsHistory'
+            );
+            this._statsHistoryCache = resp && resp.history ? resp.history : {};
             return this._statsHistoryCache;
         } catch (e) {
             console.warn('Failed to fetch statistics history', e);
@@ -1156,25 +1374,44 @@ class PopupController {
      * Render statistics summary cards + 7-day chart
      */
     renderStatisticsPanel(state) {
-        const summaryEl = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsSummary);
-        const chartEl = utils.getElement(POPUP_CONSTANTS.SELECTORS.stats7DayChart);
-        const historySection = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsHistorySection);
-        if (!summaryEl) { return; }
+        const summaryEl = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.statsSummary
+        );
+        const chartEl = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.stats7DayChart
+        );
+        const historySection = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.statsHistorySection
+        );
+        if (!summaryEl) {
+            return;
+        }
 
         const todayCompleted = state.statistics?.completedToday || 0;
         const todayFocus = state.statistics?.focusTimeToday || 0;
         const history = this._statsHistoryCache || {};
-        let totalCompleted = 0, totalFocus = 0, longestFocus = 0, activeDays = 0;
-        Object.values(history).forEach(day => {
-            if (!day) { return; }
+        let totalCompleted = 0,
+            totalFocus = 0,
+            longestFocus = 0,
+            activeDays = 0;
+        Object.values(history).forEach((day) => {
+            if (!day) {
+                return;
+            }
             const c = day.completedSessions || 0;
             const f = day.focusTimeMinutes || 0;
-            if (c > 0 || f > 0) { activeDays++; }
+            if (c > 0 || f > 0) {
+                activeDays++;
+            }
             totalCompleted += c;
             totalFocus += f;
-            if (f > longestFocus) { longestFocus = f; }
+            if (f > longestFocus) {
+                longestFocus = f;
+            }
         });
-        const productivityRate = activeDays ? (totalCompleted / activeDays).toFixed(1) : '0.0';
+        const productivityRate = activeDays
+            ? (totalCompleted / activeDays).toFixed(1)
+            : '0.0';
 
         summaryEl.innerHTML = `
             <div class="stat-grid">
@@ -1212,18 +1449,35 @@ class PopupController {
 
         if (chartEl) {
             const recentDates = this.buildRecentDates(7);
-            const chartData = recentDates.map(date => {
-                const day = history[date] || { completedSessions: 0, focusTimeMinutes: 0 };
-                return { date, completed: day.completedSessions || 0, focus: day.focusTimeMinutes || 0 };
+            const chartData = recentDates.map((date) => {
+                const day = history[date] || {
+                    completedSessions: 0,
+                    focusTimeMinutes: 0,
+                };
+                return {
+                    date,
+                    completed: day.completedSessions || 0,
+                    focus: day.focusTimeMinutes || 0,
+                };
             });
-            const maxFocus = Math.max(30, ...chartData.map(d => d.focus));
-            const maxCompleted = Math.max(1, ...chartData.map(d => d.completed));
-            chartEl.innerHTML = chartData.map(d => {
-                const focusPct = d.focus ? Math.round((d.focus / maxFocus) * 100) : 0;
-                const completedPct = d.completed ? Math.round((d.completed / maxCompleted) * 100) : 0;
-                const dateObj = new Date(d.date);
-                const label = dateObj.toLocaleDateString(undefined, { weekday: 'short' });
-                return `
+            const maxFocus = Math.max(30, ...chartData.map((d) => d.focus));
+            const maxCompleted = Math.max(
+                1,
+                ...chartData.map((d) => d.completed)
+            );
+            chartEl.innerHTML = chartData
+                .map((d) => {
+                    const focusPct = d.focus
+                        ? Math.round((d.focus / maxFocus) * 100)
+                        : 0;
+                    const completedPct = d.completed
+                        ? Math.round((d.completed / maxCompleted) * 100)
+                        : 0;
+                    const dateObj = new Date(d.date);
+                    const label = dateObj.toLocaleDateString(undefined, {
+                        weekday: 'short',
+                    });
+                    return `
                     <div class="chart-bar" role="group" aria-label="${label} ${d.focus} minutes focus, ${d.completed} pomodoros">
                         <div class="chart-bar__col">
                             <div class="chart-bar__value" style="height:${focusPct}%" aria-label="Focus ${d.focus} minutes" title="${d.focus}m"></div>
@@ -1233,11 +1487,15 @@ class PopupController {
                             <div class="chart-bar__value chart-bar__value--sessions" style="height:${completedPct}%" aria-label="${d.completed} pomodoros" title="${d.completed}"></div>
                         </div>
                     </div>`;
-            }).join('');
+                })
+                .join('');
         }
 
         if (historySection) {
-            historySection.classList.toggle('hidden', Object.keys(history).length === 0);
+            historySection.classList.toggle(
+                'hidden',
+                Object.keys(history).length === 0
+            );
         }
     }
 }

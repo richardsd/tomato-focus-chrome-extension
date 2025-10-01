@@ -4,10 +4,14 @@ export class NotificationManager {
     static offscreenCreated = false;
     static async show(title, message, settings = {}) {
         try {
-            const permissionLevel = await chromePromise.notifications.getPermissionLevel();
+            const permissionLevel =
+                await chromePromise.notifications.getPermissionLevel();
 
             if (permissionLevel !== 'granted') {
-                console.warn('Notifications not permitted. Permission level:', permissionLevel);
+                console.warn(
+                    'Notifications not permitted. Permission level:',
+                    permissionLevel
+                );
                 return;
             }
 
@@ -17,10 +21,13 @@ export class NotificationManager {
                 title,
                 message,
                 silent: true, // Always silent - we'll play our custom sound
-                requireInteraction: false
+                requireInteraction: false,
             };
 
-            await chromePromise.notifications.create(CONSTANTS.NOTIFICATION_ID, options);
+            await chromePromise.notifications.create(
+                CONSTANTS.NOTIFICATION_ID,
+                options
+            );
             console.log('Notification created successfully');
 
             // Play custom sound if enabled
@@ -35,23 +42,32 @@ export class NotificationManager {
             console.error('Failed to create notification:', error);
             // Fallback notification without icon
             try {
-                await chromePromise.notifications.create(CONSTANTS.NOTIFICATION_ID, {
-                    type: 'basic',
-                    title,
-                    message,
-                    silent: true
-                });
+                await chromePromise.notifications.create(
+                    CONSTANTS.NOTIFICATION_ID,
+                    {
+                        type: 'basic',
+                        title,
+                        message,
+                        silent: true,
+                    }
+                );
 
                 // Still try to play sound on fallback
                 if (settings.playSound) {
                     try {
                         await NotificationManager.playSound(settings.volume);
                     } catch (audioError) {
-                        console.error('Failed to play sound on fallback:', audioError);
+                        console.error(
+                            'Failed to play sound on fallback:',
+                            audioError
+                        );
                     }
                 }
             } catch (fallbackError) {
-                console.error('Fallback notification also failed:', fallbackError);
+                console.error(
+                    'Fallback notification also failed:',
+                    fallbackError
+                );
             }
         }
     }
@@ -61,14 +77,14 @@ export class NotificationManager {
             // Ensure only a single offscreen document exists
             if (!NotificationManager.offscreenCreated) {
                 const existingContexts = await chrome.runtime.getContexts({
-                    contextTypes: ['OFFSCREEN_DOCUMENT']
+                    contextTypes: ['OFFSCREEN_DOCUMENT'],
                 });
 
                 if (existingContexts.length === 0) {
                     await chrome.offscreen.createDocument({
                         url: 'offscreen.html',
                         reasons: ['AUDIO_PLAYBACK'],
-                        justification: 'Play notification sound'
+                        justification: 'Play notification sound',
                     });
                 }
 
@@ -79,18 +95,26 @@ export class NotificationManager {
             const response = await chrome.runtime.sendMessage({
                 action: 'playSound',
                 soundUrl: chrome.runtime.getURL('sounds/notification.mp3'),
-                volume: typeof volume === 'number' ? Math.max(0, Math.min(1, volume)) : 0.7
+                volume:
+                    typeof volume === 'number'
+                        ? Math.max(0, Math.min(1, volume))
+                        : 0.7,
             });
 
             if (response && !response.success) {
                 if (response.error && response.error.includes('interrupted')) {
                     console.warn('Sound playback interrupted, continuing');
                 } else {
-                    throw new Error(response.error || 'Unknown error playing sound');
+                    throw new Error(
+                        response.error || 'Unknown error playing sound'
+                    );
                 }
             }
         } catch (error) {
-            console.error('Failed to play sound via offscreen document:', error);
+            console.error(
+                'Failed to play sound via offscreen document:',
+                error
+            );
             // Fallback: try using system notification sound
             try {
                 await chromePromise.notifications.create('fallback-sound', {
@@ -98,12 +122,18 @@ export class NotificationManager {
                     iconUrl: 'icons/icon48.png',
                     title: 'Tomato Focus',
                     message: 'Timer complete',
-                    silent: false
+                    silent: false,
                 });
                 // Clear the fallback notification immediately
-                setTimeout(() => chrome.notifications.clear('fallback-sound'), 100);
+                setTimeout(
+                    () => chrome.notifications.clear('fallback-sound'),
+                    100
+                );
             } catch (fallbackError) {
-                console.error('Fallback sound notification also failed:', fallbackError);
+                console.error(
+                    'Fallback sound notification also failed:',
+                    fallbackError
+                );
             }
         }
     }

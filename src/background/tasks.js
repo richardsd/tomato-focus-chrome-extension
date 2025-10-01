@@ -7,7 +7,9 @@ export class TaskManager {
 
     static async getTasks() {
         try {
-            const result = await chromePromise.storage.local.get([CONSTANTS.TASKS_KEY]);
+            const result = await chromePromise.storage.local.get([
+                CONSTANTS.TASKS_KEY,
+            ]);
             return result[CONSTANTS.TASKS_KEY] || [];
         } catch (error) {
             console.error('Failed to load tasks:', error);
@@ -18,7 +20,7 @@ export class TaskManager {
     static async saveTasks(tasks) {
         try {
             await chromePromise.storage.local.set({
-                [CONSTANTS.TASKS_KEY]: tasks
+                [CONSTANTS.TASKS_KEY]: tasks,
             });
         } catch (error) {
             console.error('Failed to save tasks:', error);
@@ -35,7 +37,7 @@ export class TaskManager {
             completedPomodoros: 0,
             isCompleted: false,
             createdAt: new Date().toISOString(),
-            completedAt: null
+            completedAt: null,
         };
 
         tasks.push(newTask);
@@ -45,7 +47,7 @@ export class TaskManager {
 
     static async updateTask(taskId, updates) {
         const tasks = await this.getTasks();
-        const taskIndex = tasks.findIndex(task => task.id === taskId);
+        const taskIndex = tasks.findIndex((task) => task.id === taskId);
 
         if (taskIndex === -1) {
             throw new Error('Task not found');
@@ -53,7 +55,9 @@ export class TaskManager {
 
         // Handle completion status timestamps only; do NOT auto-adjust pomodoro counts
         if (updates.isCompleted !== undefined) {
-            updates.completedAt = updates.isCompleted ? new Date().toISOString() : null;
+            updates.completedAt = updates.isCompleted
+                ? new Date().toISOString()
+                : null;
             // We intentionally do not modify completedPomodoros here; user retains recorded effort
         }
 
@@ -64,7 +68,7 @@ export class TaskManager {
 
     static async deleteTask(taskId) {
         const tasks = await this.getTasks();
-        const filteredTasks = tasks.filter(task => task.id !== taskId);
+        const filteredTasks = tasks.filter((task) => task.id !== taskId);
         await this.saveTasks(filteredTasks);
         return true;
     }
@@ -124,7 +128,7 @@ export class TaskManager {
 
     static async incrementTaskPomodoros(taskId) {
         const tasks = await this.getTasks();
-        const task = tasks.find(task => task.id === taskId);
+        const task = tasks.find((task) => task.id === taskId);
 
         if (!task) {
             console.warn('Task not found for incrementing pomodoros:', taskId);
@@ -141,12 +145,12 @@ export class TaskManager {
 
     static async getTaskById(taskId) {
         const tasks = await this.getTasks();
-        return tasks.find(task => task.id === taskId) || null;
+        return tasks.find((task) => task.id === taskId) || null;
     }
 
     static async clearCompletedTasks() {
         const tasks = await this.getTasks();
-        const activeTasks = tasks.filter(task => !task.isCompleted);
+        const activeTasks = tasks.filter((task) => !task.isCompleted);
         await this.saveTasks(activeTasks);
         return activeTasks;
     }

@@ -57,7 +57,9 @@ export class TaskUIManager {
         }
 
         console.log('Rendering', displayTasks.length, 'tasks (filtered)');
-        const tasksHTML = displayTasks.map(task => this.renderTaskItem(task, currentTaskId)).join('');
+        const tasksHTML = displayTasks
+            .map((task) => this.renderTaskItem(task, currentTaskId))
+            .join('');
         console.log('Generated HTML:', tasksHTML);
         tasksList.innerHTML = tasksHTML;
         console.log('TasksList innerHTML after setting:', tasksList.innerHTML);
@@ -92,7 +94,10 @@ export class TaskUIManager {
         if (isSelected) { itemClasses.push('task-item--selected'); }
 
         // Truncate title if it's too long (max 50 characters)
-        const truncatedTitle = task.title.length > 50 ? task.title.substring(0, 47) + '...' : task.title;
+        const truncatedTitle =
+            task.title.length > 50
+                ? task.title.substring(0, 47) + '...'
+                : task.title;
 
         return `
             <div class="${itemClasses.join(' ')}"
@@ -107,7 +112,7 @@ export class TaskUIManager {
                     <div class="task-item__menu" data-task-id="${task.id}">
                         <button class="task-item__menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="Task actions menu" title="Actions">⋮</button>
                         <div class="task-item__menu-dropdown" role="menu" aria-label="Task actions">
-                            <button class="task-item__action task-select" role="menuitem" data-task-id="${task.id}" aria-pressed="${isCurrentTask}">🎯 ${task.isCompleted ? 'Reopen & Select' : (isCurrentTask ? 'Unset Current' : 'Set Current')}</button>
+                            <button class="task-item__action task-select" role="menuitem" data-task-id="${task.id}" aria-pressed="${isCurrentTask}">🎯 ${task.isCompleted ? 'Reopen & Select' : isCurrentTask ? 'Unset Current' : 'Set Current'}</button>
                             ${!task.isCompleted ? `<button class="task-item__action task-complete" role="menuitem" data-task-id="${task.id}">✅ Complete</button>` : ''}
                             ${task.isCompleted ? `<button class="task-item__action task-reopen" role="menuitem" data-task-id="${task.id}">↺ Reopen</button>` : ''}
                             <button class="task-item__action task-edit" role="menuitem" data-task-id="${task.id}">✏️ Edit</button>
@@ -140,7 +145,7 @@ export class TaskUIManager {
         });
 
         // Select task buttons
-        document.querySelectorAll('.task-select').forEach(btn => {
+        document.querySelectorAll('.task-select').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
@@ -149,7 +154,7 @@ export class TaskUIManager {
         });
 
         // Complete task buttons
-        document.querySelectorAll('.task-complete').forEach(btn => {
+        document.querySelectorAll('.task-complete').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
@@ -158,7 +163,7 @@ export class TaskUIManager {
         });
 
         // Reopen task buttons
-        document.querySelectorAll('.task-reopen').forEach(btn => {
+        document.querySelectorAll('.task-reopen').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
@@ -167,7 +172,7 @@ export class TaskUIManager {
         });
 
         // Edit task buttons
-        document.querySelectorAll('.task-edit').forEach(btn => {
+        document.querySelectorAll('.task-edit').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
@@ -176,7 +181,7 @@ export class TaskUIManager {
         });
 
         // Delete task buttons
-        document.querySelectorAll('.task-delete').forEach(btn => {
+        document.querySelectorAll('.task-delete').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const taskId = btn.dataset.taskId;
@@ -188,12 +193,14 @@ export class TaskUIManager {
         // (Selection now restricted to explicit menu action; card surface no longer selects the task.)
 
         // Complete task on double-click
-        document.querySelectorAll('.task-item:not(.task-item--completed)').forEach(item => {
-            item.addEventListener('dblclick', () => {
-                const taskId = item.dataset.taskId;
-                this.toggleTaskCompletion(taskId, true);
+        document
+            .querySelectorAll('.task-item:not(.task-item--completed)')
+            .forEach((item) => {
+                item.addEventListener('dblclick', () => {
+                    const taskId = item.dataset.taskId;
+                    this.toggleTaskCompletion(taskId, true);
+                });
             });
-        });
 
         // Setup expandable descriptions & menus after tasks render
         this.setupDescriptionToggles();
@@ -497,28 +504,37 @@ export class TaskUIManager {
      * Setup description expand / collapse toggles for overflowing text
      */
     setupDescriptionToggles() {
-        document.querySelectorAll('.task-item__description').forEach(desc => {
-            if (desc.dataset.processed === 'true') { return; }
+        document.querySelectorAll('.task-item__description').forEach((desc) => {
+            if (desc.dataset.processed === 'true') {
+                return;
+            }
 
             const rawText = (desc.textContent || '').trim();
-            if (!rawText) { desc.dataset.processed = 'true'; return; }
+            if (!rawText) {
+                desc.dataset.processed = 'true';
+                return;
+            }
 
             // Wrap contents if not already
             if (!desc.querySelector('.task-item__desc-text')) {
                 const wrapper = document.createElement('span');
                 wrapper.className = 'task-item__desc-text';
-                while (desc.firstChild) { wrapper.appendChild(desc.firstChild); }
+                while (desc.firstChild) {
+                    wrapper.appendChild(desc.firstChild);
+                }
                 desc.appendChild(wrapper);
             }
 
             // Remove any previous state
-            desc.classList.remove('clamped','expanded');
+            desc.classList.remove('clamped', 'expanded');
 
             // Measure full height
             const fullHeight = desc.scrollHeight;
             const style = window.getComputedStyle(desc);
             let lineHeight = parseFloat(style.lineHeight);
-            if (Number.isNaN(lineHeight)) { lineHeight = 16; }
+            if (Number.isNaN(lineHeight)) {
+                lineHeight = 16;
+            }
 
             // Apply clamp to compute visible height
             desc.classList.add('clamped');
@@ -527,7 +543,8 @@ export class TaskUIManager {
             // Determine overflow if more than ~0.5 line hidden OR char heuristic fallback
             const hiddenHeight = fullHeight - visibleHeight;
             const charFallback = rawText.length > 120; // if very long text, assume overflow in case measurements fail
-            const isOverflowing = hiddenHeight > (lineHeight * 0.5) || charFallback;
+            const isOverflowing =
+                hiddenHeight > lineHeight * 0.5 || charFallback;
 
             if (!isOverflowing) {
                 desc.classList.remove('clamped');
@@ -539,20 +556,21 @@ export class TaskUIManager {
             toggle.type = 'button';
             toggle.className = 'task-item__desc-toggle-inline';
             toggle.textContent = 'more';
-            toggle.setAttribute('aria-expanded','false');
+            toggle.setAttribute('aria-expanded', 'false');
             toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const expanded = toggle.getAttribute('aria-expanded') === 'true';
+                const expanded =
+                    toggle.getAttribute('aria-expanded') === 'true';
                 if (expanded) {
                     desc.classList.add('clamped');
                     desc.classList.remove('expanded');
                     toggle.textContent = 'more';
-                    toggle.setAttribute('aria-expanded','false');
+                    toggle.setAttribute('aria-expanded', 'false');
                 } else {
                     desc.classList.remove('clamped');
                     desc.classList.add('expanded');
                     toggle.textContent = 'less';
-                    toggle.setAttribute('aria-expanded','true');
+                    toggle.setAttribute('aria-expanded', 'true');
                 }
             });
             desc.insertAdjacentElement('afterend', toggle);
@@ -565,36 +583,49 @@ export class TaskUIManager {
      */
     setupMenus() {
         const triggers = document.querySelectorAll('.task-item__menu-trigger');
-        triggers.forEach(trigger => {
+        triggers.forEach((trigger) => {
             trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const menu = trigger.closest('.task-item__menu');
-                const expanded = trigger.getAttribute('aria-expanded') === 'true';
+                const expanded =
+                    trigger.getAttribute('aria-expanded') === 'true';
                 this.closeAllMenus();
                 if (!expanded) {
-                    trigger.setAttribute('aria-expanded','true');
+                    trigger.setAttribute('aria-expanded', 'true');
                     menu.classList.add('open');
                     const card = trigger.closest('.task-item');
-                    if (card) { card.classList.add('task-item--menu-open'); }
+                    if (card) {
+                        card.classList.add('task-item--menu-open');
+                    }
                 }
             });
         });
         if (!this._menuOutsideHandler) {
             this._menuOutsideHandler = (e) => {
-                if (!e.target.closest('.task-item__menu')) { this.closeAllMenus(); }
+                if (!e.target.closest('.task-item__menu')) {
+                    this.closeAllMenus();
+                }
             };
             document.addEventListener('click', this._menuOutsideHandler);
-            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { this.closeAllMenus(); } });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    this.closeAllMenus();
+                }
+            });
         }
     }
 
     closeAllMenus() {
-        document.querySelectorAll('.task-item__menu.open').forEach(menu => {
+        document.querySelectorAll('.task-item__menu.open').forEach((menu) => {
             menu.classList.remove('open');
             const card = menu.closest('.task-item');
-            if (card) { card.classList.remove('task-item--menu-open'); }
+            if (card) {
+                card.classList.remove('task-item--menu-open');
+            }
         });
-        document.querySelectorAll('.task-item__menu-trigger[aria-expanded="true"]').forEach(btn => btn.setAttribute('aria-expanded','false'));
+        document
+            .querySelectorAll('.task-item__menu-trigger[aria-expanded="true"]')
+            .forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
     }
 
     /**
@@ -603,14 +634,20 @@ export class TaskUIManager {
     async selectTask(taskId) {
         try {
             // Fetch latest full state to determine current selection
-            const stateResponse = await this.messageHandler.sendMessage('getState');
+            const stateResponse =
+                await this.messageHandler.sendMessage('getState');
             const tasks = stateResponse.tasks || [];
-            const task = tasks.find(t => t.id === taskId);
+            const task = tasks.find((t) => t.id === taskId);
             const currentTaskId = stateResponse.currentTaskId;
 
             // If clicking the currently active task, unset it
             if (currentTaskId === taskId) {
-                const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId: null });
+                const state = await this.messageHandler.sendMessage(
+                    'setCurrentTask',
+                    {
+                        taskId: null,
+                    }
+                );
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
                 const hasCurrent = !!state.currentTaskId;
@@ -624,7 +661,9 @@ export class TaskUIManager {
 
             // If selecting a completed task, confirm reopen
             if (task && task.isCompleted) {
-                const shouldReopen = window.confirm('This task is completed. Reopen and set as current?');
+                const shouldReopen = window.confirm(
+                    'This task is completed. Reopen and set as current?'
+                );
                 if (shouldReopen) {
                     await this.toggleTaskCompletion(taskId, false);
                 } else {
@@ -632,7 +671,12 @@ export class TaskUIManager {
                 }
             }
 
-            const state = await this.messageHandler.sendMessage('setCurrentTask', { taskId });
+            const state = await this.messageHandler.sendMessage(
+                'setCurrentTask',
+                {
+                    taskId,
+                }
+            );
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -655,7 +699,7 @@ export class TaskUIManager {
     async editTask(taskId) {
         try {
             const response = await this.messageHandler.sendMessage('getTasks');
-            const task = response.tasks.find(t => t.id === taskId);
+            const task = response.tasks.find((t) => t.id === taskId);
             if (task) {
                 this.showTaskForm(task);
             }
@@ -673,7 +717,9 @@ export class TaskUIManager {
         }
 
         try {
-            const state = await this.messageHandler.sendMessage('deleteTask', { taskId });
+            const state = await this.messageHandler.sendMessage('deleteTask', {
+                taskId,
+            });
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -690,7 +736,7 @@ export class TaskUIManager {
         try {
             const state = await this.messageHandler.sendMessage('updateTask', {
                 taskId,
-                updates: { isCompleted }
+                updates: { isCompleted },
             });
 
             // Refresh UI with updated state
@@ -716,8 +762,10 @@ export class TaskUIManager {
             // Populate form if editing
             if (task) {
                 document.getElementById('taskTitle').value = task.title;
-                document.getElementById('taskDescription').value = task.description || '';
-                document.getElementById('taskEstimate').value = task.estimatedPomodoros;
+                document.getElementById('taskDescription').value =
+                    task.description || '';
+                document.getElementById('taskEstimate').value =
+                    task.estimatedPomodoros;
             } else {
                 form.reset();
                 document.getElementById('taskEstimate').value = 1;
@@ -750,23 +798,29 @@ export class TaskUIManager {
         try {
             if (this.currentEditingTaskId) {
                 // Update existing task
-                const state = await this.messageHandler.sendMessage('updateTask', {
-                    taskId: this.currentEditingTaskId,
-                    updates: {
-                        title: formData.title,
-                        description: formData.description,
-                        estimatedPomodoros: formData.estimatedPomodoros
+                const state = await this.messageHandler.sendMessage(
+                    'updateTask',
+                    {
+                        taskId: this.currentEditingTaskId,
+                        updates: {
+                            title: formData.title,
+                            description: formData.description,
+                            estimatedPomodoros: formData.estimatedPomodoros,
+                        },
                     }
-                });
+                );
 
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
             } else {
                 // Create new task
-                const state = await this.messageHandler.sendMessage('createTask', {
-                    task: formData
-                });
+                const state = await this.messageHandler.sendMessage(
+                    'createTask',
+                    {
+                        task: formData,
+                    }
+                );
 
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
@@ -792,9 +846,15 @@ export class TaskUIManager {
      * Update current task display
      */
     updateCurrentTaskDisplay(currentTaskId, tasks) {
-        const currentTaskElement = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTask);
-        const currentTaskName = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTaskName);
-        const currentTaskProgress = utils.getElement(POPUP_CONSTANTS.SELECTORS.currentTaskProgress);
+        const currentTaskElement = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.currentTask
+        );
+        const currentTaskName = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.currentTaskName
+        );
+        const currentTaskProgress = utils.getElement(
+            POPUP_CONSTANTS.SELECTORS.currentTaskProgress
+        );
 
         if (!currentTaskElement || !currentTaskName || !currentTaskProgress) {
             return;
@@ -805,7 +865,7 @@ export class TaskUIManager {
             return;
         }
 
-        const currentTask = tasks.find(t => t.id === currentTaskId);
+        const currentTask = tasks.find((t) => t.id === currentTaskId);
         if (!currentTask) {
             currentTaskElement.classList.add('hidden');
             return;
@@ -815,15 +875,18 @@ export class TaskUIManager {
         currentTaskName.textContent = currentTask.title;
         currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
     }
-};
+}
 
-TaskUIManager.prototype.setupJiraSyncButton = function() {
+TaskUIManager.prototype.setupJiraSyncButton = function () {
     const btn = utils.getElement(POPUP_CONSTANTS.SELECTORS.syncJiraBtn);
-    if (!btn) { return; }
+    if (!btn) {
+        return;
+    }
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
-            const state = await this.messageHandler.sendMessage('importJiraTasks');
+            const state =
+                await this.messageHandler.sendMessage('importJiraTasks');
             this.renderTasksList(state.tasks || [], state.currentTaskId);
             notifySuccess('Jira tasks synced successfully.');
         } catch (err) {
