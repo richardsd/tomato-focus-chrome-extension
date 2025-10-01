@@ -79,8 +79,8 @@ export class TaskManager {
             return tasks;
         }
 
-        const idsToDelete = new Set(taskIds.map(id => String(id)));
-        const filteredTasks = tasks.filter(task => !idsToDelete.has(task.id));
+        const idsToDelete = new Set(taskIds.map((id) => String(id)));
+        const filteredTasks = tasks.filter((task) => !idsToDelete.has(task.id));
 
         if (filteredTasks.length !== tasks.length) {
             await this.saveTasks(filteredTasks);
@@ -95,11 +95,11 @@ export class TaskManager {
             return tasks;
         }
 
-        const idsToComplete = new Set(taskIds.map(id => String(id)));
+        const idsToComplete = new Set(taskIds.map((id) => String(id)));
         const nowIso = new Date().toISOString();
         let changed = false;
 
-        const updatedTasks = tasks.map(task => {
+        const updatedTasks = tasks.map((task) => {
             if (!idsToComplete.has(task.id)) {
                 return task;
             }

@@ -567,116 +567,173 @@ export class TimerController {
                         await this.scheduleAlarm();
                     }
 
-                await this.configureJiraSyncAlarm();
-                this.updateUI();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            }
-            case 'createTask':
-                await TaskManager.createTask(request.task);
-                this.state.tasks = await TaskManager.getTasks();
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'updateTask':
-                await TaskManager.updateTask(request.taskId, request.updates);
-                this.state.tasks = await TaskManager.getTasks();
-                if (this.state.currentTaskId === request.taskId && request.updates?.isCompleted) {
-                    this.state.currentTaskId = null;
-                }
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'deleteTask':
-                await TaskManager.deleteTask(request.taskId);
-                if (this.state.currentTaskId === request.taskId) {
-                    this.state.currentTaskId = null;
-                }
-                this.state.tasks = await TaskManager.getTasks();
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'completeTasks': {
-                const taskIds = Array.isArray(request.taskIds) ? request.taskIds : [];
-                const completedIds = new Set(taskIds.map(id => String(id)));
-                const updatedTasks = await TaskManager.completeTasks(taskIds);
-                if (this.state.currentTaskId && completedIds.has(String(this.state.currentTaskId))) {
-                    this.state.currentTaskId = null;
-                }
-                this.state.tasks = updatedTasks;
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            }
-            case 'deleteTasks': {
-                const taskIds = Array.isArray(request.taskIds) ? request.taskIds : [];
-                const deletedIds = new Set(taskIds.map(id => String(id)));
-                const updatedTasks = await TaskManager.deleteTasks(taskIds);
-                if (this.state.currentTaskId && deletedIds.has(String(this.state.currentTaskId))) {
-                    this.state.currentTaskId = null;
-                }
-                this.state.tasks = updatedTasks;
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            }
-            case 'getTasks':
-                const tasks = await TaskManager.getTasks();
-                sendResponse({ success: true, tasks });
-                break;
-            case 'importJiraTasks': {
-                try {
-                    const result = await this.performJiraSync();
+                    await this.configureJiraSyncAlarm();
+                    this.updateUI();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
-                        importedCount: result.importedCount,
-                        totalIssues: result.totalIssues
                     });
-                } catch (err) {
-                    console.error('Failed to import Jira tasks:', err);
-                    sendResponse({ error: err.message });
+                    break;
                 }
-                break;
-            }
-            case 'setCurrentTask':
-                this.state.currentTaskId = request.taskId;
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'updateUiPreferences':
-                this.state.uiPreferences = {
-                    ...this.state.uiPreferences,
-                    ...(request.uiPreferences || request.updates || {})
-                };
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'clearCompletedTasks':
-                await TaskManager.clearCompletedTasks();
-                this.state.tasks = await TaskManager.getTasks();
-                if (this.state.currentTaskId) {
-                    const exists = this.state.tasks.some(t => t.id === this.state.currentTaskId);
-                    if (!exists) this.state.currentTaskId = null;
+                case 'createTask':
+                    await TaskManager.createTask(request.task);
+                    this.state.tasks = await TaskManager.getTasks();
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'updateTask':
+                    await TaskManager.updateTask(
+                        request.taskId,
+                        request.updates
+                    );
+                    this.state.tasks = await TaskManager.getTasks();
+                    if (
+                        this.state.currentTaskId === request.taskId &&
+                        request.updates?.isCompleted
+                    ) {
+                        this.state.currentTaskId = null;
+                    }
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'deleteTask':
+                    await TaskManager.deleteTask(request.taskId);
+                    if (this.state.currentTaskId === request.taskId) {
+                        this.state.currentTaskId = null;
+                    }
+                    this.state.tasks = await TaskManager.getTasks();
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'completeTasks': {
+                    const taskIds = Array.isArray(request.taskIds)
+                        ? request.taskIds
+                        : [];
+                    const completedIds = new Set(
+                        taskIds.map((id) => String(id))
+                    );
+                    const updatedTasks =
+                        await TaskManager.completeTasks(taskIds);
+                    if (
+                        this.state.currentTaskId &&
+                        completedIds.has(String(this.state.currentTaskId))
+                    ) {
+                        this.state.currentTaskId = null;
+                    }
+                    this.state.tasks = updatedTasks;
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
                 }
-                await this.saveState();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'clearStatistics':
-                await StatisticsManager.clearAll();
-                await this.loadStatistics();
-                sendResponse({ success: true, state: this.state.getState() });
-                break;
-            case 'getStatisticsHistory':
-                const all = await StatisticsManager.getAllStatistics();
-                sendResponse({ success: true, history: all });
-                break;
-            case 'checkNotifications':
-                const permissionLevel = await NotificationManager.checkPermissions();
-                sendResponse({ success: true, permissionLevel });
-                break;
-            default:
-                sendResponse({ error: 'Unknown action' });
+                case 'deleteTasks': {
+                    const taskIds = Array.isArray(request.taskIds)
+                        ? request.taskIds
+                        : [];
+                    const deletedIds = new Set(taskIds.map((id) => String(id)));
+                    const updatedTasks = await TaskManager.deleteTasks(taskIds);
+                    if (
+                        this.state.currentTaskId &&
+                        deletedIds.has(String(this.state.currentTaskId))
+                    ) {
+                        this.state.currentTaskId = null;
+                    }
+                    this.state.tasks = updatedTasks;
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                }
+                case 'getTasks': {
+                    const tasks = await TaskManager.getTasks();
+                    sendResponse({ success: true, tasks });
+                    break;
+                }
+                case 'importJiraTasks': {
+                    try {
+                        const result = await this.performJiraSync();
+                        sendResponse({
+                            success: true,
+                            state: this.state.getState(),
+                            importedCount: result.importedCount,
+                            totalIssues: result.totalIssues,
+                        });
+                    } catch (err) {
+                        console.error('Failed to import Jira tasks:', err);
+                        sendResponse({ error: err.message });
+                    }
+                    break;
+                }
+                case 'setCurrentTask':
+                    this.state.currentTaskId = request.taskId;
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'updateUiPreferences':
+                    this.state.uiPreferences = {
+                        ...this.state.uiPreferences,
+                        ...(request.uiPreferences || request.updates || {}),
+                    };
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'clearCompletedTasks':
+                    await TaskManager.clearCompletedTasks();
+                    this.state.tasks = await TaskManager.getTasks();
+                    if (this.state.currentTaskId) {
+                        const exists = this.state.tasks.some(
+                            (t) => t.id === this.state.currentTaskId
+                        );
+                        if (!exists) {
+                            this.state.currentTaskId = null;
+                        }
+                    }
+                    await this.saveState();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'clearStatistics':
+                    await StatisticsManager.clearAll();
+                    await this.loadStatistics();
+                    sendResponse({
+                        success: true,
+                        state: this.state.getState(),
+                    });
+                    break;
+                case 'getStatisticsHistory': {
+                    const all = await StatisticsManager.getAllStatistics();
+                    sendResponse({ success: true, history: all });
+                    break;
+                }
+                case 'checkNotifications': {
+                    const permissionLevel =
+                        await NotificationManager.checkPermissions();
+                    sendResponse({ success: true, permissionLevel });
+                    break;
+                }
+                default:
+                    sendResponse({ error: 'Unknown action' });
             }
         } catch (error) {
             console.error('Error handling message:', error);

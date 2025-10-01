@@ -24,7 +24,10 @@ export class TaskUIManager {
      */
     renderTasksList(tasks, currentTaskId) {
         const allTasks = Array.isArray(tasks) ? tasks : [];
-        console.log('renderTasksList called with:', { tasks: allTasks, currentTaskId });
+        console.log('renderTasksList called with:', {
+            tasks: allTasks,
+            currentTaskId,
+        });
         const tasksList = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksList);
         if (!tasksList) {
             console.warn('tasksList element not found');
@@ -33,15 +36,22 @@ export class TaskUIManager {
         // Apply filter
         let displayTasks = allTasks;
         if (this.currentFilter === 'in-progress') {
-            displayTasks = allTasks.filter(t => !t.isCompleted);
+            displayTasks = allTasks.filter((t) => !t.isCompleted);
         } else if (this.currentFilter === 'completed') {
-            displayTasks = allTasks.filter(t => t.isCompleted);
+            displayTasks = allTasks.filter((t) => t.isCompleted);
         }
 
-        this.currentDisplayTaskIds = displayTasks.map(task => String(task.id));
-        this.selectedTaskIds = this.selectedTaskIds.filter(id => this.currentDisplayTaskIds.includes(id));
+        this.currentDisplayTaskIds = displayTasks.map((task) =>
+            String(task.id)
+        );
+        this.selectedTaskIds = this.selectedTaskIds.filter((id) =>
+            this.currentDisplayTaskIds.includes(id)
+        );
 
-        console.log('Tasks list element found, rendering with filter:', this.currentFilter);
+        console.log(
+            'Tasks list element found, rendering with filter:',
+            this.currentFilter
+        );
 
         if (!displayTasks || displayTasks.length === 0) {
             console.log('No tasks found, showing empty state');
@@ -72,8 +82,12 @@ export class TaskUIManager {
         // Toggle visibility of clear completed button
         const clearCompletedBtn = document.getElementById('clearCompletedBtn');
         if (clearCompletedBtn) {
-            const shouldShowClearCompleted = this.currentFilter === 'completed' && displayTasks.length > 0;
-            clearCompletedBtn.classList.toggle('hidden', !shouldShowClearCompleted);
+            const shouldShowClearCompleted =
+                this.currentFilter === 'completed' && displayTasks.length > 0;
+            clearCompletedBtn.classList.toggle(
+                'hidden',
+                !shouldShowClearCompleted
+            );
             clearCompletedBtn.disabled = !shouldShowClearCompleted;
         }
         this.updateSelectionBar();
@@ -85,13 +99,27 @@ export class TaskUIManager {
     renderTaskItem(task, currentTaskId) {
         const isCurrentTask = task.id === currentTaskId;
         const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
-        const statusClass = task.isCompleted ? 'completed' : (task.completedPomodoros > 0 ? 'in-progress' : 'pending');
-        const statusText = task.isCompleted ? 'Completed' : (task.completedPomodoros > 0 ? 'In progress' : 'Pending');
+        const statusClass = task.isCompleted
+            ? 'completed'
+            : task.completedPomodoros > 0
+              ? 'in-progress'
+              : 'pending';
+        const statusText = task.isCompleted
+            ? 'Completed'
+            : task.completedPomodoros > 0
+              ? 'In progress'
+              : 'Pending';
         const isSelected = this.selectedTaskIds.includes(task.id);
         const itemClasses = ['task-item'];
-        if (isCurrentTask) { itemClasses.push('task-item--current'); }
-        if (task.isCompleted) { itemClasses.push('task-item--completed'); }
-        if (isSelected) { itemClasses.push('task-item--selected'); }
+        if (isCurrentTask) {
+            itemClasses.push('task-item--current');
+        }
+        if (task.isCompleted) {
+            itemClasses.push('task-item--completed');
+        }
+        if (isSelected) {
+            itemClasses.push('task-item--selected');
+        }
 
         // Truncate title if it's too long (max 50 characters)
         const truncatedTitle =
@@ -135,14 +163,16 @@ export class TaskUIManager {
      * Attach event listeners to task items
      */
     attachTaskEventListeners() {
-        document.querySelectorAll('.task-item__checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                e.stopPropagation();
-                const taskId = checkbox.dataset.taskId;
-                this.toggleTaskSelection(taskId, checkbox.checked);
+        document
+            .querySelectorAll('.task-item__checkbox')
+            .forEach((checkbox) => {
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const taskId = checkbox.dataset.taskId;
+                    this.toggleTaskSelection(taskId, checkbox.checked);
+                });
+                checkbox.addEventListener('click', (e) => e.stopPropagation());
             });
-            checkbox.addEventListener('click', (e) => e.stopPropagation());
-        });
 
         // Select task buttons
         document.querySelectorAll('.task-select').forEach((btn) => {
@@ -214,33 +244,43 @@ export class TaskUIManager {
         this.selectionCancelBtn = document.getElementById('cancelSelectionBtn');
         const selectionBarRoot = document.getElementById('tasksSelectionBar');
         this.deleteSelectedButtons = selectionBarRoot
-            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="delete-selected"]'))
+            ? Array.from(
+                  selectionBarRoot.querySelectorAll(
+                      '[data-action="delete-selected"]'
+                  )
+              )
             : [];
         this.completeSelectedButtons = selectionBarRoot
-            ? Array.from(selectionBarRoot.querySelectorAll('[data-action="complete-selected"]'))
+            ? Array.from(
+                  selectionBarRoot.querySelectorAll(
+                      '[data-action="complete-selected"]'
+                  )
+              )
             : [];
-        this.selectAllButtons = Array.from(document.querySelectorAll('[data-action="select-all"]'));
+        this.selectAllButtons = Array.from(
+            document.querySelectorAll('[data-action="select-all"]')
+        );
         if (this.selectionCancelBtn) {
             this.selectionCancelBtn.addEventListener('click', () => {
                 this.clearSelection();
             });
         }
 
-        this.deleteSelectedButtons.forEach(button => {
+        this.deleteSelectedButtons.forEach((button) => {
             button.disabled = true;
             button.addEventListener('click', async () => {
                 await this.deleteSelectedTasks();
             });
         });
 
-        this.completeSelectedButtons.forEach(button => {
+        this.completeSelectedButtons.forEach((button) => {
             button.disabled = true;
             button.addEventListener('click', async () => {
                 await this.completeSelectedTasks();
             });
         });
 
-        this.selectAllButtons.forEach(button => {
+        this.selectAllButtons.forEach((button) => {
             button.disabled = true;
             button.addEventListener('click', () => {
                 // Behaves like toggle: if all selected -> clear, else select remaining
@@ -252,7 +292,9 @@ export class TaskUIManager {
     }
 
     toggleTaskSelection(taskId, explicitState = null) {
-        if (!taskId) { return; }
+        if (!taskId) {
+            return;
+        }
         const id = String(taskId);
         const currentlySelected = this.selectedTaskIds.includes(id);
         let shouldSelect = explicitState;
@@ -263,7 +305,9 @@ export class TaskUIManager {
         if (shouldSelect && !currentlySelected) {
             this.selectedTaskIds.push(id);
         } else if (!shouldSelect && currentlySelected) {
-            this.selectedTaskIds = this.selectedTaskIds.filter(existingId => existingId !== id);
+            this.selectedTaskIds = this.selectedTaskIds.filter(
+                (existingId) => existingId !== id
+            );
         }
 
         this.updateTaskSelectionUI(id, shouldSelect);
@@ -271,8 +315,12 @@ export class TaskUIManager {
     }
 
     updateTaskSelectionUI(taskId, isSelected) {
-        const taskElement = Array.from(document.querySelectorAll('.task-item')).find(item => item.dataset.taskId === taskId);
-        if (!taskElement) { return; }
+        const taskElement = Array.from(
+            document.querySelectorAll('.task-item')
+        ).find((item) => item.dataset.taskId === taskId);
+        if (!taskElement) {
+            return;
+        }
         taskElement.classList.toggle('task-item--selected', !!isSelected);
         const checkbox = taskElement.querySelector('.task-item__checkbox');
         if (checkbox) {
@@ -297,19 +345,27 @@ export class TaskUIManager {
             this.selectionCountEl.textContent = label;
         }
 
-        this.deleteSelectedButtons.forEach(button => {
+        this.deleteSelectedButtons.forEach((button) => {
             button.disabled = count === 0;
         });
 
-        this.completeSelectedButtons.forEach(button => {
+        this.completeSelectedButtons.forEach((button) => {
             button.disabled = count === 0;
         });
 
-        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
-        const selectedIdsSet = new Set(this.selectedTaskIds.map(id => String(id)));
-        const allSelected = displayIds.length > 0 && displayIds.every(id => selectedIdsSet.has(String(id)));
-        const someSelected = !allSelected && displayIds.some(id => selectedIdsSet.has(String(id)));
-        this.selectAllButtons.forEach(button => {
+        const displayIds = Array.isArray(this.currentDisplayTaskIds)
+            ? this.currentDisplayTaskIds
+            : [];
+        const selectedIdsSet = new Set(
+            this.selectedTaskIds.map((id) => String(id))
+        );
+        const allSelected =
+            displayIds.length > 0 &&
+            displayIds.every((id) => selectedIdsSet.has(String(id)));
+        const someSelected =
+            !allSelected &&
+            displayIds.some((id) => selectedIdsSet.has(String(id)));
+        this.selectAllButtons.forEach((button) => {
             const hasTasks = displayIds.length > 0;
             let ariaChecked = 'false';
             let ariaLabel = 'Select all tasks';
@@ -328,16 +384,19 @@ export class TaskUIManager {
             button.setAttribute('aria-label', ariaLabel);
             button.title = ariaLabel;
             const srLabel = button.querySelector('[data-select-all-label]');
-            if (srLabel) { srLabel.textContent = ariaLabel; }
+            if (srLabel) {
+                srLabel.textContent = ariaLabel;
+            }
             const icon = button.querySelector('[data-select-all-icon]');
-            if (icon) { icon.textContent = iconChar; }
+            if (icon) {
+                icon.textContent = iconChar;
+            }
         });
-
     }
 
     syncTaskSelectionCheckboxes() {
         const selectedIds = new Set(this.selectedTaskIds);
-        document.querySelectorAll('.task-item').forEach(item => {
+        document.querySelectorAll('.task-item').forEach((item) => {
             const taskId = item.dataset.taskId;
             const isSelected = selectedIds.has(taskId);
             item.classList.toggle('task-item--selected', isSelected);
@@ -361,19 +420,31 @@ export class TaskUIManager {
     }
 
     selectAllDisplayedTasks() {
-        const displayIds = Array.isArray(this.currentDisplayTaskIds) ? this.currentDisplayTaskIds : [];
-        if (!displayIds.length) { return; }
+        const displayIds = Array.isArray(this.currentDisplayTaskIds)
+            ? this.currentDisplayTaskIds
+            : [];
+        if (!displayIds.length) {
+            return;
+        }
 
-        const normalizedDisplayIds = displayIds.map(id => String(id));
+        const normalizedDisplayIds = displayIds.map((id) => String(id));
         const displaySet = new Set(normalizedDisplayIds);
-        const selectedSet = new Set(this.selectedTaskIds.map(id => String(id)));
-        const allSelected = normalizedDisplayIds.every(id => selectedSet.has(id));
+        const selectedSet = new Set(
+            this.selectedTaskIds.map((id) => String(id))
+        );
+        const allSelected = normalizedDisplayIds.every((id) =>
+            selectedSet.has(id)
+        );
 
         if (allSelected) {
-            this.selectedTaskIds = this.selectedTaskIds.filter(id => !displaySet.has(String(id)));
+            this.selectedTaskIds = this.selectedTaskIds.filter(
+                (id) => !displaySet.has(String(id))
+            );
         } else {
-            const combined = new Set(this.selectedTaskIds.map(id => String(id)));
-            normalizedDisplayIds.forEach(id => combined.add(id));
+            const combined = new Set(
+                this.selectedTaskIds.map((id) => String(id))
+            );
+            normalizedDisplayIds.forEach((id) => combined.add(id));
             this.selectedTaskIds = Array.from(combined);
         }
         this.syncTaskSelectionCheckboxes();
@@ -381,20 +452,29 @@ export class TaskUIManager {
     }
 
     async deleteSelectedTasks() {
-        if (!this.selectedTaskIds.length) { return; }
+        if (!this.selectedTaskIds.length) {
+            return;
+        }
 
         const count = this.selectedTaskIds.length;
-        const confirmationMessage = count === 1
-            ? 'Are you sure you want to delete the selected task?'
-            : `Are you sure you want to delete the ${count} selected tasks?`;
+        const confirmationMessage =
+            count === 1
+                ? 'Are you sure you want to delete the selected task?'
+                : `Are you sure you want to delete the ${count} selected tasks?`;
 
         if (!window.confirm(confirmationMessage)) {
             return;
         }
 
-        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
-        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
-        this.selectAllButtons.forEach(button => { button.disabled = true; });
+        this.deleteSelectedButtons.forEach((button) => {
+            button.disabled = true;
+        });
+        this.completeSelectedButtons.forEach((button) => {
+            button.disabled = true;
+        });
+        this.selectAllButtons.forEach((button) => {
+            button.disabled = true;
+        });
 
         const taskIds = [...this.selectedTaskIds];
 
@@ -415,7 +495,10 @@ export class TaskUIManager {
             try {
                 state = await this.messageHandler.sendMessage('getState');
             } catch (stateError) {
-                console.error('Failed to refresh state after deletion:', stateError);
+                console.error(
+                    'Failed to refresh state after deletion:',
+                    stateError
+                );
             }
         }
 
@@ -428,11 +511,19 @@ export class TaskUIManager {
     }
 
     async completeSelectedTasks() {
-        if (!this.selectedTaskIds.length) { return; }
+        if (!this.selectedTaskIds.length) {
+            return;
+        }
 
-        this.completeSelectedButtons.forEach(button => { button.disabled = true; });
-        this.deleteSelectedButtons.forEach(button => { button.disabled = true; });
-        this.selectAllButtons.forEach(button => { button.disabled = true; });
+        this.completeSelectedButtons.forEach((button) => {
+            button.disabled = true;
+        });
+        this.deleteSelectedButtons.forEach((button) => {
+            button.disabled = true;
+        });
+        this.selectAllButtons.forEach((button) => {
+            button.disabled = true;
+        });
 
         const taskIds = [...this.selectedTaskIds];
 
@@ -453,7 +544,10 @@ export class TaskUIManager {
             try {
                 state = await this.messageHandler.sendMessage('getState');
             } catch (stateError) {
-                console.error('Failed to refresh state after completion:', stateError);
+                console.error(
+                    'Failed to refresh state after completion:',
+                    stateError
+                );
             }
         }
 
@@ -467,16 +561,23 @@ export class TaskUIManager {
 
     async performBulkCompleteRequest(taskIds) {
         try {
-            return await this.messageHandler.sendMessage('completeTasks', { taskIds });
+            return await this.messageHandler.sendMessage('completeTasks', {
+                taskIds,
+            });
         } catch (error) {
             if (error && error.message === 'Unknown action') {
-                console.warn('Bulk complete action unsupported; falling back to sequential updates.');
+                console.warn(
+                    'Bulk complete action unsupported; falling back to sequential updates.'
+                );
                 let latestState = null;
                 for (const taskId of taskIds) {
-                    latestState = await this.messageHandler.sendMessage('updateTask', {
-                        taskId,
-                        updates: { isCompleted: true }
-                    });
+                    latestState = await this.messageHandler.sendMessage(
+                        'updateTask',
+                        {
+                            taskId,
+                            updates: { isCompleted: true },
+                        }
+                    );
                 }
                 return latestState;
             }
@@ -486,13 +587,20 @@ export class TaskUIManager {
 
     async performBulkDeleteRequest(taskIds) {
         try {
-            return await this.messageHandler.sendMessage('deleteTasks', { taskIds });
+            return await this.messageHandler.sendMessage('deleteTasks', {
+                taskIds,
+            });
         } catch (error) {
             if (error && error.message === 'Unknown action') {
-                console.warn('Bulk delete action unsupported; falling back to sequential deletions.');
+                console.warn(
+                    'Bulk delete action unsupported; falling back to sequential deletions.'
+                );
                 let latestState = null;
                 for (const taskId of taskIds) {
-                    latestState = await this.messageHandler.sendMessage('deleteTask', { taskId });
+                    latestState = await this.messageHandler.sendMessage(
+                        'deleteTask',
+                        { taskId }
+                    );
                 }
                 return latestState;
             }

@@ -1043,7 +1043,9 @@ class PopupController {
                     return;
                 }
                 // If already active, ignore
-                if (btn.classList.contains('is-active')) {return;}
+                if (btn.classList.contains('is-active')) {
+                    return;
+                }
                 if (this.taskUIManager) {
                     this.taskUIManager.clearSelection();
                 }
