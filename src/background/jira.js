@@ -7,7 +7,8 @@ export async function fetchAssignedIssues(settings) {
     const base = jiraUrl.replace(/\/$/, '');
     const escapedUsername = jiraUsername.replace(/"/g, '\\"');
     const jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
-    const search = `${base}/rest/api/3/search?jql=${encodeURIComponent(jql)}`;
+    const fields = 'key,summary,description';
+    const search = `${base}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=${encodeURIComponent(fields)}`;
     const auth = btoa(`${jiraUsername}:${jiraToken}`);
 
     let response;
