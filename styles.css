@@ -1654,7 +1654,6 @@ select.settings-input {
     box-sizing: border-box;
     max-width: 100%;
     align-self: stretch;
-    margin-bottom: 11px;
 }
 
 .tasks-selection-bar__left,
