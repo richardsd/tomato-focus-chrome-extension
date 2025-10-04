@@ -24,6 +24,9 @@ class DashboardApp {
             document.querySelectorAll('.dashboard-nav__item')
         );
 
+        this.activeSection = null;
+        this.handleHashChange = this.handleHashChange.bind(this);
+
         this.state = {
             core: { ...POPUP_CONSTANTS.DEFAULT_STATE },
             history: {},
@@ -54,6 +57,8 @@ class DashboardApp {
 
     async init() {
         this.bindNavigation();
+        this.applyInitialSectionFromHash();
+        window.addEventListener('hashchange', this.handleHashChange);
         this.taskManager.init();
         this.settingsManager.init();
         this.statisticsManager.init();
@@ -67,18 +72,35 @@ class DashboardApp {
             button.addEventListener('click', () => {
                 const sectionKey = button.dataset.section;
                 if (sectionKey) {
-                    this.activateSection(sectionKey);
+                    this.navigateToSection(sectionKey);
                 }
             });
         });
     }
 
+    navigateToSection(key) {
+        this.activateSection(key);
+        this.updateHashForSection(key);
+    }
+
     activateSection(key) {
+        if (!this.sections[key]) {
+            return;
+        }
+
+        const previousSection = this.activeSection;
+        this.activeSection = key;
+
         this.navButtons.forEach((button) => {
             button.classList.toggle(
                 'is-active',
                 button.dataset.section === key
             );
+            if (button.dataset.section === key) {
+                button.setAttribute('aria-current', 'page');
+            } else {
+                button.removeAttribute('aria-current');
+            }
         });
 
         Object.entries(this.sections).forEach(([sectionKey, element]) => {
@@ -96,8 +118,45 @@ class DashboardApp {
 
         if (key === 'statistics') {
             this.statisticsManager.refreshHistory();
-        } else if (key === 'tasks') {
+        } else if (key === 'tasks' && previousSection !== 'tasks') {
             this.fetchAndSyncState();
+        }
+    }
+
+    updateHashForSection(key) {
+        const targetHash = `#${key}`;
+        if (window.location.hash === targetHash) {
+            return;
+        }
+        try {
+            window.history.replaceState(null, '', targetHash);
+        } catch {
+            window.location.hash = targetHash;
+        }
+    }
+
+    applyInitialSectionFromHash() {
+        const key = this.getSectionKeyFromHash(window.location.hash);
+        if (key) {
+            this.activateSection(key);
+            return;
+        }
+        this.activateSection('tasks');
+        this.updateHashForSection('tasks');
+    }
+
+    getSectionKeyFromHash(hash) {
+        if (!hash) {
+            return null;
+        }
+        const key = hash.replace(/^#/, '');
+        return this.sections[key] ? key : null;
+    }
+
+    handleHashChange() {
+        const key = this.getSectionKeyFromHash(window.location.hash);
+        if (key) {
+            this.activateSection(key);
         }
     }
 
