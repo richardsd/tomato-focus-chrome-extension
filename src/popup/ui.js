@@ -1,6 +1,10 @@
 import { POPUP_CONSTANTS, utils } from './common.js';
 import { TaskUIManager } from './tasks.js';
 import { SettingsManager } from './settings.js';
+import {
+    RuntimeMessenger,
+    addRuntimeActionListener,
+} from '../shared/runtimeMessaging.js';
 
 function isElementNode(value) {
     return (
@@ -159,84 +163,36 @@ export function initPanelHeaders(navigationManager, panelConfigs = []) {
     return controllers;
 }
 
-class MessageHandler {
+class MessageHandler extends RuntimeMessenger {
     constructor() {
-        this.setupMessageListener();
-    }
-
-    /**
-     * Send message to background script with retry logic
-     */
-    async sendMessage(action, data = {}) {
-        return new Promise((resolve, reject) => {
-            const handleResponse = (resp) => {
-                if (chrome.runtime.lastError) {
-                    console.warn(
-                        'Message failed:',
-                        chrome.runtime.lastError.message
-                    );
-                    if (action === 'getState') {
-                        resolve(POPUP_CONSTANTS.DEFAULT_STATE);
-                    } else {
-                        reject(new Error(chrome.runtime.lastError.message));
-                    }
-                    return;
-                }
-
-                if (resp && resp.error) {
-                    reject(new Error(resp.error));
-                    return;
-                }
-
-                // Unwrap state responses for convenience
-                if (
-                    resp &&
-                    Object.prototype.hasOwnProperty.call(resp, 'state')
-                ) {
-                    resolve(resp.state);
-                } else {
-                    resolve(resp);
-                }
-            };
-
-            chrome.runtime.sendMessage({ action, ...data }, (response) => {
-                if (chrome.runtime.lastError) {
-                    // Retry once after a short delay
-                    setTimeout(() => {
-                        chrome.runtime.sendMessage(
-                            { action, ...data },
-                            (retryResponse) => {
-                                if (chrome.runtime.lastError) {
-                                    console.error(
-                                        'Retry failed:',
-                                        chrome.runtime.lastError.message
-                                    );
-                                }
-                                handleResponse(retryResponse);
-                            }
-                        );
-                    }, POPUP_CONSTANTS.RETRY_DELAY);
-                } else {
-                    handleResponse(response);
-                }
-            });
+        super({
+            retryDelay: POPUP_CONSTANTS.RETRY_DELAY,
+            fallbacks: { getState: POPUP_CONSTANTS.DEFAULT_STATE },
         });
+        this.unsubscribe = null;
+        this.setupMessageListener();
     }
 
     /**
      * Setup listener for background script messages
      */
     setupMessageListener() {
-        chrome.runtime.onMessage.addListener((request) => {
-            if (request.action === 'updateTimer' && request.state) {
-                // Emit custom event for state updates
-                document.dispatchEvent(
-                    new CustomEvent('timerUpdate', {
-                        detail: request.state,
-                    })
-                );
+        if (this.unsubscribe) {
+            this.unsubscribe();
+        }
+
+        this.unsubscribe = addRuntimeActionListener(
+            'updateTimer',
+            (request) => {
+                if (request.state) {
+                    document.dispatchEvent(
+                        new CustomEvent('timerUpdate', {
+                            detail: request.state,
+                        })
+                    );
+                }
             }
-        });
+        );
     }
 }
 
@@ -606,7 +562,8 @@ class UIManager {
  * Manages notification status and messages
  */
 class NotificationController {
-    constructor() {
+    constructor(messageHandler) {
+        this.messageHandler = messageHandler;
         this.statusElement = utils.getElement(
             POPUP_CONSTANTS.SELECTORS.notificationStatus
         );
@@ -620,9 +577,8 @@ class NotificationController {
      */
     async checkPermissions() {
         try {
-            const messageHandler = new MessageHandler();
             const response =
-                await messageHandler.sendMessage('checkNotifications');
+                await this.messageHandler.sendMessage('checkNotifications');
             if (response && response.permissionLevel) {
                 this.showNotificationStatus(response.permissionLevel);
             }
@@ -769,7 +725,9 @@ class PopupController {
         this.messageHandler = new MessageHandler();
         this.uiManager = new UIManager();
         this.themeManager = new ThemeManager();
-        this.notificationController = new NotificationController();
+        this.notificationController = new NotificationController(
+            this.messageHandler
+        );
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
         this.panelHeaders = initPanelHeaders(this.navigationManager, [
@@ -1127,6 +1085,7 @@ class PopupController {
         );
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
+        const dashboardBtn = document.getElementById('dashboardBtn');
         const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
@@ -1177,6 +1136,18 @@ class PopupController {
                     this.renderStatisticsPanel(state);
                 } catch (e) {
                     console.error('Failed to open statistics panel', e);
+                }
+            });
+        }
+
+        if (dashboardBtn) {
+            dashboardBtn.addEventListener('click', () => {
+                if (chrome.runtime.openOptionsPage) {
+                    chrome.runtime.openOptionsPage();
+                } else {
+                    chrome.tabs.create({
+                        url: chrome.runtime.getURL('dashboard.html'),
+                    });
                 }
             });
         }

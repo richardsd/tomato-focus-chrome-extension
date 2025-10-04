@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Tomato Focus Dashboard</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="styles/dashboard.css" />
+    </head>
+    <body>
+        <div class="dashboard" role="application">
+            <aside class="dashboard__sidebar">
+                <div class="dashboard__brand">
+                    <img
+                        src="icons/icon48.png"
+                        alt="Tomato Focus icon"
+                        width="32"
+                        height="32"
+                    />
+                    <span>Tomato Focus</span>
+                </div>
+                <nav class="dashboard-nav" aria-label="Dashboard sections">
+                    <button
+                        class="dashboard-nav__item is-active"
+                        data-section="tasks"
+                        type="button"
+                    >
+                        Tasks
+                    </button>
+                    <button
+                        class="dashboard-nav__item"
+                        data-section="settings"
+                        type="button"
+                    >
+                        Settings
+                    </button>
+                    <button
+                        class="dashboard-nav__item"
+                        data-section="statistics"
+                        type="button"
+                    >
+                        Statistics
+                    </button>
+                </nav>
+                <div class="dashboard__meta">
+                    <p>
+                        Manage timers, tasks, and statistics in a dedicated
+                        workspace.
+                    </p>
+                </div>
+            </aside>
+            <main class="dashboard__main" role="main">
+                <section
+                    id="dashboardTasksSection"
+                    class="dashboard-section is-active"
+                    aria-labelledby="dashboardTasksHeading"
+                >
+                    <header class="section-header">
+                        <div>
+                            <h1 id="dashboardTasksHeading">Tasks</h1>
+                            <p class="section-subtitle">
+                                Organise your focus sessions and choose a
+                                current task.
+                            </p>
+                        </div>
+                        <div class="section-actions">
+                            <button id="dashboardRefreshTasks" type="button">
+                                Refresh
+                            </button>
+                        </div>
+                    </header>
+                    <form id="dashboardTaskForm" class="card form-grid">
+                        <div class="form-row">
+                            <label for="dashboardTaskTitle">Task title</label>
+                            <input
+                                id="dashboardTaskTitle"
+                                name="title"
+                                type="text"
+                                required
+                                placeholder="Write a task name"
+                            />
+                        </div>
+                        <div class="form-row">
+                            <label for="dashboardTaskDescription"
+                                >Description</label
+                            >
+                            <textarea
+                                id="dashboardTaskDescription"
+                                name="description"
+                                rows="2"
+                                placeholder="Optional context for the task"
+                            ></textarea>
+                        </div>
+                        <div class="form-row form-row--split">
+                            <div>
+                                <label for="dashboardTaskEstimate"
+                                    >Estimated pomodoros</label
+                                >
+                                <input
+                                    id="dashboardTaskEstimate"
+                                    name="estimatedPomodoros"
+                                    type="number"
+                                    min="1"
+                                    value="1"
+                                    required
+                                />
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    Add task
+                                </button>
+                            </div>
+                        </div>
+                        <div
+                            id="dashboardTaskFormErrors"
+                            class="form-errors hidden"
+                            role="alert"
+                        ></div>
+                    </form>
+                    <div class="card" id="dashboardCurrentTaskCard">
+                        <header class="card__header">
+                            <h2>Current focus</h2>
+                            <button
+                                id="dashboardClearCurrentTask"
+                                type="button"
+                            >
+                                Clear selection
+                            </button>
+                        </header>
+                        <div
+                            id="dashboardCurrentTask"
+                            class="current-task-panel"
+                        >
+                            <p class="empty-state">No task selected.</p>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <header class="card__header">
+                            <h2>All tasks</h2>
+                        </header>
+                        <div
+                            id="dashboardTasksList"
+                            class="tasks-list"
+                            role="list"
+                        >
+                            <p class="empty-state">
+                                No tasks yet — add your first task above.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    id="dashboardSettingsSection"
+                    class="dashboard-section"
+                    aria-labelledby="dashboardSettingsHeading"
+                    hidden
+                >
+                    <header class="section-header">
+                        <div>
+                            <h1 id="dashboardSettingsHeading">Settings</h1>
+                            <p class="section-subtitle">
+                                Update timer preferences and Jira integration.
+                            </p>
+                        </div>
+                        <div class="section-actions">
+                            <button id="dashboardResetSettings" type="button">
+                                Reset to defaults
+                            </button>
+                        </div>
+                    </header>
+                    <form id="dashboardSettingsForm" class="card form-grid">
+                        <div
+                            id="dashboardSettingsErrors"
+                            class="form-errors hidden"
+                            role="alert"
+                        ></div>
+                        <div
+                            id="dashboardSettingsStatus"
+                            class="form-status hidden"
+                            role="status"
+                        ></div>
+                        <fieldset class="fieldset">
+                            <legend>Timer durations</legend>
+                            <div class="form-row form-row--split">
+                                <label for="dsWorkDuration"
+                                    >Focus length (minutes)</label
+                                >
+                                <input
+                                    id="dsWorkDuration"
+                                    name="workDuration"
+                                    type="number"
+                                    min="1"
+                                    max="60"
+                                />
+                            </div>
+                            <div class="form-row form-row--split">
+                                <label for="dsShortBreak"
+                                    >Short break (minutes)</label
+                                >
+                                <input
+                                    id="dsShortBreak"
+                                    name="shortBreak"
+                                    type="number"
+                                    min="1"
+                                    max="30"
+                                />
+                            </div>
+                            <div class="form-row form-row--split">
+                                <label for="dsLongBreak"
+                                    >Long break (minutes)</label
+                                >
+                                <input
+                                    id="dsLongBreak"
+                                    name="longBreak"
+                                    type="number"
+                                    min="1"
+                                    max="60"
+                                />
+                            </div>
+                            <div class="form-row form-row--split">
+                                <label for="dsLongBreakInterval">
+                                    Sessions before long break
+                                </label>
+                                <input
+                                    id="dsLongBreakInterval"
+                                    name="longBreakInterval"
+                                    type="number"
+                                    min="1"
+                                    max="10"
+                                />
+                            </div>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend>Behaviour</legend>
+                            <label class="checkbox">
+                                <input
+                                    id="dsAutoStart"
+                                    name="autoStart"
+                                    type="checkbox"
+                                />
+                                <span
+                                    >Automatically start the next session</span
+                                >
+                            </label>
+                            <label class="checkbox">
+                                <input
+                                    id="dsPauseOnIdle"
+                                    name="pauseOnIdle"
+                                    type="checkbox"
+                                />
+                                <span>Pause timer when the device is idle</span>
+                            </label>
+                            <label class="checkbox">
+                                <input
+                                    id="dsPlaySound"
+                                    name="playSound"
+                                    type="checkbox"
+                                />
+                                <span>Play sound when sessions finish</span>
+                            </label>
+                            <div class="form-row">
+                                <label for="dsVolume"
+                                    >Notification volume</label
+                                >
+                                <input
+                                    id="dsVolume"
+                                    name="volume"
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.05"
+                                />
+                            </div>
+                            <div class="form-row">
+                                <label for="dsTheme">Theme</label>
+                                <select id="dsTheme" name="theme">
+                                    <option value="system">
+                                        Follow system
+                                    </option>
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                </select>
+                            </div>
+                        </fieldset>
+                        <fieldset class="fieldset">
+                            <legend>Jira integration</legend>
+                            <div class="form-row">
+                                <label for="dsJiraUrl">Jira URL</label>
+                                <input
+                                    id="dsJiraUrl"
+                                    name="jiraUrl"
+                                    type="url"
+                                    placeholder="https://your-domain.atlassian.net"
+                                />
+                            </div>
+                            <div class="form-row">
+                                <label for="dsJiraUsername"
+                                    >Jira username</label
+                                >
+                                <input
+                                    id="dsJiraUsername"
+                                    name="jiraUsername"
+                                    type="text"
+                                />
+                            </div>
+                            <div class="form-row">
+                                <label for="dsJiraToken">Jira API token</label>
+                                <input
+                                    id="dsJiraToken"
+                                    name="jiraToken"
+                                    type="password"
+                                />
+                            </div>
+                            <label class="checkbox">
+                                <input
+                                    id="dsAutoSyncJira"
+                                    name="autoSyncJira"
+                                    type="checkbox"
+                                />
+                                <span>Enable periodic Jira sync</span>
+                            </label>
+                            <div class="form-row">
+                                <label for="dsJiraSyncInterval"
+                                    >Sync interval (minutes)</label
+                                >
+                                <input
+                                    id="dsJiraSyncInterval"
+                                    name="jiraSyncInterval"
+                                    type="number"
+                                    min="5"
+                                    max="720"
+                                />
+                            </div>
+                        </fieldset>
+                        <div class="form-actions form-actions--end">
+                            <button type="submit" class="btn-primary">
+                                Save settings
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section
+                    id="dashboardStatisticsSection"
+                    class="dashboard-section"
+                    aria-labelledby="dashboardStatisticsHeading"
+                    hidden
+                >
+                    <header class="section-header">
+                        <div>
+                            <h1 id="dashboardStatisticsHeading">Statistics</h1>
+                            <p class="section-subtitle">
+                                Track progress for today and review historical
+                                focus sessions.
+                            </p>
+                        </div>
+                        <div class="section-actions">
+                            <button id="dashboardRefreshStats" type="button">
+                                Refresh
+                            </button>
+                            <button
+                                id="dashboardClearStats"
+                                type="button"
+                                class="btn-danger"
+                            >
+                                Clear statistics
+                            </button>
+                        </div>
+                    </header>
+                    <div class="stats-grid">
+                        <div class="card stats-card">
+                            <div class="stats-card__label">Completed today</div>
+                            <div
+                                id="dashboardCompletedToday"
+                                class="stats-card__value"
+                            >
+                                0
+                            </div>
+                        </div>
+                        <div class="card stats-card">
+                            <div class="stats-card__label">
+                                Focus time today
+                            </div>
+                            <div
+                                id="dashboardFocusTime"
+                                class="stats-card__value"
+                            >
+                                0m
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <header class="card__header">
+                            <h2>History</h2>
+                        </header>
+                        <div id="dashboardStatsHistory" class="stats-history">
+                            <p class="empty-state">
+                                No statistics recorded yet — complete sessions
+                                to see history.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+        <script type="module" src="dashboard.js"></script>
+    </body>
+</html>
