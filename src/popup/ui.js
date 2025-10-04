@@ -2,6 +2,163 @@ import { POPUP_CONSTANTS, utils } from './common.js';
 import { TaskUIManager } from './tasks.js';
 import { SettingsManager } from './settings.js';
 
+function isElementNode(value) {
+    return (
+        value !== null &&
+        typeof value === 'object' &&
+        'nodeType' in value &&
+        value.nodeType === 1
+    );
+}
+
+/**
+ * Resolve a selector or element reference, scoped to a root element when provided.
+ *
+ * @param {Element|Document} root - The element to scope the lookup to.
+ * @param {string|Element|null|undefined} target - Selector string or existing element reference.
+ * @returns {Element|null}
+ */
+function resolveElement(root, target) {
+    if (!target) {
+        return null;
+    }
+
+    if (isElementNode(target)) {
+        return target;
+    }
+
+    if (typeof target === 'string') {
+        if (root && root !== document) {
+            const scoped = root.querySelector(target);
+            if (scoped) {
+                return scoped;
+            }
+        }
+        return document.querySelector(target);
+    }
+
+    return null;
+}
+
+/**
+ * Initialize shared panel header behaviour.
+ *
+ * @param {NavigationManager} navigationManager - Instance controlling panel navigation.
+ * @param {Array<Object>} panelConfigs - Panel configuration objects.
+ * @returns {Map<string, {panel: Element, header: Element, backButton: Element|null, actions: Element|null, refreshActions: Function}>}
+ */
+export function initPanelHeaders(navigationManager, panelConfigs = []) {
+    const controllers = new Map();
+
+    if (!navigationManager || !Array.isArray(panelConfigs)) {
+        return controllers;
+    }
+
+    const defaultBackHandler = () => {
+        navigationManager.showTimerPanel();
+    };
+
+    panelConfigs.forEach((config = {}, index) => {
+        const panelElement = resolveElement(document, config.panel);
+
+        if (!panelElement) {
+            console.warn(
+                'Panel header initialisation skipped; panel not found.',
+                config
+            );
+            return;
+        }
+
+        const headerElement = resolveElement(
+            panelElement,
+            config.headerSelector || '.panel-header'
+        );
+
+        if (!headerElement) {
+            console.warn('Panel header element not found for panel.', config);
+            return;
+        }
+
+        const backButtonElement = resolveElement(
+            headerElement,
+            config.backButtonSelector ||
+                '.panel-header__back button, .btn--back'
+        );
+
+        if (backButtonElement) {
+            const backHandler =
+                typeof config.onBack === 'function'
+                    ? config.onBack
+                    : defaultBackHandler;
+
+            backButtonElement.addEventListener('click', (event) => {
+                backHandler(event, {
+                    navigationManager,
+                    panel: panelElement,
+                    header: headerElement,
+                });
+            });
+        }
+
+        const actionsElement = resolveElement(
+            headerElement,
+            config.actionsSelector || '.panel-header__actions'
+        );
+
+        const refreshActions = () => {
+            if (!actionsElement) {
+                return;
+            }
+
+            const hasVisibleChildren = Array.from(actionsElement.children).some(
+                (child) => {
+                    if (!isElementNode(child)) {
+                        return false;
+                    }
+
+                    const elementChild = /** @type {Element} */ (child);
+
+                    if (
+                        elementChild.hasAttribute('hidden') ||
+                        elementChild.classList.contains('hidden')
+                    ) {
+                        return false;
+                    }
+
+                    const styles = window.getComputedStyle(elementChild);
+                    return (
+                        styles.display !== 'none' &&
+                        styles.visibility !== 'hidden'
+                    );
+                }
+            );
+
+            actionsElement.classList.toggle(
+                'panel-header__actions--empty',
+                !hasVisibleChildren
+            );
+
+            if (hasVisibleChildren) {
+                actionsElement.removeAttribute('aria-hidden');
+            } else {
+                actionsElement.setAttribute('aria-hidden', 'true');
+            }
+        };
+
+        refreshActions();
+
+        controllers.set(config.key || config.panel || `panel-${index}`, {
+            panel: panelElement,
+            header: headerElement,
+            backButton: backButtonElement,
+            actions: actionsElement,
+            refreshActions,
+        });
+    });
+
+    return controllers;
+}
+
 class MessageHandler {
     constructor() {
         this.setupMessageListener();
@@ -615,6 +772,23 @@ class PopupController {
         this.notificationController = new NotificationController();
         this.settingsManager = new SettingsManager();
         this.navigationManager = new NavigationManager();
+        this.panelHeaders = initPanelHeaders(this.navigationManager, [
+            {
+                key: 'settings',
+                panel: POPUP_CONSTANTS.SELECTORS.settingsPanel,
+                backButtonSelector: POPUP_CONSTANTS.SELECTORS.backBtn,
+            },
+            {
+                key: 'tasks',
+                panel: POPUP_CONSTANTS.SELECTORS.tasksPanel,
+                backButtonSelector: POPUP_CONSTANTS.SELECTORS.backFromTasksBtn,
+            },
+            {
+                key: 'stats',
+                panel: POPUP_CONSTANTS.SELECTORS.statsPanel,
+                backButtonSelector: POPUP_CONSTANTS.SELECTORS.backFromStatsBtn,
+            },
+        ]);
         this.taskUIManager = new TaskUIManager(this.messageHandler);
         // Bind layout sync for height management
         this.syncCurrentTaskLayout = this.syncCurrentTaskLayout.bind(this);
@@ -953,13 +1127,6 @@ class PopupController {
         );
         const tasksBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksBtn);
         const statsBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.statsBtn);
-        const backBtn = utils.getElement(POPUP_CONSTANTS.SELECTORS.backBtn);
-        const backFromTasksBtn = utils.getElement(
-            POPUP_CONSTANTS.SELECTORS.backFromTasksBtn
-        );
-        const backFromStatsBtn = utils.getElement(
-            POPUP_CONSTANTS.SELECTORS.backFromStatsBtn
-        );
         const filtersBar = document.getElementById('tasksFilters');
 
         if (settingsBtn) {
@@ -1011,24 +1178,6 @@ class PopupController {
                 } catch (e) {
                     console.error('Failed to open statistics panel', e);
                 }
-            });
-        }
-
-        if (backBtn) {
-            backBtn.addEventListener('click', () => {
-                this.navigationManager.showTimerPanel();
-            });
-        }
-
-        if (backFromTasksBtn) {
-            backFromTasksBtn.addEventListener('click', () => {
-                this.navigationManager.showTimerPanel();
-            });
-        }
-
-        if (backFromStatsBtn) {
-            backFromStatsBtn.addEventListener('click', () => {
-                this.navigationManager.showTimerPanel();
             });
         }
 
