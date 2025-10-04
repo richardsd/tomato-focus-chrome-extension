@@ -209,19 +209,20 @@
                 role="region"
                 aria-label="Settings panel"
             >
-                <div
-                    class="settings-header flex items-center justify-between mb-4"
-                >
-                    <button
-                        id="backBtn"
-                        class="btn--back"
-                        aria-label="Back to timer"
-                    >
-                        ←
-                    </button>
-                    <h1 class="header__title">Settings</h1>
-                    <div class="settings-header__spacer"></div>
-                    <!-- Spacer matching back button width -->
+                <div class="panel-header settings-header mb-4">
+                    <div class="panel-header__back">
+                        <button
+                            id="backBtn"
+                            class="btn--back"
+                            aria-label="Back to timer"
+                        >
+                            ←
+                        </button>
+                    </div>
+                    <div class="panel-header__title">
+                        <h1 class="header__title">Settings</h1>
+                    </div>
+                    <div class="panel-header__actions" aria-hidden="true"></div>
                 </div>
 
                 <div class="settings-content">
@@ -468,22 +469,20 @@
                 aria-label="Tasks panel"
             >
                 <div class="tasks-toolbar">
-                    <div
-                        id="tasksHeaderBar"
-                        class="tasks-header header flex items-center justify-between"
-                    >
-                        <button
-                            id="backFromTasksBtn"
-                            class="btn--back"
-                            aria-label="Back to timer"
-                        >
-                            ←
-                        </button>
-                        <h1 class="header__title">Tasks</h1>
-                        <div
-                            class="tasks-header__actions"
-                            style="display: flex; gap: 8px; align-items: center"
-                        >
+                    <div id="tasksHeaderBar" class="panel-header tasks-header">
+                        <div class="panel-header__back">
+                            <button
+                                id="backFromTasksBtn"
+                                class="btn--back"
+                                aria-label="Back to timer"
+                            >
+                                ←
+                            </button>
+                        </div>
+                        <div class="panel-header__title">
+                            <h1 class="header__title">Tasks</h1>
+                        </div>
+                        <div class="panel-header__actions">
                             <button
                                 id="addTaskBtn"
                                 class="btn--add"
@@ -626,18 +625,20 @@
                 role="region"
                 aria-label="Statistics panel"
             >
-                <div
-                    class="tasks-header header flex items-center justify-between mb-4"
-                >
-                    <button
-                        id="backFromStatsBtn"
-                        class="btn--back"
-                        aria-label="Back to timer"
-                    >
-                        ←
-                    </button>
-                    <h1 class="header__title">Statistics</h1>
-                    <div style="width: 40px; height: 40px"></div>
+                <div class="panel-header tasks-header mb-4">
+                    <div class="panel-header__back">
+                        <button
+                            id="backFromStatsBtn"
+                            class="btn--back"
+                            aria-label="Back to timer"
+                        >
+                            ←
+                        </button>
+                    </div>
+                    <div class="panel-header__title">
+                        <h1 class="header__title">Statistics</h1>
+                    </div>
+                    <div class="panel-header__actions" aria-hidden="true"></div>
                 </div>
                 <div id="statsPanelContent" class="stats-panel-content">
                     <div

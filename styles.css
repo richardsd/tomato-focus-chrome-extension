@@ -233,6 +233,50 @@ body {
     gap: 6px;
 }
 
+/* Shared panel header layout */
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 40px;
+}
+
+.panel-header__back,
+.panel-header__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    min-width: 40px;
+}
+
+.panel-header__back {
+    justify-content: flex-start;
+}
+
+.panel-header__title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.panel-header__title > * {
+    margin: 0;
+}
+
+.panel-header__actions {
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.panel-header__actions--empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 /* Secondary toolbar */
 .toolbar-secondary {
     display: flex;
@@ -712,16 +756,6 @@ body {
 
 .settings-header {
     margin-bottom: var(--space-3);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 40px; /* Ensure consistent height */
-}
-
-.settings-header__spacer {
-    width: 40px; /* Match back button width exactly */
-    height: 40px;
-    flex-shrink: 0; /* Prevent shrinking */
 }
 
 .settings-footer {
