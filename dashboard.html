@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Tomato Focus Dashboard</title>
         <link
-            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="styles/dashboard.css" />
@@ -47,110 +47,327 @@
                 </nav>
                 <div class="dashboard__meta">
                     <p>
-                        Manage timers, tasks, and statistics in a dedicated
-                        workspace.
+                        Manage timers, tasks, and historical insights in a
+                        dedicated workspace.
                     </p>
                 </div>
             </aside>
             <main class="dashboard__main" role="main">
+                <div
+                    id="dashboardToasts"
+                    class="toast-region"
+                    role="status"
+                    aria-live="polite"
+                ></div>
                 <section
                     id="dashboardTasksSection"
                     class="dashboard-section is-active"
                     aria-labelledby="dashboardTasksHeading"
                 >
-                    <header class="section-header">
-                        <div>
-                            <h1 id="dashboardTasksHeading">Tasks</h1>
-                            <p class="section-subtitle">
-                                Organise your focus sessions and choose a
-                                current task.
+                    <div class="section-hero">
+                        <div class="section-hero__content">
+                            <h1 id="dashboardTasksHeading">Time to focus!</h1>
+                            <p>
+                                Craft your plan, stay in the zone, and celebrate
+                                every pomodoro.
                             </p>
                         </div>
-                        <div class="section-actions">
-                            <button id="dashboardRefreshTasks" type="button">
-                                Refresh
+                        <div class="section-hero__actions">
+                            <button
+                                id="dashboardNewTaskButton"
+                                type="button"
+                                class="btn btn-primary"
+                            >
+                                <span aria-hidden="true">+</span>
+                                New Task
                             </button>
                         </div>
-                    </header>
-                    <form id="dashboardTaskForm" class="card form-grid">
-                        <div class="form-row">
-                            <label for="dashboardTaskTitle">Task title</label>
-                            <input
-                                id="dashboardTaskTitle"
-                                name="title"
-                                type="text"
-                                required
-                                placeholder="Write a task name"
-                            />
-                        </div>
-                        <div class="form-row">
-                            <label for="dashboardTaskDescription"
-                                >Description</label
-                            >
-                            <textarea
-                                id="dashboardTaskDescription"
-                                name="description"
-                                rows="2"
-                                placeholder="Optional context for the task"
-                            ></textarea>
-                        </div>
-                        <div class="form-row form-row--split">
+                    </div>
+
+                    <section
+                        id="dashboardTaskComposer"
+                        class="task-composer"
+                        hidden
+                        aria-label="Task composer"
+                    >
+                        <header class="task-composer__header">
                             <div>
-                                <label for="dashboardTaskEstimate"
-                                    >Estimated pomodoros</label
+                                <h2 id="dashboardTaskComposerTitle">
+                                    Create a task
+                                </h2>
+                                <p class="task-composer__subtitle">
+                                    Keep titles short and actionable to stay
+                                    focused.
+                                </p>
+                            </div>
+                            <button
+                                id="dashboardCloseComposer"
+                                type="button"
+                                class="btn btn-ghost"
+                                aria-label="Close task composer"
+                            >
+                                Close
+                            </button>
+                        </header>
+                        <form id="dashboardTaskForm" novalidate>
+                            <div class="form-grid">
+                                <label class="form-field">
+                                    <span class="form-field__label"
+                                        >Task title</span
+                                    >
+                                    <input
+                                        id="dashboardTaskTitle"
+                                        name="title"
+                                        type="text"
+                                        required
+                                        placeholder="Write a task name"
+                                        autocomplete="off"
+                                    />
+                                    <span
+                                        class="form-field__error"
+                                        id="dashboardTaskTitleError"
+                                        role="alert"
+                                        aria-live="polite"
+                                    ></span>
+                                </label>
+                                <label class="form-field">
+                                    <span class="form-field__label"
+                                        >Description</span
+                                    >
+                                    <textarea
+                                        id="dashboardTaskDescription"
+                                        name="description"
+                                        rows="3"
+                                        placeholder="Optional context for the task"
+                                    ></textarea>
+                                </label>
+                                <div class="form-field form-field--row">
+                                    <label
+                                        class="form-field__label"
+                                        for="dashboardTaskEstimate"
+                                        >Estimated pomodoros</label
+                                    >
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-1"
+                                            aria-label="Decrease estimate"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dashboardTaskEstimate"
+                                            name="estimatedPomodoros"
+                                            type="number"
+                                            min="1"
+                                            value="1"
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="1"
+                                            aria-label="Increase estimate"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="task-composer__footer">
+                                <div
+                                    id="dashboardTaskFormErrors"
+                                    class="form-errors"
+                                    role="alert"
+                                    aria-live="assertive"
+                                ></div>
+                                <div class="task-composer__actions">
+                                    <button
+                                        id="dashboardTaskCancel"
+                                        type="button"
+                                        class="btn btn-ghost"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        id="dashboardTaskSubmit"
+                                        type="submit"
+                                        class="btn btn-primary"
+                                    >
+                                        Save task
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </section>
+
+                    <article
+                        class="card focus-card"
+                        id="dashboardCurrentTaskCard"
+                    >
+                        <header class="card__header">
+                            <div>
+                                <h2 class="card__title">Current focus</h2>
+                                <p class="card__subtitle">
+                                    Stay locked in on what matters most right
+                                    now.
+                                </p>
+                            </div>
+                            <div class="focus-card__actions">
+                                <button
+                                    id="dashboardFocusDetails"
+                                    type="button"
+                                    class="btn btn-ghost"
+                                >
+                                    View details
+                                </button>
+                            </div>
+                        </header>
+                        <div class="focus-card__body">
+                            <div class="focus-card__status">
+                                <span
+                                    id="dashboardFocusStatus"
+                                    class="focus-card__status-chip"
+                                >
+                                    No task selected
+                                </span>
+                                <span
+                                    id="dashboardFocusMeta"
+                                    class="focus-card__meta"
+                                ></span>
+                            </div>
+                            <div class="focus-card__timer">
+                                <span id="dashboardFocusTimer">25:00</span>
+                                <span id="dashboardFocusPhase"
+                                    >Focus session</span
+                                >
+                            </div>
+                            <p
+                                id="dashboardFocusDescription"
+                                class="focus-card__description"
+                            >
+                                Pick a task from your list to start a focus
+                                sprint.
+                            </p>
+                            <p
+                                id="dashboardFocusQuote"
+                                class="focus-card__quote"
+                            >
+                                "Deep work is the door to meaningful progress."
+                            </p>
+                            <button
+                                id="dashboardFocusQuoteToggle"
+                                type="button"
+                                class="btn btn-link"
+                            >
+                                Hide inspiration
+                            </button>
+                        </div>
+                        <div class="focus-card__controls">
+                            <button
+                                id="dashboardFocusToggle"
+                                type="button"
+                                class="btn btn-primary"
+                                data-action="toggle"
+                            >
+                                Start focus
+                            </button>
+                            <button
+                                id="dashboardFocusReset"
+                                type="button"
+                                class="btn btn-ghost"
+                                data-action="reset"
+                            >
+                                Reset timer
+                            </button>
+                            <button
+                                id="dashboardClearCurrentTask"
+                                type="button"
+                                class="btn btn-ghost"
+                                data-action="clear"
+                            >
+                                Clear selection
+                            </button>
+                        </div>
+                    </article>
+
+                    <section class="card tasks-panel">
+                        <header class="card__header tasks-panel__header">
+                            <div>
+                                <h2 class="card__title">All tasks</h2>
+                                <p class="card__subtitle">
+                                    Track progress across every focus item.
+                                </p>
+                            </div>
+                            <button
+                                id="dashboardRefreshTasks"
+                                type="button"
+                                class="btn btn-ghost"
+                            >
+                                Refresh
+                            </button>
+                        </header>
+                        <div class="tasks-panel__filters">
+                            <div
+                                class="tasks-panel__tabs"
+                                role="tablist"
+                                aria-label="Filter tasks by status"
+                            >
+                                <button
+                                    type="button"
+                                    class="tasks-panel__tab is-active"
+                                    data-task-filter="all"
+                                >
+                                    All
+                                </button>
+                                <button
+                                    type="button"
+                                    class="tasks-panel__tab"
+                                    data-task-filter="in-progress"
+                                >
+                                    In Progress
+                                </button>
+                                <button
+                                    type="button"
+                                    class="tasks-panel__tab"
+                                    data-task-filter="completed"
+                                >
+                                    Completed
+                                </button>
+                            </div>
+                            <div class="tasks-panel__search">
+                                <label class="sr-only" for="dashboardTaskSearch"
+                                    >Filter tasks</label
                                 >
                                 <input
-                                    id="dashboardTaskEstimate"
-                                    name="estimatedPomodoros"
-                                    type="number"
-                                    min="1"
-                                    value="1"
-                                    required
+                                    id="dashboardTaskSearch"
+                                    type="search"
+                                    placeholder="Search tasks"
+                                    autocomplete="off"
                                 />
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn-primary">
-                                    Add task
+                                <button
+                                    id="dashboardTaskSearchClear"
+                                    type="button"
+                                    class="btn btn-icon"
+                                    aria-label="Clear search"
+                                >
+                                    ×
                                 </button>
                             </div>
                         </div>
                         <div
-                            id="dashboardTaskFormErrors"
-                            class="form-errors hidden"
-                            role="alert"
-                        ></div>
-                    </form>
-                    <div class="card" id="dashboardCurrentTaskCard">
-                        <header class="card__header">
-                            <h2>Current focus</h2>
-                            <button
-                                id="dashboardClearCurrentTask"
-                                type="button"
-                            >
-                                Clear selection
-                            </button>
-                        </header>
-                        <div
-                            id="dashboardCurrentTask"
-                            class="current-task-panel"
-                        >
-                            <p class="empty-state">No task selected.</p>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <header class="card__header">
-                            <h2>All tasks</h2>
-                        </header>
-                        <div
                             id="dashboardTasksList"
-                            class="tasks-list"
+                            class="tasks-grid"
                             role="list"
+                            aria-live="polite"
                         >
                             <p class="empty-state">
-                                No tasks yet — add your first task above.
+                                No tasks yet — add your first task to get
+                                started.
                             </p>
                         </div>
-                    </div>
+                    </section>
                 </section>
 
                 <section
@@ -162,56 +379,115 @@
                         <div>
                             <h1 id="dashboardStatisticsHeading">Statistics</h1>
                             <p class="section-subtitle">
-                                Track progress for today and review historical
-                                focus sessions.
+                                Celebrate wins and review momentum over time.
                             </p>
                         </div>
                         <div class="section-actions">
-                            <button id="dashboardRefreshStats" type="button">
+                            <button
+                                id="dashboardRefreshStats"
+                                type="button"
+                                class="btn btn-ghost"
+                            >
                                 Refresh
                             </button>
                             <button
                                 id="dashboardClearStats"
                                 type="button"
-                                class="btn-danger"
+                                class="btn btn-danger"
                             >
                                 Clear statistics
                             </button>
                         </div>
                     </header>
-                    <div class="stats-grid">
-                        <div class="card stats-card">
-                            <div class="stats-card__label">Completed today</div>
-                            <div
+                    <div class="stats-summary">
+                        <article class="card stats-summary__card">
+                            <h2 class="stats-summary__label">
+                                Completed today
+                            </h2>
+                            <p
                                 id="dashboardCompletedToday"
-                                class="stats-card__value"
+                                class="stats-summary__value"
                             >
                                 0
-                            </div>
-                        </div>
-                        <div class="card stats-card">
-                            <div class="stats-card__label">
+                            </p>
+                        </article>
+                        <article class="card stats-summary__card">
+                            <h2 class="stats-summary__label">
                                 Focus time today
-                            </div>
-                            <div
+                            </h2>
+                            <p
                                 id="dashboardFocusTime"
-                                class="stats-card__value"
+                                class="stats-summary__value"
                             >
                                 0m
-                            </div>
-                        </div>
+                            </p>
+                        </article>
                     </div>
-                    <div class="card">
-                        <header class="card__header">
-                            <h2>History</h2>
+                    <article class="card stats-history">
+                        <header class="stats-history__header">
+                            <div>
+                                <h2 class="card__title">History</h2>
+                                <p class="card__subtitle">
+                                    Visualise momentum across previous days.
+                                </p>
+                            </div>
+                            <div class="stats-history__filters">
+                                <span class="stats-history__filters-label"
+                                    >Range:</span
+                                >
+                                <div class="chip-group" role="radiogroup">
+                                    <button
+                                        type="button"
+                                        class="chip is-active"
+                                        data-range="30"
+                                    >
+                                        30d
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="chip"
+                                        data-range="90"
+                                    >
+                                        90d
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="chip"
+                                        data-range="all"
+                                    >
+                                        All
+                                    </button>
+                                </div>
+                            </div>
                         </header>
-                        <div id="dashboardStatsHistory" class="stats-history">
+                        <div
+                            id="dashboardStatsChart"
+                            class="stats-chart"
+                            role="img"
+                            aria-label="Daily completed pomodoros chart"
+                        >
                             <p class="empty-state">
                                 No statistics recorded yet — complete sessions
                                 to see history.
                             </p>
                         </div>
-                    </div>
+                        <div class="stats-history__details">
+                            <button
+                                id="dashboardStatsDetailsToggle"
+                                type="button"
+                                class="btn btn-link"
+                                aria-expanded="false"
+                                aria-controls="dashboardStatsDetails"
+                            >
+                                Show details
+                            </button>
+                            <div
+                                id="dashboardStatsDetails"
+                                class="stats-details"
+                                hidden
+                            ></div>
+                        </div>
+                    </article>
                 </section>
 
                 <section
@@ -223,181 +499,401 @@
                         <div>
                             <h1 id="dashboardSettingsHeading">Settings</h1>
                             <p class="section-subtitle">
-                                Update timer preferences and Jira integration.
+                                Tailor sessions, behaviours, and integrations to
+                                fit your flow.
                             </p>
                         </div>
                         <div class="section-actions">
-                            <button id="dashboardResetSettings" type="button">
+                            <button
+                                id="dashboardResetSettings"
+                                type="button"
+                                class="btn btn-outline"
+                            >
                                 Reset to defaults
                             </button>
                         </div>
                     </header>
-                    <form id="dashboardSettingsForm" class="card form-grid">
+                    <form id="dashboardSettingsForm" novalidate>
                         <div
                             id="dashboardSettingsErrors"
-                            class="form-errors hidden"
+                            class="form-errors"
                             role="alert"
+                            aria-live="assertive"
                         ></div>
-                        <div
-                            id="dashboardSettingsStatus"
-                            class="form-status hidden"
-                            role="status"
-                        ></div>
-                        <fieldset class="fieldset">
-                            <legend>Timer durations</legend>
-                            <div class="form-row form-row--split">
-                                <label for="dsWorkDuration"
-                                    >Focus length (minutes)</label
+                        <div class="settings-grid">
+                            <section class="settings-card">
+                                <header class="settings-card__header">
+                                    <h2>Timer durations</h2>
+                                    <p>
+                                        Define how long to focus and rest during
+                                        each cycle.
+                                    </p>
+                                </header>
+                                <div
+                                    class="settings-field"
+                                    data-field="workDuration"
                                 >
-                                <input
-                                    id="dsWorkDuration"
-                                    name="workDuration"
-                                    type="number"
-                                    min="1"
-                                    max="60"
-                                />
-                            </div>
-                            <div class="form-row form-row--split">
-                                <label for="dsShortBreak"
-                                    >Short break (minutes)</label
+                                    <label for="dsWorkDuration">
+                                        Focus length (minutes)
+                                    </label>
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-1"
+                                            data-target="dsWorkDuration"
+                                            aria-label="Decrease focus length"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dsWorkDuration"
+                                            name="workDuration"
+                                            type="number"
+                                            min="5"
+                                            max="90"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="1"
+                                            data-target="dsWorkDuration"
+                                            aria-label="Increase focus length"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-workDuration"
+                                    ></p>
+                                </div>
+                                <div
+                                    class="settings-field"
+                                    data-field="shortBreak"
                                 >
-                                <input
-                                    id="dsShortBreak"
-                                    name="shortBreak"
-                                    type="number"
-                                    min="1"
-                                    max="30"
-                                />
-                            </div>
-                            <div class="form-row form-row--split">
-                                <label for="dsLongBreak"
-                                    >Long break (minutes)</label
+                                    <label for="dsShortBreak">
+                                        Short break (minutes)
+                                    </label>
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-1"
+                                            data-target="dsShortBreak"
+                                            aria-label="Decrease short break"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dsShortBreak"
+                                            name="shortBreak"
+                                            type="number"
+                                            min="1"
+                                            max="30"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="1"
+                                            data-target="dsShortBreak"
+                                            aria-label="Increase short break"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-shortBreak"
+                                    ></p>
+                                </div>
+                                <div
+                                    class="settings-field"
+                                    data-field="longBreak"
                                 >
-                                <input
-                                    id="dsLongBreak"
-                                    name="longBreak"
-                                    type="number"
-                                    min="1"
-                                    max="60"
-                                />
-                            </div>
-                            <div class="form-row form-row--split">
-                                <label for="dsLongBreakInterval">
-                                    Sessions before long break
+                                    <label for="dsLongBreak">
+                                        Long break (minutes)
+                                    </label>
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-1"
+                                            data-target="dsLongBreak"
+                                            aria-label="Decrease long break"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dsLongBreak"
+                                            name="longBreak"
+                                            type="number"
+                                            min="5"
+                                            max="90"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="1"
+                                            data-target="dsLongBreak"
+                                            aria-label="Increase long break"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-longBreak"
+                                    ></p>
+                                </div>
+                                <div
+                                    class="settings-field"
+                                    data-field="longBreakInterval"
+                                >
+                                    <label for="dsLongBreakInterval">
+                                        Sessions before long break
+                                    </label>
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-1"
+                                            data-target="dsLongBreakInterval"
+                                            aria-label="Decrease sessions before long break"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dsLongBreakInterval"
+                                            name="longBreakInterval"
+                                            type="number"
+                                            min="1"
+                                            max="12"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="1"
+                                            data-target="dsLongBreakInterval"
+                                            aria-label="Increase sessions before long break"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-longBreakInterval"
+                                    ></p>
+                                </div>
+                            </section>
+
+                            <section class="settings-card">
+                                <header class="settings-card__header">
+                                    <h2>Behavior</h2>
+                                    <p>
+                                        Choose how the timer behaves and sounds
+                                        during the day.
+                                    </p>
+                                </header>
+                                <label class="toggle">
+                                    <input
+                                        id="dsAutoStart"
+                                        name="autoStart"
+                                        type="checkbox"
+                                    />
+                                    <span class="toggle__label"
+                                        >Automatically start the next
+                                        session</span
+                                    >
                                 </label>
-                                <input
-                                    id="dsLongBreakInterval"
-                                    name="longBreakInterval"
-                                    type="number"
-                                    min="1"
-                                    max="10"
-                                />
-                            </div>
-                        </fieldset>
-                        <fieldset class="fieldset">
-                            <legend>Behaviour</legend>
-                            <label class="checkbox">
-                                <input
-                                    id="dsAutoStart"
-                                    name="autoStart"
-                                    type="checkbox"
-                                />
-                                <span
-                                    >Automatically start the next session</span
+                                <label class="toggle">
+                                    <input
+                                        id="dsPauseOnIdle"
+                                        name="pauseOnIdle"
+                                        type="checkbox"
+                                    />
+                                    <span class="toggle__label"
+                                        >Pause timer when the device is
+                                        idle</span
+                                    >
+                                </label>
+                                <label class="toggle">
+                                    <input
+                                        id="dsPlaySound"
+                                        name="playSound"
+                                        type="checkbox"
+                                    />
+                                    <span class="toggle__label"
+                                        >Play sound when sessions finish</span
+                                    >
+                                </label>
+                                <div
+                                    class="settings-field settings-field--column"
                                 >
-                            </label>
-                            <label class="checkbox">
-                                <input
-                                    id="dsPauseOnIdle"
-                                    name="pauseOnIdle"
-                                    type="checkbox"
-                                />
-                                <span>Pause timer when the device is idle</span>
-                            </label>
-                            <label class="checkbox">
-                                <input
-                                    id="dsPlaySound"
-                                    name="playSound"
-                                    type="checkbox"
-                                />
-                                <span>Play sound when sessions finish</span>
-                            </label>
-                            <div class="form-row">
-                                <label for="dsVolume"
-                                    >Notification volume</label
+                                    <label for="dsVolume">
+                                        Notification volume
+                                    </label>
+                                    <div class="slider">
+                                        <input
+                                            id="dsVolume"
+                                            name="volume"
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.05"
+                                        />
+                                        <output id="dsVolumeValue">100%</output>
+                                    </div>
+                                </div>
+                                <div class="settings-field">
+                                    <label for="dsTheme">Theme</label>
+                                    <select id="dsTheme" name="theme">
+                                        <option value="system">System</option>
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                    </select>
+                                </div>
+                            </section>
+
+                            <section class="settings-card">
+                                <header class="settings-card__header">
+                                    <div>
+                                        <h2>Integrations</h2>
+                                        <p>
+                                            Connect Jira to sync tasks and
+                                            focus.
+                                        </p>
+                                    </div>
+                                </header>
+                                <div
+                                    class="settings-field"
+                                    data-field="jiraUrl"
                                 >
-                                <input
-                                    id="dsVolume"
-                                    name="volume"
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.05"
-                                />
-                            </div>
-                            <div class="form-row">
-                                <label for="dsTheme">Theme</label>
-                                <select id="dsTheme" name="theme">
-                                    <option value="system">
-                                        Follow system
-                                    </option>
-                                    <option value="light">Light</option>
-                                    <option value="dark">Dark</option>
-                                </select>
-                            </div>
-                        </fieldset>
-                        <fieldset class="fieldset">
-                            <legend>Jira integration</legend>
-                            <div class="form-row">
-                                <label for="dsJiraUrl">Jira URL</label>
-                                <input
-                                    id="dsJiraUrl"
-                                    name="jiraUrl"
-                                    type="url"
-                                    placeholder="https://your-domain.atlassian.net"
-                                />
-                            </div>
-                            <div class="form-row">
-                                <label for="dsJiraUsername"
-                                    >Jira username</label
+                                    <label for="dsJiraUrl">Jira URL</label>
+                                    <input
+                                        id="dsJiraUrl"
+                                        name="jiraUrl"
+                                        type="url"
+                                        placeholder="https://your-domain.atlassian.net"
+                                    />
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-jiraUrl"
+                                    ></p>
+                                </div>
+                                <div
+                                    class="settings-field"
+                                    data-field="jiraUsername"
                                 >
-                                <input
-                                    id="dsJiraUsername"
-                                    name="jiraUsername"
-                                    type="text"
-                                />
-                            </div>
-                            <div class="form-row">
-                                <label for="dsJiraToken">Jira API token</label>
-                                <input
-                                    id="dsJiraToken"
-                                    name="jiraToken"
-                                    type="password"
-                                />
-                            </div>
-                            <label class="checkbox">
-                                <input
-                                    id="dsAutoSyncJira"
-                                    name="autoSyncJira"
-                                    type="checkbox"
-                                />
-                                <span>Enable periodic Jira sync</span>
-                            </label>
-                            <div class="form-row">
-                                <label for="dsJiraSyncInterval"
-                                    >Sync interval (minutes)</label
+                                    <label for="dsJiraUsername"
+                                        >Jira username</label
+                                    >
+                                    <input
+                                        id="dsJiraUsername"
+                                        name="jiraUsername"
+                                        type="text"
+                                    />
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-jiraUsername"
+                                    ></p>
+                                </div>
+                                <div
+                                    class="settings-field"
+                                    data-field="jiraToken"
                                 >
-                                <input
-                                    id="dsJiraSyncInterval"
-                                    name="jiraSyncInterval"
-                                    type="number"
-                                    min="5"
-                                    max="720"
-                                />
-                            </div>
-                        </fieldset>
-                        <div class="form-actions form-actions--end">
-                            <button type="submit" class="btn-primary">
+                                    <label for="dsJiraToken"
+                                        >Jira API token</label
+                                    >
+                                    <div class="token-input">
+                                        <input
+                                            id="dsJiraToken"
+                                            name="jiraToken"
+                                            type="password"
+                                            autocomplete="off"
+                                            placeholder="Enter token"
+                                        />
+                                        <div class="token-input__actions">
+                                            <button
+                                                id="dashboardPasteJiraToken"
+                                                type="button"
+                                                class="btn btn-ghost"
+                                            >
+                                                Paste
+                                            </button>
+                                            <button
+                                                id="dashboardCopyJiraToken"
+                                                type="button"
+                                                class="btn btn-ghost"
+                                            >
+                                                Copy
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-jiraToken"
+                                    ></p>
+                                </div>
+                                <label class="toggle">
+                                    <input
+                                        id="dsAutoSyncJira"
+                                        name="autoSyncJira"
+                                        type="checkbox"
+                                    />
+                                    <span class="toggle__label"
+                                        >Enable periodic Jira sync</span
+                                    >
+                                </label>
+                                <div
+                                    class="settings-field"
+                                    data-field="jiraSyncInterval"
+                                >
+                                    <label for="dsJiraSyncInterval">
+                                        Sync interval (minutes)
+                                    </label>
+                                    <div class="input-stepper">
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="-5"
+                                            data-target="dsJiraSyncInterval"
+                                            aria-label="Decrease sync interval"
+                                        >
+                                            −
+                                        </button>
+                                        <input
+                                            id="dsJiraSyncInterval"
+                                            name="jiraSyncInterval"
+                                            type="number"
+                                            min="5"
+                                            max="720"
+                                        />
+                                        <button
+                                            type="button"
+                                            class="input-stepper__btn"
+                                            data-step="5"
+                                            data-target="dsJiraSyncInterval"
+                                            aria-label="Increase sync interval"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                    <p
+                                        class="settings-field__error"
+                                        id="error-jiraSyncInterval"
+                                    ></p>
+                                </div>
+                            </section>
+                        </div>
+                        <div class="settings-save-bar">
+                            <p
+                                id="dashboardSettingsStatus"
+                                class="form-status"
+                                role="status"
+                                aria-live="polite"
+                            ></p>
+                            <button type="submit" class="btn btn-primary">
                                 Save settings
                             </button>
                         </div>

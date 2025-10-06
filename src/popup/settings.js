@@ -3,17 +3,20 @@ import { POPUP_CONSTANTS } from './common.js';
 export function validateSettingsValues(settings) {
     const errors = [];
 
-    if (settings.workDuration < 1 || settings.workDuration > 60) {
-        errors.push('Work duration must be between 1 and 60 minutes');
+    if (settings.workDuration < 5 || settings.workDuration > 90) {
+        errors.push('Work duration must be between 5 and 90 minutes');
     }
     if (settings.shortBreak < 1 || settings.shortBreak > 30) {
         errors.push('Short break must be between 1 and 30 minutes');
     }
-    if (settings.longBreak < 1 || settings.longBreak > 60) {
-        errors.push('Long break must be between 1 and 60 minutes');
+    if (settings.longBreak < settings.shortBreak) {
+        errors.push('Long break must be at least as long as the short break');
     }
-    if (settings.longBreakInterval < 1 || settings.longBreakInterval > 10) {
-        errors.push('Sessions before long break must be between 1 and 10');
+    if (settings.longBreak < 5 || settings.longBreak > 90) {
+        errors.push('Long break must be between 5 and 90 minutes');
+    }
+    if (settings.longBreakInterval < 1 || settings.longBreakInterval > 12) {
+        errors.push('Sessions before long break must be between 1 and 12');
     }
 
     if (settings.volume < 0 || settings.volume > 1) {

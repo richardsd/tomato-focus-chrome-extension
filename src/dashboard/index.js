@@ -7,6 +7,41 @@ import { DashboardTaskManager } from './tasks.js';
 import { DashboardSettingsManager } from './settings.js';
 import { DashboardStatisticsManager } from './statistics.js';
 
+class DashboardToastManager {
+    constructor(container) {
+        this.container = container;
+        this.activeToasts = new Set();
+    }
+
+    show(message, options = {}) {
+        if (!this.container || !message) {
+            return;
+        }
+        const { variant = 'success', timeout = 4000 } = options;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.dataset.variant = variant;
+        toast.textContent = message;
+        this.container.appendChild(toast);
+        this.activeToasts.add(toast);
+
+        window.setTimeout(() => {
+            this.dismiss(toast);
+        }, timeout);
+    }
+
+    dismiss(toast) {
+        if (!toast || !this.activeToasts.has(toast)) {
+            return;
+        }
+        this.activeToasts.delete(toast);
+        toast.classList.add('is-leaving');
+        window.setTimeout(() => {
+            toast.remove();
+        }, 150);
+    }
+}
+
 class DashboardApp {
     constructor() {
         this.messenger = new RuntimeMessenger({
@@ -24,6 +59,10 @@ class DashboardApp {
             document.querySelectorAll('.dashboard-nav__item')
         );
 
+        this.toastManager = new DashboardToastManager(
+            document.getElementById('dashboardToasts')
+        );
+
         Object.entries(this.sections).forEach(([key, element]) => {
             if (element) {
                 element.dataset.sectionKey = key;
@@ -33,9 +72,6 @@ class DashboardApp {
 
         this.activeSection = null;
         this.handleHashChange = this.handleHashChange.bind(this);
-        this.handleScroll = this.handleScroll.bind(this);
-        this.scrollUpdateFrame = null;
-
         this.state = {
             core: { ...POPUP_CONSTANTS.DEFAULT_STATE },
             history: {},
@@ -46,12 +82,14 @@ class DashboardApp {
             messenger: this.messenger,
             onStateUpdate: (state) => this.updateCoreState(state),
             refreshState: () => this.fetchAndSyncState(),
+            toastManager: this.toastManager,
         });
 
         this.settingsManager = new DashboardSettingsManager({
             container: this.sections.settings,
             messenger: this.messenger,
             onStateUpdate: (state) => this.updateCoreState(state),
+            toastManager: this.toastManager,
         });
 
         this.statisticsManager = new DashboardStatisticsManager({
@@ -59,6 +97,7 @@ class DashboardApp {
             messenger: this.messenger,
             onRequestHistory: () => this.fetchStatisticsHistory(),
             onStateUpdate: (state) => this.updateCoreState(state),
+            toastManager: this.toastManager,
         });
 
         this.unsubscribeRuntimeUpdates = null;
@@ -67,7 +106,6 @@ class DashboardApp {
     async init() {
         this.bindNavigation();
         this.applyInitialSectionFromHash();
-        this.registerScrollSpy();
         window.addEventListener('hashchange', this.handleHashChange);
         this.taskManager.init();
         this.settingsManager.init();
@@ -83,7 +121,6 @@ class DashboardApp {
                 const sectionKey = button.dataset.section;
                 if (sectionKey) {
                     this.setActiveSection(sectionKey);
-                    this.scrollToSection(sectionKey);
                 }
             });
         });
@@ -129,65 +166,6 @@ class DashboardApp {
         }
     }
 
-    scrollToSection(key, options = {}) {
-        const section = this.sections[key];
-        if (!section) {
-            return;
-        }
-
-        const { behavior = 'smooth' } = options;
-
-        try {
-            section.scrollIntoView({ behavior, block: 'start' });
-        } catch {
-            section.scrollIntoView();
-        }
-    }
-
-    registerScrollSpy() {
-        this.updateActiveSectionFromScroll();
-        window.addEventListener('scroll', this.handleScroll, { passive: true });
-    }
-
-    handleScroll() {
-        if (this.scrollUpdateFrame) {
-            return;
-        }
-
-        this.scrollUpdateFrame = window.requestAnimationFrame(() => {
-            this.scrollUpdateFrame = null;
-            this.updateActiveSectionFromScroll();
-        });
-    }
-
-    updateActiveSectionFromScroll() {
-        let closestKey = null;
-        let smallestDistance = Number.POSITIVE_INFINITY;
-        const viewportHeight = window.innerHeight || 0;
-
-        Object.entries(this.sections).forEach(([key, element]) => {
-            if (!element) {
-                return;
-            }
-
-            const rect = element.getBoundingClientRect();
-            const isVisible = rect.top < viewportHeight && rect.bottom > 0;
-            if (!isVisible) {
-                return;
-            }
-
-            const distance = Math.abs(rect.top);
-            if (distance < smallestDistance) {
-                smallestDistance = distance;
-                closestKey = key;
-            }
-        });
-
-        if (closestKey) {
-            this.setActiveSection(closestKey);
-        }
-    }
-
     updateHashForSection(key) {
         const targetHash = `#${key}`;
         if (window.location.hash === targetHash) {
@@ -204,7 +182,6 @@ class DashboardApp {
         const key = this.getSectionKeyFromHash(window.location.hash);
         if (key) {
             this.setActiveSection(key);
-            this.scrollToSection(key, { behavior: 'auto' });
             return;
         }
         this.setActiveSection('tasks');
