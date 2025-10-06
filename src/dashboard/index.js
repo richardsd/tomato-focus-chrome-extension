@@ -16,8 +16,8 @@ class DashboardApp {
 
         this.sections = {
             tasks: document.getElementById('dashboardTasksSection'),
-            settings: document.getElementById('dashboardSettingsSection'),
             statistics: document.getElementById('dashboardStatisticsSection'),
+            settings: document.getElementById('dashboardSettingsSection'),
         };
 
         this.navButtons = Array.from(
@@ -115,6 +115,7 @@ class DashboardApp {
             }
             const isActive = sectionKey === key;
             element.classList.toggle('is-active', isActive);
+            element.setAttribute('aria-hidden', isActive ? 'false' : 'true');
         });
 
         if (!options.skipHashUpdate) {

@@ -114,9 +114,13 @@ textarea {
 }
 
 .dashboard-section {
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 24px;
+}
+
+.dashboard-section.is-active {
+    display: flex;
 }
 
 .section-header {

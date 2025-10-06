@@ -32,17 +32,17 @@
                     </button>
                     <button
                         class="dashboard-nav__item"
-                        data-section="settings"
-                        type="button"
-                    >
-                        Settings
-                    </button>
-                    <button
-                        class="dashboard-nav__item"
                         data-section="statistics"
                         type="button"
                     >
                         Statistics
+                    </button>
+                    <button
+                        class="dashboard-nav__item"
+                        data-section="settings"
+                        type="button"
+                    >
+                        Settings
                     </button>
                 </nav>
                 <div class="dashboard__meta">
@@ -148,6 +148,67 @@
                         >
                             <p class="empty-state">
                                 No tasks yet — add your first task above.
+                            </p>
+                        </div>
+                    </div>
+                </section>
+
+                <section
+                    id="dashboardStatisticsSection"
+                    class="dashboard-section"
+                    aria-labelledby="dashboardStatisticsHeading"
+                >
+                    <header class="section-header">
+                        <div>
+                            <h1 id="dashboardStatisticsHeading">Statistics</h1>
+                            <p class="section-subtitle">
+                                Track progress for today and review historical
+                                focus sessions.
+                            </p>
+                        </div>
+                        <div class="section-actions">
+                            <button id="dashboardRefreshStats" type="button">
+                                Refresh
+                            </button>
+                            <button
+                                id="dashboardClearStats"
+                                type="button"
+                                class="btn-danger"
+                            >
+                                Clear statistics
+                            </button>
+                        </div>
+                    </header>
+                    <div class="stats-grid">
+                        <div class="card stats-card">
+                            <div class="stats-card__label">Completed today</div>
+                            <div
+                                id="dashboardCompletedToday"
+                                class="stats-card__value"
+                            >
+                                0
+                            </div>
+                        </div>
+                        <div class="card stats-card">
+                            <div class="stats-card__label">
+                                Focus time today
+                            </div>
+                            <div
+                                id="dashboardFocusTime"
+                                class="stats-card__value"
+                            >
+                                0m
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <header class="card__header">
+                            <h2>History</h2>
+                        </header>
+                        <div id="dashboardStatsHistory" class="stats-history">
+                            <p class="empty-state">
+                                No statistics recorded yet — complete sessions
+                                to see history.
                             </p>
                         </div>
                     </div>
@@ -341,67 +402,6 @@
                             </button>
                         </div>
                     </form>
-                </section>
-
-                <section
-                    id="dashboardStatisticsSection"
-                    class="dashboard-section"
-                    aria-labelledby="dashboardStatisticsHeading"
-                >
-                    <header class="section-header">
-                        <div>
-                            <h1 id="dashboardStatisticsHeading">Statistics</h1>
-                            <p class="section-subtitle">
-                                Track progress for today and review historical
-                                focus sessions.
-                            </p>
-                        </div>
-                        <div class="section-actions">
-                            <button id="dashboardRefreshStats" type="button">
-                                Refresh
-                            </button>
-                            <button
-                                id="dashboardClearStats"
-                                type="button"
-                                class="btn-danger"
-                            >
-                                Clear statistics
-                            </button>
-                        </div>
-                    </header>
-                    <div class="stats-grid">
-                        <div class="card stats-card">
-                            <div class="stats-card__label">Completed today</div>
-                            <div
-                                id="dashboardCompletedToday"
-                                class="stats-card__value"
-                            >
-                                0
-                            </div>
-                        </div>
-                        <div class="card stats-card">
-                            <div class="stats-card__label">
-                                Focus time today
-                            </div>
-                            <div
-                                id="dashboardFocusTime"
-                                class="stats-card__value"
-                            >
-                                0m
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <header class="card__header">
-                            <h2>History</h2>
-                        </header>
-                        <div id="dashboardStatsHistory" class="stats-history">
-                            <p class="empty-state">
-                                No statistics recorded yet — complete sessions
-                                to see history.
-                            </p>
-                        </div>
-                    </div>
                 </section>
             </main>
         </div>
