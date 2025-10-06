@@ -51,6 +51,11 @@ Stay focused and take healthy breaks! 🍅⏰
 
 <!-- Screenshot Placeholder: Statistics panel with daily summary -->
 
+### 🖥️ Full Dashboard Workspace (NEW!)
+- **Full-Tab Experience**: Launch a dedicated dashboard tab with room to review everything at once
+- **Unified Controls**: Manage tasks, current selection, settings, and statistics without switching popup panels
+- **Responsive Layout**: Sidebar navigation adapts to smaller screens while keeping actions accessible
+
 ### ⚙️ Customizable Settings
 - **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)
 - **Break Intervals**: Configure how many sessions before a long break (1–10)
@@ -99,6 +104,12 @@ _Not yet published._
 2. **Pause/Resume**: Use the pause or resume controls
 3. **Reset**: Restart the current session
 4. **Break Management**: Skip or complete breaks as needed
+
+### Dashboard Workspace
+1. Click the new **Dashboard** button in the popup toolbar (or open the extension options page)
+2. Manage tasks in a spacious list, including bulk actions and the current-task selector
+3. Edit and save timer preferences with full validation feedback
+4. Review today's focus summary and historical statistics in one place
 
 ### Settings Configuration
 1. Click the gear icon in the popup

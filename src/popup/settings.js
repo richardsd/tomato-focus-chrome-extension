@@ -1,5 +1,55 @@
 import { POPUP_CONSTANTS } from './common.js';
 
+export function validateSettingsValues(settings) {
+    const errors = [];
+
+    if (settings.workDuration < 5 || settings.workDuration > 90) {
+        errors.push('Work duration must be between 5 and 90 minutes');
+    }
+    if (settings.shortBreak < 1 || settings.shortBreak > 30) {
+        errors.push('Short break must be between 1 and 30 minutes');
+    }
+    if (settings.longBreak < settings.shortBreak) {
+        errors.push('Long break must be at least as long as the short break');
+    }
+    if (settings.longBreak < 5 || settings.longBreak > 90) {
+        errors.push('Long break must be between 5 and 90 minutes');
+    }
+    if (settings.longBreakInterval < 1 || settings.longBreakInterval > 12) {
+        errors.push('Sessions before long break must be between 1 and 12');
+    }
+
+    if (settings.volume < 0 || settings.volume > 1) {
+        errors.push('Volume must be between 0 and 1');
+    }
+
+    const hasAnyJira =
+        settings.jiraUrl || settings.jiraUsername || settings.jiraToken;
+    const hasAllJira =
+        settings.jiraUrl && settings.jiraUsername && settings.jiraToken;
+    if (hasAnyJira && !hasAllJira) {
+        errors.push(
+            'Jira URL, username, and token are all required for Jira integration'
+        );
+    }
+
+    if (settings.autoSyncJira && !hasAllJira) {
+        errors.push(
+            'Enable periodic sync only after entering Jira URL, username, and token'
+        );
+    }
+
+    if (
+        !Number.isFinite(settings.jiraSyncInterval) ||
+        settings.jiraSyncInterval < 5 ||
+        settings.jiraSyncInterval > 720
+    ) {
+        errors.push('Sync interval must be between 5 and 720 minutes');
+    }
+
+    return { isValid: errors.length === 0, errors };
+}
+
 export class SettingsManager {
     constructor() {
         this.form = this.createFormInterface();
@@ -59,50 +109,7 @@ export class SettingsManager {
      * Validate settings values
      */
     validateSettings(settings) {
-        const errors = [];
-
-        if (settings.workDuration < 1 || settings.workDuration > 60) {
-            errors.push('Work duration must be between 1 and 60 minutes');
-        }
-        if (settings.shortBreak < 1 || settings.shortBreak > 30) {
-            errors.push('Short break must be between 1 and 30 minutes');
-        }
-        if (settings.longBreak < 1 || settings.longBreak > 60) {
-            errors.push('Long break must be between 1 and 60 minutes');
-        }
-        if (settings.longBreakInterval < 1 || settings.longBreakInterval > 10) {
-            errors.push('Sessions before long break must be between 1 and 10');
-        }
-
-        if (settings.volume < 0 || settings.volume > 1) {
-            errors.push('Volume must be between 0 and 1');
-        }
-
-        const hasAnyJira =
-            settings.jiraUrl || settings.jiraUsername || settings.jiraToken;
-        const hasAllJira =
-            settings.jiraUrl && settings.jiraUsername && settings.jiraToken;
-        if (hasAnyJira && !hasAllJira) {
-            errors.push(
-                'Jira URL, username, and token are all required for Jira integration'
-            );
-        }
-
-        if (settings.autoSyncJira && !hasAllJira) {
-            errors.push(
-                'Enable periodic sync only after entering Jira URL, username, and token'
-            );
-        }
-
-        if (
-            !Number.isFinite(settings.jiraSyncInterval) ||
-            settings.jiraSyncInterval < 5 ||
-            settings.jiraSyncInterval > 720
-        ) {
-            errors.push('Sync interval must be between 5 and 720 minutes');
-        }
-
-        return { isValid: errors.length === 0, errors };
+        return validateSettingsValues(settings);
     }
 }
 
