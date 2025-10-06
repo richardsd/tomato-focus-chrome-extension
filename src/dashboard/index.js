@@ -24,8 +24,17 @@ class DashboardApp {
             document.querySelectorAll('.dashboard-nav__item')
         );
 
+        Object.entries(this.sections).forEach(([key, element]) => {
+            if (element) {
+                element.dataset.sectionKey = key;
+                element.removeAttribute('hidden');
+            }
+        });
+
         this.activeSection = null;
         this.handleHashChange = this.handleHashChange.bind(this);
+        this.handleScroll = this.handleScroll.bind(this);
+        this.scrollUpdateFrame = null;
 
         this.state = {
             core: { ...POPUP_CONSTANTS.DEFAULT_STATE },
@@ -58,6 +67,7 @@ class DashboardApp {
     async init() {
         this.bindNavigation();
         this.applyInitialSectionFromHash();
+        this.registerScrollSpy();
         window.addEventListener('hashchange', this.handleHashChange);
         this.taskManager.init();
         this.settingsManager.init();
@@ -72,19 +82,15 @@ class DashboardApp {
             button.addEventListener('click', () => {
                 const sectionKey = button.dataset.section;
                 if (sectionKey) {
-                    this.navigateToSection(sectionKey);
+                    this.setActiveSection(sectionKey);
+                    this.scrollToSection(sectionKey);
                 }
             });
         });
     }
 
-    navigateToSection(key) {
-        this.activateSection(key);
-        this.updateHashForSection(key);
-    }
-
-    activateSection(key) {
-        if (!this.sections[key]) {
+    setActiveSection(key, options = {}) {
+        if (!this.sections[key] || this.activeSection === key) {
             return;
         }
 
@@ -109,17 +115,75 @@ class DashboardApp {
             }
             const isActive = sectionKey === key;
             element.classList.toggle('is-active', isActive);
-            if (isActive) {
-                element.removeAttribute('hidden');
-            } else {
-                element.setAttribute('hidden', '');
-            }
         });
+
+        if (!options.skipHashUpdate) {
+            this.updateHashForSection(key);
+        }
 
         if (key === 'statistics') {
             this.statisticsManager.refreshHistory();
         } else if (key === 'tasks' && previousSection !== 'tasks') {
             this.fetchAndSyncState();
+        }
+    }
+
+    scrollToSection(key, options = {}) {
+        const section = this.sections[key];
+        if (!section) {
+            return;
+        }
+
+        const { behavior = 'smooth' } = options;
+
+        try {
+            section.scrollIntoView({ behavior, block: 'start' });
+        } catch {
+            section.scrollIntoView();
+        }
+    }
+
+    registerScrollSpy() {
+        this.updateActiveSectionFromScroll();
+        window.addEventListener('scroll', this.handleScroll, { passive: true });
+    }
+
+    handleScroll() {
+        if (this.scrollUpdateFrame) {
+            return;
+        }
+
+        this.scrollUpdateFrame = window.requestAnimationFrame(() => {
+            this.scrollUpdateFrame = null;
+            this.updateActiveSectionFromScroll();
+        });
+    }
+
+    updateActiveSectionFromScroll() {
+        let closestKey = null;
+        let smallestDistance = Number.POSITIVE_INFINITY;
+        const viewportHeight = window.innerHeight || 0;
+
+        Object.entries(this.sections).forEach(([key, element]) => {
+            if (!element) {
+                return;
+            }
+
+            const rect = element.getBoundingClientRect();
+            const isVisible = rect.top < viewportHeight && rect.bottom > 0;
+            if (!isVisible) {
+                return;
+            }
+
+            const distance = Math.abs(rect.top);
+            if (distance < smallestDistance) {
+                smallestDistance = distance;
+                closestKey = key;
+            }
+        });
+
+        if (closestKey) {
+            this.setActiveSection(closestKey);
         }
     }
 
@@ -138,11 +202,11 @@ class DashboardApp {
     applyInitialSectionFromHash() {
         const key = this.getSectionKeyFromHash(window.location.hash);
         if (key) {
-            this.activateSection(key);
+            this.setActiveSection(key);
+            this.scrollToSection(key, { behavior: 'auto' });
             return;
         }
-        this.activateSection('tasks');
-        this.updateHashForSection('tasks');
+        this.setActiveSection('tasks');
     }
 
     getSectionKeyFromHash(hash) {
@@ -156,7 +220,8 @@ class DashboardApp {
     handleHashChange() {
         const key = this.getSectionKeyFromHash(window.location.hash);
         if (key) {
-            this.activateSection(key);
+            this.setActiveSection(key, { skipHashUpdate: true });
+            this.scrollToSection(key);
         }
     }
 
