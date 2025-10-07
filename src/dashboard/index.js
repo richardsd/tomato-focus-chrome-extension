@@ -77,6 +77,13 @@ class DashboardApp {
             history: {},
         };
 
+        this.systemThemeMediaQuery =
+            typeof window.matchMedia === 'function'
+                ? window.matchMedia('(prefers-color-scheme: dark)')
+                : null;
+        this.handleSystemThemeChange = this.handleSystemThemeChange.bind(this);
+        this.applyTheme();
+
         this.taskManager = new DashboardTaskManager({
             container: this.sections.tasks,
             messenger: this.messenger,
@@ -107,6 +114,20 @@ class DashboardApp {
         this.bindNavigation();
         this.applyInitialSectionFromHash();
         window.addEventListener('hashchange', this.handleHashChange);
+        if (this.systemThemeMediaQuery) {
+            if (typeof this.systemThemeMediaQuery.addEventListener === 'function') {
+                this.systemThemeMediaQuery.addEventListener(
+                    'change',
+                    this.handleSystemThemeChange
+                );
+            } else if (
+                typeof this.systemThemeMediaQuery.addListener === 'function'
+            ) {
+                this.systemThemeMediaQuery.addListener(
+                    this.handleSystemThemeChange
+                );
+            }
+        }
         this.taskManager.init();
         this.settingsManager.init();
         this.statisticsManager.init();
@@ -124,6 +145,33 @@ class DashboardApp {
                 }
             });
         });
+    }
+
+    handleSystemThemeChange() {
+        if (this.state?.core?.settings?.theme === 'system') {
+            this.applyTheme();
+        }
+    }
+
+    resolveSelectedTheme() {
+        const preference = this.state?.core?.settings?.theme || 'system';
+        if (preference === 'system') {
+            if (this.systemThemeMediaQuery) {
+                return this.systemThemeMediaQuery.matches ? 'dark' : 'light';
+            }
+            return 'dark';
+        }
+        return preference === 'light' ? 'light' : 'dark';
+    }
+
+    applyTheme() {
+        const body = document.body;
+        if (!body) {
+            return;
+        }
+        const theme = this.resolveSelectedTheme();
+        body.classList.remove('light-theme', 'dark-theme');
+        body.classList.add(`${theme}-theme`);
     }
 
     setActiveSection(key, options = {}) {
@@ -259,6 +307,7 @@ class DashboardApp {
             return;
         }
         this.state.core = { ...state };
+        this.applyTheme();
         if (!options.silent) {
             this.renderAll();
         }
