@@ -986,15 +986,26 @@ class PopupController {
     }
 
     /**
-     * Ensure popup stays within 600px by optionally hiding stats
-     * if compressed layout still overflows. Runs after state updates
-     * and current task visibility changes.
+     * Ensure popup stays within the configured max height by
+     * optionally hiding stats if compressed layout still overflows.
+     * Runs after state updates and current task visibility changes.
      */
     syncCurrentTaskLayout() {
         // Defer to next frame so DOM has applied style changes
         (window.requestAnimationFrame || window.setTimeout)(() => {
             try {
-                const overflow = document.documentElement.scrollHeight > 600;
+                const rootStyles = getComputedStyle(document.documentElement);
+                const maxHeightToken = parseFloat(
+                    rootStyles.getPropertyValue('--popup-max-height')
+                );
+                const maxPopupHeight = Number.isFinite(maxHeightToken)
+                    ? maxHeightToken
+                    : 600;
+                const bodyScrollHeight = Math.max(
+                    document.body.scrollHeight,
+                    document.documentElement.scrollHeight
+                );
+                const overflow = bodyScrollHeight > maxPopupHeight;
                 document.body.classList.toggle('hide-stats', overflow);
             } catch (e) {
                 console.warn('syncCurrentTaskLayout failed', e);

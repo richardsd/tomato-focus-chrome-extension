@@ -101,11 +101,25 @@
     --transition-base: 0.3s ease;
     --transition-slow: 0.5s ease;
 
+    /* Popup constraints (Chrome limits popup windows to 600x800) */
+    --popup-max-width: 360px;
+    --popup-max-height: 600px;
+
     /* Z-index */
     --z-base: 1;
     --z-elevated: 10;
     --z-overlay: 100;
     --z-modal: 1000;
+}
+
+html {
+    box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
 }
 
 /* --- Task Item Card (base definition, overridden for theme-specific styling below) --- */
@@ -151,16 +165,21 @@ body {
     --theme-secondary: var(--theme-secondary-dark);
     --theme-surface: var(--theme-surface-dark);
     --theme-primary-break: var(--theme-primary-dark-break);
-    width: 340px;
+    width: min(100vw, var(--popup-max-width));
+    max-width: var(--popup-max-width);
     padding: var(--space-4);
     background: var(--theme-primary);
     background-repeat: no-repeat;
     background-size: cover;
     background-position: top center;
     min-height: 480px;
-    /* Removed fixed max-height & overflow to let popup grow when current task shown */
-    height: auto;
-    overflow: visible;
+    height: min(100vh, var(--popup-max-height));
+    max-height: var(--popup-max-height);
+    margin: 0;
+    box-sizing: border-box;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-gutter: stable both-edges;
     display: flex;
     justify-content: center;
     align-items: stretch;
@@ -2255,16 +2274,19 @@ select.settings-input {
 }
 
 /* =============================================================
-   POPUP HEIGHT CONSTRAINT & CURRENT TASK COMPRESSION
-   Keep total popup height <= 600px (Chrome limit) when current
-   task strip is visible by tightening vertical spacing, timer
-   size, and stats section. A JS helper toggles body classes:
+   POPUP DIMENSION CONSTRAINTS & CURRENT TASK COMPRESSION
+   Keep the popup within Chrome's 600px height limit when the
+   current task strip is visible by tightening vertical spacing,
+   timer size, and stats section. A JS helper toggles body classes:
      .has-current-task  -> current task visible
      .hide-stats        -> stats auto-hidden when still too tall
    ============================================================= */
 html,
 body {
-    max-height: 600px;
+    width: min(100vw, var(--popup-max-width));
+    max-width: var(--popup-max-width);
+    height: min(100vh, var(--popup-max-height));
+    max-height: var(--popup-max-height);
 }
 body.has-current-task .header {
     margin-bottom: var(--space-3);
