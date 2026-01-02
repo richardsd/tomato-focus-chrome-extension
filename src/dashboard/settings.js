@@ -1,5 +1,9 @@
 import { POPUP_CONSTANTS } from '../popup/common.js';
 import { validateSettingsValues } from '../popup/settings.js';
+import {
+    isValidJiraUrl,
+    validateJiraUrl,
+} from '../shared/jiraUrlValidator.js';
 
 const TOKEN_PLACEHOLDER = '••••••••••';
 
@@ -8,20 +12,6 @@ function clamp(value, { min, max }) {
         return min;
     }
     return Math.min(Math.max(value, min), max);
-}
-
-function isValidJiraUrl(url) {
-    if (!url) {
-        return false;
-    }
-    try {
-        const parsed = new window.URL(url);
-        return Boolean(
-            parsed.protocol === 'https:' || parsed.protocol === 'http:'
-        );
-    } catch {
-        return false;
-    }
 }
 
 export class DashboardSettingsManager {
@@ -321,9 +311,11 @@ export class DashboardSettingsManager {
             fieldErrors.volume = 'Volume must be between 0 and 100%';
         }
 
-        if (settings.jiraUrl && !isValidJiraUrl(settings.jiraUrl)) {
-            fieldErrors.jiraUrl =
-                'Enter a valid Jira URL (https://example.atlassian.net)';
+        if (settings.jiraUrl) {
+            const { isValid, message } = validateJiraUrl(settings.jiraUrl);
+            if (!isValid) {
+                fieldErrors.jiraUrl = message;
+            }
         }
 
         const baseValidation = validateSettingsValues(settings);

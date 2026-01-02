@@ -1,7 +1,13 @@
+import { validateJiraUrl } from '../shared/jiraUrlValidator.js';
+
 export async function fetchAssignedIssues(settings) {
     const { jiraUrl, jiraUsername, jiraToken } = settings || {};
     if (!jiraUrl || !jiraUsername || !jiraToken) {
         throw new Error('Missing Jira configuration');
+    }
+    const { isValid, message } = validateJiraUrl(jiraUrl);
+    if (!isValid) {
+        throw new Error(message);
     }
 
     const base = jiraUrl.replace(/\/$/, '');
