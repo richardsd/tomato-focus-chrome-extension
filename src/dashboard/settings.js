@@ -11,20 +11,6 @@ function clamp(value, { min, max }) {
     return Math.min(Math.max(value, min), max);
 }
 
-function isValidJiraUrl(url) {
-    if (!url) {
-        return false;
-    }
-    try {
-        const parsed = new window.URL(url);
-        return Boolean(
-            parsed.protocol === 'https:' || parsed.protocol === 'http:'
-        );
-    } catch {
-        return false;
-    }
-}
-
 function getJiraPermissionOrigin(jiraUrl) {
     if (!jiraUrl) {
         return null;

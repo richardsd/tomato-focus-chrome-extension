@@ -1018,8 +1018,14 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
         try {
             const state = await this.messageHandler.sendMessage('getState');
             const settings = state?.settings || {};
-            if (!settings.jiraUrl || !settings.jiraUsername || !settings.jiraToken) {
-                notifyError('Enter Jira URL, username, and token before syncing.');
+            if (
+                !settings.jiraUrl ||
+                !settings.jiraUsername ||
+                !settings.jiraToken
+            ) {
+                notifyError(
+                    'Enter Jira URL, username, and token before syncing.'
+                );
                 return;
             }
             const permissionGranted = await requestJiraPermission(
@@ -1031,6 +1037,7 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
                 );
                 return;
             }
+            await this.messageHandler.sendMessage('reconfigureJiraSync');
             const updatedState =
                 await this.messageHandler.sendMessage('importJiraTasks');
             this.renderTasksList(

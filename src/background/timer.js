@@ -697,6 +697,11 @@ export class TimerController {
                     sendResponse({ success: true, tasks });
                     break;
                 }
+                case 'reconfigureJiraSync': {
+                    await this.configureJiraSyncAlarm();
+                    sendResponse({ success: true });
+                    break;
+                }
                 case 'importJiraTasks': {
                     try {
                         const result = await this.performJiraSync();
