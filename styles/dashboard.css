@@ -903,6 +903,9 @@ select:focus {
 }
 
 .settings-card__header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 0 0 8px;
 }
 
@@ -911,15 +914,18 @@ select:focus {
     color: var(--color-text-muted);
 }
 
-.settings-card__hint {
-    margin: 0;
-    font-size: 0.9rem;
+.settings-card__hint-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.2);
     color: var(--color-text-muted);
-    line-height: 1.5;
-}
-
-.settings-card__hint code {
-    color: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: help;
 }
 
 .settings-field {
