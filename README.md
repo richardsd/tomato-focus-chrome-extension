@@ -186,6 +186,9 @@ This project uses a combination of ESLint, Stylelint, and Prettier for code qual
 4. Check the background script console for any errors
 5. Verify notifications work correctly
 
+### Testing
+There are no automated tests beyond linting at this time. Use `npm test` (or `npm run lint`) to run the linting and formatting checks.
+
 ### Contributing
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
