@@ -43,6 +43,7 @@ const sharedGlobals = {
     requestAnimationFrame: 'readonly',
     cancelAnimationFrame: 'readonly',
     self: 'readonly',
+    URL: 'readonly',
 };
 
 const noopHtmlParser = {

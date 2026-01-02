@@ -6,6 +6,36 @@ import {
     addRuntimeActionListener,
 } from '../shared/runtimeMessaging.js';
 
+function getJiraPermissionOrigin(jiraUrl) {
+    if (!jiraUrl) {
+        return null;
+    }
+    try {
+        const parsed = new URL(jiraUrl);
+        return `${parsed.origin}/*`;
+    } catch (error) {
+        console.warn('Unable to parse Jira URL for permissions:', error);
+        return null;
+    }
+}
+
+async function requestJiraPermission(settings) {
+    if (!settings?.jiraUrl || !settings?.jiraUsername || !settings?.jiraToken) {
+        return true;
+    }
+    const origin = getJiraPermissionOrigin(settings.jiraUrl);
+    if (!origin) {
+        return false;
+    }
+    const hasPermission = await chrome.permissions.contains({
+        origins: [origin],
+    });
+    if (hasPermission) {
+        return true;
+    }
+    return chrome.permissions.request({ origins: [origin] });
+}
+
 function isElementNode(value) {
     return (
         value !== null &&
@@ -1344,6 +1374,15 @@ class PopupController {
                         alert(
                             'Settings validation failed:\n' +
                                 validation.errors.join('\n')
+                        );
+                        return;
+                    }
+
+                    const permissionGranted =
+                        await requestJiraPermission(settings);
+                    if (!permissionGranted) {
+                        alert(
+                            'Jira permission not granted. Allow access to your Jira site to enable syncing.'
                         );
                         return;
                     }
