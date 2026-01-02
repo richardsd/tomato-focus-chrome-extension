@@ -142,9 +142,13 @@ Right-click the extension icon to:
 
 - **Browser Compatibility**: Chrome, Edge, and other Chromium-based browsers
 - **Permissions**:
-  - `notifications`: For timer alerts
-  - `storage`: To persist user settings
-  - `contextMenus`: For right-click controls
+  - `notifications`: Show timer and break alerts.
+  - `storage`: Save your timer settings and preferences.
+  - `contextMenus`: Add right-click controls for quick actions.
+  - `alarms`: Schedule timer ticks and break reminders in the background.
+  - `idle`: Pause or adjust timers when the system is idle.
+  - `offscreen`: Play notification sounds via an offscreen document.
+  - `*://*/*` (host permissions): Allow optional site-level focus features across any page you use.
 - **Architecture**:
   - Manifest V3
   - Service Worker
