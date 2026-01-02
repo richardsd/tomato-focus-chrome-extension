@@ -11,6 +11,50 @@ function clamp(value, { min, max }) {
     return Math.min(Math.max(value, min), max);
 }
 
+function isValidJiraUrl(url) {
+    if (!url) {
+        return false;
+    }
+    try {
+        const parsed = new window.URL(url);
+        return Boolean(
+            parsed.protocol === 'https:' || parsed.protocol === 'http:'
+        );
+    } catch {
+        return false;
+    }
+}
+
+function getJiraPermissionOrigin(jiraUrl) {
+    if (!jiraUrl) {
+        return null;
+    }
+    try {
+        const parsed = new window.URL(jiraUrl);
+        return `${parsed.origin}/*`;
+    } catch (error) {
+        console.warn('Unable to parse Jira URL for permissions:', error);
+        return null;
+    }
+}
+
+async function requestJiraPermission(settings) {
+    if (!settings?.jiraUrl || !settings?.jiraUsername || !settings?.jiraToken) {
+        return true;
+    }
+    const origin = getJiraPermissionOrigin(settings.jiraUrl);
+    if (!origin) {
+        return false;
+    }
+    const hasPermission = await chrome.permissions.contains({
+        origins: [origin],
+    });
+    if (hasPermission) {
+        return true;
+    }
+    return chrome.permissions.request({ origins: [origin] });
+}
+
 export class DashboardSettingsManager {
     constructor(options = {}) {
         const { container, messenger, onStateUpdate, toastManager } = options;
@@ -390,6 +434,13 @@ export class DashboardSettingsManager {
         }
 
         try {
+            const permissionGranted = await requestJiraPermission(settings);
+            if (!permissionGranted) {
+                this.showErrors([
+                    'Jira permission not granted. Allow access to your Jira site to enable syncing.',
+                ]);
+                return;
+            }
             const state = await this.messenger.sendMessage('saveSettings', {
                 settings,
             });

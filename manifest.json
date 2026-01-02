@@ -3,8 +3,8 @@
   "name": "Tomato Focus",
   "version": "1.0.0",
   "description": "A configurable Tomato Focus to boost productivity",
-  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen"],
-  "host_permissions": ["*://*/*"],
+  "permissions": ["notifications", "storage", "alarms", "contextMenus", "idle", "offscreen", "permissions"],
+  "optional_host_permissions": ["*://*/*"],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
@@ -25,11 +25,5 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": ["sounds/*.mp3"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  }
 }

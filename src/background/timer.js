@@ -6,6 +6,27 @@ import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
 
+function getJiraPermissionOrigin(jiraUrl) {
+    if (!jiraUrl) {
+        return null;
+    }
+    try {
+        const parsed = new URL(jiraUrl);
+        return `${parsed.origin}/*`;
+    } catch (error) {
+        console.warn('Unable to parse Jira URL for permissions:', error);
+        return null;
+    }
+}
+
+async function hasJiraPermission(jiraUrl) {
+    const origin = getJiraPermissionOrigin(jiraUrl);
+    if (!origin) {
+        return false;
+    }
+    return chrome.permissions.contains({ origins: [origin] });
+}
+
 class TimerState {
     constructor() {
         this.reset();
@@ -164,6 +185,14 @@ export class TimerController {
             return;
         }
 
+        const hasPermission = await hasJiraPermission(jiraUrl);
+        if (!hasPermission) {
+            console.warn(
+                'Jira auto-sync is enabled but host permission is not granted. Skipping alarm registration.'
+            );
+            return;
+        }
+
         const interval =
             Number.parseInt(jiraSyncInterval, 10) ||
             CONSTANTS.DEFAULT_SETTINGS.jiraSyncInterval;
@@ -175,6 +204,12 @@ export class TimerController {
 
     async performJiraSync() {
         const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
+        const hasPermission = await hasJiraPermission(jiraUrl);
+        if (!hasPermission) {
+            throw new Error(
+                'Jira permission not granted. Please enable Jira access in settings.'
+            );
+        }
         const issues = await fetchAssignedIssues({
             jiraUrl,
             jiraUsername,
