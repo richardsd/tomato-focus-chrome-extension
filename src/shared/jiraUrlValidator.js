@@ -9,7 +9,7 @@ export function validateJiraUrl(url) {
     }
 
     try {
-        const parsed = new URL(url);
+        const parsed = new window.URL(url);
         if (parsed.protocol !== 'https:') {
             return { isValid: false, message: JIRA_URL_ERROR_MESSAGE };
         }

@@ -1,9 +1,6 @@
 import { POPUP_CONSTANTS } from '../popup/common.js';
 import { validateSettingsValues } from '../popup/settings.js';
-import {
-    isValidJiraUrl,
-    validateJiraUrl,
-} from '../shared/jiraUrlValidator.js';
+import { isValidJiraUrl, validateJiraUrl } from '../shared/jiraUrlValidator.js';
 
 const TOKEN_PLACEHOLDER = '••••••••••';
 
