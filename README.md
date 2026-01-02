@@ -19,6 +19,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Usage](#usage)
 - [Technical Details](#technical-details)
 - [Development](#development)
+- [Privacy Policy](#privacy-policy)
 - [Acknowledgments](#acknowledgments)
 - [Support](#support)
 - [License](#license)
@@ -188,6 +189,11 @@ This project uses a combination of ESLint, Stylelint, and Prettier for code qual
 3. Make your changes and test thoroughly
 4. Commit with descriptive messages
 5. Push to your fork and submit a pull request
+
+## Privacy Policy
+
+For details about what data is stored, where it is stored, and how to remove it,
+see [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 
 ## Acknowledgments
 - Inspired by the timeboxing method popularized as the Pomodoro® Technique
