@@ -903,12 +903,29 @@ select:focus {
 }
 
 .settings-card__header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin: 0 0 8px;
 }
 
 .settings-card__header p {
     margin: 0;
     color: var(--color-text-muted);
+}
+
+.settings-card__hint-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(148, 163, 184, 0.2);
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: help;
 }
 
 .settings-field {
