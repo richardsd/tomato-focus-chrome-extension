@@ -1,32 +1,6 @@
 import { POPUP_CONSTANTS, utils } from './common.js';
 import { notifyError, notifySuccess } from './notifications.js';
-
-function getJiraPermissionOrigin(jiraUrl) {
-    if (!jiraUrl) {
-        return null;
-    }
-    try {
-        const parsed = new URL(jiraUrl);
-        return `${parsed.origin}/*`;
-    } catch (error) {
-        console.warn('Unable to parse Jira URL for permissions:', error);
-        return null;
-    }
-}
-
-async function requestJiraPermission(jiraUrl) {
-    const origin = getJiraPermissionOrigin(jiraUrl);
-    if (!origin) {
-        return false;
-    }
-    const hasPermission = await chrome.permissions.contains({
-        origins: [origin],
-    });
-    if (hasPermission) {
-        return true;
-    }
-    return chrome.permissions.request({ origins: [origin] });
-}
+import { requestJiraPermission } from '../shared/jiraPermissions.js';
 
 export class TaskUIManager {
     constructor(messageHandler) {
