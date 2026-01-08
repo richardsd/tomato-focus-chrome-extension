@@ -5,7 +5,7 @@ import { NotificationManager } from './notifications.js';
 import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
-import { getJiraPermissionOrigin, hasJiraPermission } from '../shared/jiraPermissions.js';
+import { hasJiraPermission } from '../shared/jiraPermissions.js';
 
 class TimerState {
     constructor() {
