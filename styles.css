@@ -288,6 +288,9 @@ body {
 .toolbar-secondary > .toolbar-btn {
     flex: 1 1 0;
 }
+.toolbar-btn--hidden {
+    display: none !important;
+}
 .toolbar-btn {
     position: relative;
     display: inline-flex;
