@@ -309,24 +309,15 @@ export class TaskUIManager {
 
         this.selectAllButtons.forEach((button) => {
             button.disabled = true;
-            button.setAttribute('role', 'checkbox');
-            if (!button.hasAttribute('aria-checked')) {
-                button.setAttribute('aria-checked', 'false');
-            }
-            const handleSelectAllToggle = () => {
+            button.addEventListener('click', () => {
                 // Behaves like toggle: if all selected -> clear, else select remaining
                 this.selectAllDisplayedTasks();
-            };
-            button.addEventListener('click', handleSelectAllToggle);
+            });
             button.addEventListener('keydown', (event) => {
                 const { key } = event;
-                if (
-                    key === ' ' ||
-                    key === 'Enter' ||
-                    key === 'Spacebar'
-                ) {
+                if (key === ' ' || key === 'Enter') {
                     event.preventDefault();
-                    handleSelectAllToggle();
+                    button.click();
                 }
             });
         });
