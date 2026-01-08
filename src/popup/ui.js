@@ -1,6 +1,7 @@
 import { POPUP_CONSTANTS, utils } from './common.js';
 import { TaskUIManager } from './tasks.js';
 import { SettingsManager } from './settings.js';
+import { notifyError, notifySuccess } from './notifications.js';
 import {
     RuntimeMessenger,
     addRuntimeActionListener,
@@ -1371,7 +1372,7 @@ class PopupController {
                         this.settingsManager.validateSettings(settings);
 
                     if (!validation.isValid) {
-                        alert(
+                        notifyError(
                             'Settings validation failed:\n' +
                                 validation.errors.join('\n')
                         );
@@ -1381,7 +1382,7 @@ class PopupController {
                     const permissionGranted =
                         await requestJiraPermission(settings);
                     if (!permissionGranted) {
-                        alert(
+                        notifyError(
                             'Jira permission not granted. Allow access to your Jira site to enable syncing.'
                         );
                         return;
@@ -1395,7 +1396,7 @@ class PopupController {
                     this.navigationManager.showTimerPanel();
                 } catch (error) {
                     console.error('Failed to save settings:', error);
-                    alert('Failed to save settings. Please try again.');
+                    notifyError('Failed to save settings. Please try again.');
                 }
             });
         }
@@ -1418,7 +1419,7 @@ class PopupController {
                         await this.messageHandler.sendMessage(
                             'clearStatistics'
                         );
-                        alert(
+                        notifySuccess(
                             'All statistics data has been cleared successfully.'
                         );
 
@@ -1431,7 +1432,7 @@ class PopupController {
                             'Failed to clear statistics data:',
                             error
                         );
-                        alert(
+                        notifyError(
                             'Failed to clear statistics data. Please try again.'
                         );
                     }
