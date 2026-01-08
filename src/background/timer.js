@@ -5,27 +5,7 @@ import { NotificationManager } from './notifications.js';
 import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
-
-function getJiraPermissionOrigin(jiraUrl) {
-    if (!jiraUrl) {
-        return null;
-    }
-    try {
-        const parsed = new URL(jiraUrl);
-        return `${parsed.origin}/*`;
-    } catch (error) {
-        console.warn('Unable to parse Jira URL for permissions:', error);
-        return null;
-    }
-}
-
-async function hasJiraPermission(jiraUrl) {
-    const origin = getJiraPermissionOrigin(jiraUrl);
-    if (!origin) {
-        return false;
-    }
-    return chrome.permissions.contains({ origins: [origin] });
-}
+import { getJiraPermissionOrigin, hasJiraPermission } from '../shared/jiraPermissions.js';
 
 class TimerState {
     constructor() {
