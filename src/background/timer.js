@@ -493,6 +493,8 @@ export class TimerController {
         this.state.timeLeft = minutes * 60;
         await this.saveState();
         await this.scheduleAlarm();
+        this.stopBadgeUpdater();
+        this.startBadgeUpdater();
         this.updateBadge();
         ContextMenuManager.update(true, true, this.state.timeLeft);
         this.updateUI();
