@@ -289,7 +289,7 @@ body {
     flex: 1 1 0;
 }
 .toolbar-btn--hidden {
-    display: none;
+    display: none !important;
 }
 .toolbar-btn {
     position: relative;
