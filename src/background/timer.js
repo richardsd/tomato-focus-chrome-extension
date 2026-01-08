@@ -35,6 +35,7 @@ class TimerState {
     reset() {
         this.isRunning = false;
         this.timeLeft = CONSTANTS.DEFAULT_SETTINGS.workDuration * 60;
+        this.endTime = null;
         this.currentSession = 1;
         this.isWorkSession = true;
         this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
@@ -49,6 +50,7 @@ class TimerState {
         return {
             isRunning: this.isRunning,
             timeLeft: this.timeLeft,
+            endTime: this.endTime,
             currentSession: this.currentSession,
             isWorkSession: this.isWorkSession,
             settings: { ...this.settings },
@@ -144,6 +146,13 @@ export class TimerController {
                 ...CONSTANTS.DEFAULT_SETTINGS,
                 ...(savedState.settings || {}),
             };
+            if (savedState.endTime) {
+                const remainingMs = savedState.endTime - Date.now();
+                this.state.timeLeft = Math.max(
+                    0,
+                    Math.ceil(remainingMs / 1000)
+                );
+            }
         } else {
             await this.saveState();
         }
@@ -366,6 +375,7 @@ export class TimerController {
         }
 
         this.state.isRunning = false;
+        this.state.endTime = null;
         await chrome.alarms.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
@@ -382,6 +392,7 @@ export class TimerController {
         this.state.isRunning = false;
         this.state.currentSession = 1;
         this.state.startWork();
+        this.state.endTime = null;
         await chrome.alarms.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
@@ -397,6 +408,7 @@ export class TimerController {
     async scheduleAlarm() {
         const now = Date.now();
         const when = now + this.state.timeLeft * 1000;
+        this.state.endTime = when;
         await chrome.alarms.create(this.alarmName, { when });
     }
 
@@ -443,6 +455,7 @@ export class TimerController {
             await this.scheduleAlarm();
             this.startBadgeUpdater();
         } else {
+            this.state.endTime = null;
             this.stopBadgeUpdater();
         }
 
@@ -474,6 +487,7 @@ export class TimerController {
                 await this.scheduleAlarm();
                 this.startBadgeUpdater();
             } else {
+                this.state.endTime = null;
                 this.stopBadgeUpdater();
             }
             await this.saveState();
@@ -602,6 +616,8 @@ export class TimerController {
                     if (this.state.isRunning) {
                         await chrome.alarms.clear(this.alarmName);
                         await this.scheduleAlarm();
+                    } else {
+                        this.state.endTime = null;
                     }
 
                     await this.configureJiraSyncAlarm();
