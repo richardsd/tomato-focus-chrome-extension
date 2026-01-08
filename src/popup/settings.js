@@ -85,6 +85,8 @@ export class SettingsManager {
     getSettings() {
         const { inputs } = this.form;
 
+        const parsedVolume = Number.parseFloat(inputs.volume?.value);
+
         return {
             workDuration: parseInt(inputs.workDuration?.value) || 25,
             shortBreak: parseInt(inputs.shortBreak?.value) || 5,
@@ -94,7 +96,9 @@ export class SettingsManager {
             theme: inputs.theme?.value || 'system',
             pauseOnIdle: inputs.pauseOnIdle ? inputs.pauseOnIdle.checked : true,
             playSound: inputs.playSound ? inputs.playSound.checked : true,
-            volume: parseFloat(inputs.volume?.value) || 1,
+            volume: Number.isFinite(parsedVolume)
+                ? parsedVolume
+                : POPUP_CONSTANTS.DEFAULT_STATE.settings.volume,
             jiraUrl: inputs.jiraUrl?.value?.trim() || '',
             jiraUsername: inputs.jiraUsername?.value?.trim() || '',
             jiraToken: inputs.jiraToken?.value?.trim() || '',
