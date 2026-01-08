@@ -842,7 +842,18 @@ body {
 }
 
 .settings-slider {
-    min-width: 100px;
+    min-width: 120px;
+    width: 140px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input.settings-slider:focus {
+    border-color: transparent;
+    box-shadow: none;
+    transform: none;
 }
 
 input.settings-input {
