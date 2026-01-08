@@ -313,6 +313,13 @@ export class TaskUIManager {
                 // Behaves like toggle: if all selected -> clear, else select remaining
                 this.selectAllDisplayedTasks();
             });
+            button.addEventListener('keydown', (event) => {
+                const { key } = event;
+                if (key === ' ' || key === 'Enter') {
+                    event.preventDefault();
+                    button.click();
+                }
+            });
         });
 
         this.updateSelectionBar();
