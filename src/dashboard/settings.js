@@ -315,20 +315,17 @@ export class DashboardSettingsManager {
         const fieldErrors = {};
         const messages = [];
 
-        if (settings.workDuration < 5 || settings.workDuration > 90) {
-            fieldErrors.workDuration =
-                'Focus length must be between 5 and 90 minutes';
+        if (settings.workDuration < 1) {
+            fieldErrors.workDuration = 'Focus length must be at least 1 minute';
         }
-        if (settings.shortBreak < 1 || settings.shortBreak > 30) {
-            fieldErrors.shortBreak =
-                'Short break must be between 1 and 30 minutes';
+        if (settings.shortBreak < 1) {
+            fieldErrors.shortBreak = 'Short break must be at least 1 minute';
         }
         if (settings.longBreak < settings.shortBreak) {
             fieldErrors.longBreak =
                 'Long break should be at least as long as the short break';
-        } else if (settings.longBreak < 5 || settings.longBreak > 90) {
-            fieldErrors.longBreak =
-                'Long break must be between 5 and 90 minutes';
+        } else if (settings.longBreak < 1) {
+            fieldErrors.longBreak = 'Long break must be at least 1 minute';
         }
         if (settings.longBreakInterval < 1 || settings.longBreakInterval > 12) {
             fieldErrors.longBreakInterval =
