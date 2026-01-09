@@ -12,8 +12,17 @@ A configurable **time-management Chrome extension** that helps boost productivit
 
 Stay focused and take healthy breaks! 🍅⏰
 
+## Quick Start
+
+1. Install the extension (see [Installation](#installation)).
+2. Click the Tomato Focus icon and press **Start** to begin a session.
+3. Track or select a task from the task list to stay organized.
+4. Open **Settings** to customize durations, themes, and notifications.
+
 ## Table of Contents
 
+- [Quick Start](#quick-start)
+- [What's New](#whats-new)
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -23,6 +32,11 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Acknowledgments](#acknowledgments)
 - [Support](#support)
 - [License](#license)
+
+## What's New
+
+- Task management with Jira sync support
+- Enhanced statistics and task-based analytics
 
 ## Features
 
@@ -52,11 +66,6 @@ Stay focused and take healthy breaks! 🍅⏰
 
 <!-- Screenshot Placeholder: Statistics panel with daily summary -->
 
-### 🖥️ Full Dashboard Workspace (NEW!)
-- **Full-Tab Experience**: Launch a dedicated dashboard tab with room to review everything at once
-- **Unified Controls**: Manage tasks, current selection, settings, and statistics without switching popup panels
-- **Responsive Layout**: Sidebar navigation adapts to smaller screens while keeping actions accessible
-
 ### ⚙️ Customizable Settings
 - **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)
 - **Break Intervals**: Configure how many sessions before a long break (1–10)
@@ -65,6 +74,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Play Sound & Volume**: Enable/disable notification sounds and control volume
 - **Pause When Idle**: Automatically pause (and optionally resume) when the system is idle or locked
 - **Persistent Settings**: Preferences are saved and restored between sessions
+- **Jira Credentials**: Store Jira connection details securely in extension storage (Jira Cloud)
 
 ### 🔔 Smart Notifications
 - **Browser Alerts**: Notifications when sessions end
@@ -90,13 +100,14 @@ Stay focused and take healthy breaks! 🍅⏰
 ## Installation
 
 ### From Chrome Web Store (coming soon)
-_Not yet published._
+_Not yet published. A link will be added once the listing is live._
 
 ### Manual Installation (Development)
 1. Clone or download this repository
 2. Open `chrome://extensions/` in Chrome
 3. Enable "Developer mode"
 4. Click **Load unpacked** and select the extension folder
+5. For Edge, open `edge://extensions/` and follow the same steps
 
 ## Usage
 
@@ -105,12 +116,6 @@ _Not yet published._
 2. **Pause/Resume**: Use the pause or resume controls
 3. **Reset**: Restart the current session
 4. **Break Management**: Skip or complete breaks as needed
-
-### Dashboard Workspace
-1. Click the new **Dashboard** button in the popup toolbar (or open the extension options page)
-2. Manage tasks in a spacious list, including bulk actions and the current-task selector
-3. Edit and save timer preferences with full validation feedback
-4. Review today's focus summary and historical statistics in one place
 
 ### Settings Configuration
 1. Click the gear icon in the popup
@@ -142,14 +147,14 @@ Right-click the extension icon to:
 ## Technical Details
 
 - **Browser Compatibility**: Chrome, Edge, and other Chromium-based browsers
-- **Permissions**:
+- **Permissions (with rationale)**:
   - `notifications`: Show timer and break alerts.
   - `storage`: Save your timer settings and preferences.
   - `contextMenus`: Add right-click controls for quick actions.
   - `alarms`: Schedule timer ticks and break reminders in the background.
   - `idle`: Pause or adjust timers when the system is idle.
   - `offscreen`: Play notification sounds via an offscreen document.
-  - `*://*/*` (host permissions): Allow optional site-level focus features across any page you use.
+  - `*://*/*` (host permissions): Allow optional site-level focus features across any page you use (required for Jira sync).
 - **Architecture**:
   - Manifest V3
   - Service Worker
@@ -207,7 +212,7 @@ see [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 - Icons inspired by traditional tomato timers
 
 ## Support
-Please report issues or suggestions via [Github Issues](https://github.com/richardsd/pomodoro-chrome-extension/issues).
+Please report issues or suggestions via [GitHub Issues](https://github.com/richardsd/pomodoro-chrome-extension/issues).
 
 ## License
 This project is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
