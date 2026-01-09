@@ -316,12 +316,10 @@ export class DashboardSettingsManager {
         const messages = [];
 
         if (settings.workDuration < 1) {
-            fieldErrors.workDuration =
-                'Focus length must be at least 1 minute';
+            fieldErrors.workDuration = 'Focus length must be at least 1 minute';
         }
         if (settings.shortBreak < 1) {
-            fieldErrors.shortBreak =
-                'Short break must be at least 1 minute';
+            fieldErrors.shortBreak = 'Short break must be at least 1 minute';
         }
         if (settings.longBreak < settings.shortBreak) {
             fieldErrors.longBreak =
