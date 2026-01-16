@@ -40,18 +40,19 @@ jobs:
           TAG="v${{ steps.package-version.outputs.version }}-rc.${{ github.run_number }}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
+      - name: Stage extension files
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          cp manifest.json background.js popup.html popup.js offscreen.html offscreen.js dashboard.html dashboard.js styles.css dist/
+          cp -R icons sounds src styles dist/
+        env:
+          TAG: ${{ steps.rc.outputs.tag }}
+
       - name: Zip extension
         run: |
-          zip -r tomato-focus-chrome-extension-${TAG}.zip \
-            manifest.json \
-            background.js \
-            popup.html \
-            popup.js \
-            offscreen.html \
-            offscreen.js \
-            styles.css \
-            icons \
-            sounds
+          cd dist
+          zip -r ../tomato-focus-chrome-extension-${TAG}.zip .
         env:
           TAG: ${{ steps.rc.outputs.tag }}
 
