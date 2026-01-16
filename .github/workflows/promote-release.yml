@@ -28,17 +28,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Update manifest version
+      - name: Update manifest and package versions
         run: |
           node -e "const fs=require('fs');const mf=require('./manifest.json');mf.version=process.env.VERSION;fs.writeFileSync('./manifest.json', JSON.stringify(mf, null, 2));"
+          node -e "const fs=require('fs');const pkg=require('./package.json');pkg.version=process.env.VERSION;fs.writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
         env:
           VERSION: ${{ github.event.inputs.version }}
 
-      - name: Commit manifest
+      - name: Commit release metadata
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          git commit -am "chore: release v${{ github.event.inputs.version }}"
+          git add manifest.json package.json
+          git commit -m "chore: release v${{ github.event.inputs.version }}"
           git tag v${{ github.event.inputs.version }}
 
       - name: Push changes
