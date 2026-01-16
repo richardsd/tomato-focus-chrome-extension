@@ -16,8 +16,25 @@
     "format": "prettier \"**/*.{js,css,html}\" --write",
     "format:check": "prettier \"**/*.{js,css,html}\" --check"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "chrome-extension",
+    "productivity",
+    "timer",
+    "pomodoro",
+    "time-management",
+    "focus",
+    "task-management",
+    "jira"
+  ],
+  "author": "richardsd",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/richardsd/tomato-focus-chrome-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/richardsd/tomato-focus-chrome-extension/issues"
+  },
+  "homepage": "https://github.com/richardsd/tomato-focus-chrome-extension#readme",
   "license": "GPL-3.0",
   "devDependencies": {
     "eslint": "^9.32.0",

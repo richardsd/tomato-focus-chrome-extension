@@ -212,7 +212,7 @@ see [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
 - Icons inspired by traditional tomato timers
 
 ## Support
-Please report issues or suggestions via [GitHub Issues](https://github.com/richardsd/pomodoro-chrome-extension/issues).
+Please report issues or suggestions via [GitHub Issues](https://github.com/richardsd/tomato-focus-chrome-extension/issues).
 
 ## License
 This project is licensed under the [GNU GPL v3.0](https://www.gnu.org/licenses/gpl-3.0.html).
