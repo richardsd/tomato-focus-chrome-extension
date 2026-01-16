@@ -50,18 +50,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Stage extension files
+        run: |
+          rm -rf dist
+          mkdir -p dist
+          cp manifest.json background.js popup.html popup.js offscreen.html offscreen.js dashboard.html dashboard.js styles.css dist/
+          cp -R icons sounds src styles dist/
+        env:
+          VERSION: ${{ github.event.inputs.version }}
+
       - name: Zip extension
         run: |
-          zip -r tomato-focus-chrome-extension-v${VERSION}.zip \
-            manifest.json \
-            background.js \
-            popup.html \
-            popup.js \
-            offscreen.html \
-            offscreen.js \
-            styles.css \
-            icons \
-            sounds
+          cd dist
+          zip -r ../tomato-focus-chrome-extension-v${VERSION}.zip .
         env:
           VERSION: ${{ github.event.inputs.version }}
 
