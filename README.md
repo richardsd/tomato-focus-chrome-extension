@@ -28,6 +28,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Usage](#usage)
 - [Technical Details](#technical-details)
 - [Development](#development)
+- [Release & Publishing](#release--publishing)
 - [Privacy Policy](#privacy-policy)
 - [Acknowledgments](#acknowledgments)
 - [Support](#support)
@@ -201,6 +202,30 @@ There are no automated tests beyond linting at this time. Use `npm test` (or `np
 3. Make your changes and test thoroughly (always run `npm run lint`)
 4. Commit with descriptive messages
 5. Push to your fork and submit a pull request
+
+## Release & Publishing
+
+This repository uses GitHub Actions to move from a release candidate to a published Chrome Web Store listing.
+
+### Release candidate (RC)
+1. Merge changes to `main`.
+2. The **Release Candidate** workflow (`.github/workflows/release.yml`) runs on push to `main`, lints the code, and creates a prerelease tag like `v1.2.3-rc.45` with a ZIP asset.
+
+### Promote RC to release
+1. Trigger the **Promote Release** workflow (`.github/workflows/promote-release.yml`) via **workflow_dispatch**.
+2. Provide the RC tag and final version (e.g., `1.2.3`).
+3. The workflow updates `manifest.json`, tags the release (`v1.2.3`), and creates a GitHub Release with a ZIP asset named `tomato-focus-chrome-extension-v1.2.3.zip`.
+
+### Publish to Chrome Web Store
+1. Publish the GitHub Release (`v1.2.3`). This triggers the **Publish to Chrome Web Store** workflow (`.github/workflows/publish.yml`), or run it manually with **workflow_dispatch** and the release tag.
+2. The workflow downloads the release ZIP and uploads it to the Chrome Web Store using `browser-actions/upload-chrome-extension`.
+
+### Required secrets
+Configure these repository secrets before running the publish workflow:
+- `CHROME_EXTENSION_ID`
+- `CHROME_CLIENT_ID`
+- `CHROME_CLIENT_SECRET`
+- `CHROME_REFRESH_TOKEN`
 
 ## Privacy Policy
 
