@@ -4,7 +4,7 @@ A configurable **time-management Chrome extension** that helps boost productivit
 
 <p align="center">
   <img src="docs/timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
-  <img src="docs/settings_screen.png" alt="Settings" width="43%" style="display:inline-block;"/>
+  <img src="docs/short_break_screen.png" alt="Settings" width="44.8%" style="display:inline-block;"/>
 </p>
 
 > **Disclaimer**: This project is **not affiliated with**, **endorsed by**, or **licensed by** Francesco Cirillo or the official Pomodoro® Technique. “Pomodoro®” is a registered trademark of Francesco Cirillo.
@@ -33,11 +33,6 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Support](#support)
 - [License](#license)
 
-## What's New
-
-- Task management with Jira sync support
-- Enhanced statistics and task-based analytics
-
 ## Features
 
 ### 🧭 Core Timer Functionality
@@ -47,7 +42,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Visual Progress**: Circular progress ring with smooth countdown animation
 - **Session Counter**: Track your completed focus sessions
 
-### 📋 Task Management (NEW!)
+### 📋 Task Management
 - **Task List**: Create, edit, and delete tasks to organize your work
 - **Task-Timer Integration**: Associate your Pomodoro sessions with specific tasks
 - **Progress Tracking**: See how many Pomodoros each task has consumed vs estimated
@@ -58,13 +53,17 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Clear Completed Tasks**: Remove all finished tasks in one click
 - **Jira Sync**: Import assignments on demand or enable automatic refreshes on a custom schedule
 
-<!-- Screenshot Placeholder: Tasks panel showing filters and clear completed button -->
+<p align="center">
+  <img src="docs/tasks_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
+</p>
 
 ### 📊 Statistics Panel
 - **Daily Summary**: Displays today's completed sessions and total focus time
 - **Data Management**: Option to clear all stored statistics
 
-<!-- Screenshot Placeholder: Statistics panel with daily summary -->
+<p align="center">
+  <img src="docs/statistics_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
+</p>
 
 ### ⚙️ Customizable Settings
 - **Flexible Durations**: Adjust work, short break, and long break durations (1–60 minutes)
@@ -75,6 +74,10 @@ Stay focused and take healthy breaks! 🍅⏰
 - **Pause When Idle**: Automatically pause (and optionally resume) when the system is idle or locked
 - **Persistent Settings**: Preferences are saved and restored between sessions
 - **Jira Credentials**: Store Jira connection details securely in extension storage (Jira Cloud)
+
+<p align="center">
+  <img src="docs/settings_screen.png" alt="Settings" width="44%" style="display:inline-block;"/>
+</p>
 
 ### 🔔 Smart Notifications
 - **Browser Alerts**: Notifications when sessions end
