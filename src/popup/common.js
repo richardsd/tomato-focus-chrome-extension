@@ -13,6 +13,7 @@ export const POPUP_CONSTANTS = {
         completedToday: '#completedToday',
         focusTime: '#focusTime',
         saveSettingsBtn: '#saveSettings',
+        resetSettingsBtn: '#resetSettingsBtn',
         clearDataBtn: '#clearDataBtn',
         jiraUrl: '#jiraUrl',
         jiraUsername: '#jiraUsername',
