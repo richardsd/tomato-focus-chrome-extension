@@ -1402,9 +1402,7 @@ class PopupController {
                     notifySuccess('Settings reset to defaults.');
                 } catch (error) {
                     console.error('Failed to reset settings:', error);
-                    notifyError(
-                        'Failed to reset settings. Please try again.'
-                    );
+                    notifyError('Failed to reset settings. Please try again.');
                     try {
                         const state =
                             await this.messageHandler.sendMessage('getState');
