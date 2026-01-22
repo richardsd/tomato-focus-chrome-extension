@@ -1,3 +1,5 @@
+import { CONSTANTS } from '../background/constants.js';
+
 export const POPUP_CONSTANTS = {
     RETRY_DELAY: 100,
     ANIMATION_DURATION: 300,
@@ -73,20 +75,7 @@ export const POPUP_CONSTANTS = {
         currentTaskId: null,
         tasks: [],
         settings: {
-            workDuration: 25,
-            shortBreak: 5,
-            longBreak: 15,
-            longBreakInterval: 4,
-            autoStart: false,
-            theme: 'system',
-            pauseOnIdle: true,
-            playSound: true,
-            volume: 1,
-            jiraUrl: '',
-            jiraUsername: '',
-            jiraToken: '',
-            autoSyncJira: false,
-            jiraSyncInterval: 30,
+            ...CONSTANTS.DEFAULT_SETTINGS,
         },
     },
 };
