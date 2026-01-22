@@ -1334,6 +1334,7 @@ class PopupController {
      */
     setupSettingsEvents() {
         const saveBtn = this.uiManager.elements.saveSettingsBtn;
+        const resetBtn = this.uiManager.elements.resetSettingsBtn;
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
@@ -1368,6 +1369,50 @@ class PopupController {
                 } catch (error) {
                     console.error('Failed to save settings:', error);
                     notifyError('Failed to save settings. Please try again.');
+                }
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                const confirmed = window.confirm(
+                    'Reset all settings to their default values?'
+                );
+                if (!confirmed) {
+                    return;
+                }
+
+                const defaults = {
+                    ...POPUP_CONSTANTS.DEFAULT_STATE.settings,
+                };
+                const optimisticState = this._lastState
+                    ? { ...this._lastState, settings: defaults }
+                    : {
+                          ...POPUP_CONSTANTS.DEFAULT_STATE,
+                          settings: defaults,
+                      };
+                this.uiManager.forceUpdateSettings(optimisticState);
+
+                try {
+                    const state = await this.messageHandler.sendMessage(
+                        'saveSettings',
+                        { settings: defaults }
+                    );
+                    this.updateState(state);
+                    notifySuccess('Settings reset to defaults.');
+                } catch (error) {
+                    console.error('Failed to reset settings:', error);
+                    notifyError('Failed to reset settings. Please try again.');
+                    try {
+                        const state =
+                            await this.messageHandler.sendMessage('getState');
+                        this.updateState(state);
+                    } catch (refreshError) {
+                        console.error(
+                            'Failed to refresh settings after reset error:',
+                            refreshError
+                        );
+                    }
                 }
             });
         }
