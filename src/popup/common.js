@@ -1,7 +1,14 @@
-import { createDefaultState } from '../shared/stateDefaults.js';
+import { DEFAULT_STATE, RETRY_DELAY } from '../shared/uiConstants.js';
+import {
+    debounce,
+    escapeHtml,
+    formatTime,
+    getElement,
+    getElementById,
+} from '../shared/uiUtils.js';
 
 export const POPUP_CONSTANTS = {
-    RETRY_DELAY: 100,
+    RETRY_DELAY,
     ANIMATION_DURATION: 300,
     UPDATE_DEBOUNCE: 50,
     PROGRESS_RING_RADIUS: 80, // reduced 10% (was 90) to match smaller SVG
@@ -67,15 +74,13 @@ export const POPUP_CONSTANTS = {
             className: 'break-mode',
         },
     },
-    DEFAULT_STATE: createDefaultState(),
+    DEFAULT_STATE,
 };
 
 export const utils = {
-    formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    },
+    debounce,
+    escapeHtml,
+    formatTime,
     formatFocusTime(minutes) {
         if (minutes < 60) {
             return `${minutes}m`;
@@ -90,20 +95,8 @@ export const utils = {
     getCircumference(radius = POPUP_CONSTANTS.PROGRESS_RING_RADIUS) {
         return 2 * Math.PI * radius;
     },
-    debounce(func, delay) {
-        let timeoutId;
-        return (...args) => {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => func.apply(this, args), delay);
-        };
-    },
-    getElement(selector) {
-        const element = document.querySelector(selector);
-        if (!element) {
-            console.warn(`Element not found: ${selector}`);
-        }
-        return element;
-    },
+    getElement,
+    getElementById,
     validateState(state) {
         return (
             state &&
