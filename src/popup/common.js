@@ -1,4 +1,4 @@
-import { CONSTANTS } from '../background/constants.js';
+import { createDefaultState } from '../shared/stateDefaults.js';
 
 export const POPUP_CONSTANTS = {
     RETRY_DELAY: 100,
@@ -67,17 +67,7 @@ export const POPUP_CONSTANTS = {
             className: 'break-mode',
         },
     },
-    DEFAULT_STATE: {
-        isRunning: false,
-        timeLeft: 25 * 60,
-        currentSession: 1,
-        isWorkSession: true,
-        currentTaskId: null,
-        tasks: [],
-        settings: {
-            ...CONSTANTS.DEFAULT_SETTINGS,
-        },
-    },
+    DEFAULT_STATE: createDefaultState(),
 };
 
 export const utils = {
