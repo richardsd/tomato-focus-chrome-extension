@@ -2,6 +2,10 @@ import { POPUP_CONSTANTS, utils } from './common.js';
 import { notifyError, notifySuccess } from './notifications.js';
 import { requestJiraPermission } from '../shared/jiraPermissions.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
+import { renderTaskItem } from './taskTemplates.js';
+import { createLogger } from '../shared/logger.js';
+
+const logger = createLogger('TaskUI');
 
 export class TaskUIManager {
     constructor(messageHandler) {
@@ -26,13 +30,9 @@ export class TaskUIManager {
      */
     renderTasksList(tasks, currentTaskId) {
         const allTasks = Array.isArray(tasks) ? tasks : [];
-        console.log('renderTasksList called with:', {
-            tasks: allTasks,
-            currentTaskId,
-        });
         const tasksList = utils.getElement(POPUP_CONSTANTS.SELECTORS.tasksList);
         if (!tasksList) {
-            console.warn('tasksList element not found');
+            logger.warn('tasksList element not found');
             return;
         }
         // Apply filter
@@ -50,13 +50,7 @@ export class TaskUIManager {
             this.currentDisplayTaskIds.includes(id)
         );
 
-        console.log(
-            'Tasks list element found, rendering with filter:',
-            this.currentFilter
-        );
-
         if (!displayTasks || displayTasks.length === 0) {
-            console.log('No tasks found, showing empty state');
             tasksList.innerHTML = `
                 <div class="tasks-empty">
                     <div class="tasks-empty__icon">📋</div>
@@ -68,13 +62,15 @@ export class TaskUIManager {
             return;
         }
 
-        console.log('Rendering', displayTasks.length, 'tasks (filtered)');
         const tasksHTML = displayTasks
-            .map((task) => this.renderTaskItem(task, currentTaskId))
+            .map((task) =>
+                renderTaskItem(task, {
+                    currentTaskId,
+                    selectedTaskIds: this.selectedTaskIds,
+                })
+            )
             .join('');
-        console.log('Generated HTML:', tasksHTML);
         tasksList.innerHTML = tasksHTML;
-        console.log('TasksList innerHTML after setting:', tasksList.innerHTML);
 
         // Add event listeners for task items
         this.attachTaskEventListeners();
@@ -93,72 +89,6 @@ export class TaskUIManager {
             clearCompletedBtn.disabled = !shouldShowClearCompleted;
         }
         this.updateSelectionBar();
-    }
-
-    /**
-     * Render a single task item
-     */
-    renderTaskItem(task, currentTaskId) {
-        const isCurrentTask = task.id === currentTaskId;
-        const progress = `${task.completedPomodoros}/${task.estimatedPomodoros}`;
-        const statusClass = task.isCompleted
-            ? 'completed'
-            : task.completedPomodoros > 0
-              ? 'in-progress'
-              : 'pending';
-        const statusText = task.isCompleted
-            ? 'Completed'
-            : task.completedPomodoros > 0
-              ? 'In progress'
-              : 'Pending';
-        const isSelected = this.selectedTaskIds.includes(task.id);
-        const itemClasses = ['task-item'];
-        if (isCurrentTask) {
-            itemClasses.push('task-item--current');
-        }
-        if (task.isCompleted) {
-            itemClasses.push('task-item--completed');
-        }
-        if (isSelected) {
-            itemClasses.push('task-item--selected');
-        }
-
-        // Truncate title if it's too long (max 50 characters)
-        const truncatedTitle =
-            task.title.length > 50
-                ? task.title.substring(0, 47) + '...'
-                : task.title;
-
-        return `
-            <div class="${itemClasses.join(' ')}"
-                 data-task-id="${task.id}" aria-label="Task: ${this.escapeHtml(task.title)}. ${statusText}. Progress ${progress} pomodoros." tabindex="0">
-                <div class="task-item__header">
-                    <div class="task-item__selection">
-                        <input type="checkbox" class="task-item__checkbox" data-task-id="${task.id}" ${isSelected ? 'checked' : ''} aria-label="Select task ${this.escapeHtml(task.title)}">
-                    </div>
-                    <div class="task-item__title ${task.isCompleted ? 'completed' : ''}" title="${this.escapeHtml(task.title)}">
-                        ${this.escapeHtml(truncatedTitle)}
-                    </div>
-                    <div class="task-item__menu" data-task-id="${task.id}">
-                        <button class="task-item__menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="Task actions menu" title="Actions">⋮</button>
-                        <div class="task-item__menu-dropdown" role="menu" aria-label="Task actions">
-                            <button class="task-item__action task-select" role="menuitem" data-task-id="${task.id}" aria-pressed="${isCurrentTask}">🎯 ${task.isCompleted ? 'Reopen & Select' : isCurrentTask ? 'Unset Current' : 'Set Current'}</button>
-                            ${!task.isCompleted ? `<button class="task-item__action task-complete" role="menuitem" data-task-id="${task.id}">✅ Complete</button>` : ''}
-                            ${task.isCompleted ? `<button class="task-item__action task-reopen" role="menuitem" data-task-id="${task.id}">↺ Reopen</button>` : ''}
-                            <button class="task-item__action task-edit" role="menuitem" data-task-id="${task.id}">✏️ Edit</button>
-                            <button class="task-item__action task-delete" role="menuitem" data-task-id="${task.id}">🗑 Delete</button>
-                        </div>
-                    </div>
-                </div>
-                ${task.description ? `<div class="task-item__description" data-has-description="true" title="${this.escapeHtml(task.description)}">${this.escapeHtml(task.description)}</div>` : ''}
-                <div class="task-item__footer">
-                    <div class="task-item__progress" aria-label="Progress: ${progress} pomodoros; Status: ${statusText}">
-                        <div class="task-item__pomodoros" aria-hidden="false">🍅 ${progress}</div>
-                        <div class="task-item__status ${statusClass}" role="status">${statusText}</div>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     /**
@@ -492,7 +422,7 @@ export class TaskUIManager {
         try {
             state = await this.performBulkDeleteRequest(taskIds);
         } catch (error) {
-            console.error('Failed to delete selected tasks:', error);
+            logger.error('Failed to delete selected tasks:', error);
             alert('Failed to delete selected tasks. Please try again.');
             this.updateSelectionBar();
             return;
@@ -506,7 +436,7 @@ export class TaskUIManager {
                     ACTIONS.GET_STATE
                 );
             } catch (stateError) {
-                console.error(
+                logger.error(
                     'Failed to refresh state after deletion:',
                     stateError
                 );
@@ -543,7 +473,7 @@ export class TaskUIManager {
         try {
             state = await this.performBulkCompleteRequest(taskIds);
         } catch (error) {
-            console.error('Failed to complete selected tasks:', error);
+            logger.error('Failed to complete selected tasks:', error);
             alert('Failed to complete selected tasks. Please try again.');
             this.updateSelectionBar();
             return;
@@ -557,7 +487,7 @@ export class TaskUIManager {
                     ACTIONS.GET_STATE
                 );
             } catch (stateError) {
-                console.error(
+                logger.error(
                     'Failed to refresh state after completion:',
                     stateError
                 );
@@ -582,7 +512,7 @@ export class TaskUIManager {
             );
         } catch (error) {
             if (error && error.message === 'Unknown action') {
-                console.warn(
+                logger.warn(
                     'Bulk complete action unsupported; falling back to sequential updates.'
                 );
                 let latestState = null;
@@ -608,7 +538,7 @@ export class TaskUIManager {
             });
         } catch (error) {
             if (error && error.message === 'Unknown action') {
-                console.warn(
+                logger.warn(
                     'Bulk delete action unsupported; falling back to sequential deletions.'
                 );
                 let latestState = null;
@@ -810,7 +740,7 @@ export class TaskUIManager {
                 window._popupController?.syncCurrentTaskLayout?.();
             });
         } catch (error) {
-            console.error('Failed to select task:', error);
+            logger.error('Failed to select task:', error);
         }
     }
 
@@ -827,7 +757,7 @@ export class TaskUIManager {
                 this.showTaskForm(task);
             }
         } catch (error) {
-            console.error('Failed to load task for editing:', error);
+            logger.error('Failed to load task for editing:', error);
         }
     }
 
@@ -851,7 +781,7 @@ export class TaskUIManager {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         } catch (error) {
-            console.error('Failed to delete task:', error);
+            logger.error('Failed to delete task:', error);
         }
     }
 
@@ -872,7 +802,7 @@ export class TaskUIManager {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
         } catch (error) {
-            console.error('Failed to update task completion:', error);
+            logger.error('Failed to update task completion:', error);
         }
     }
 
@@ -909,13 +839,12 @@ export class TaskUIManager {
      * Hide task form modal
      */
     hideTaskForm() {
-        console.log('Hiding task form modal');
         const modal = utils.getElement(POPUP_CONSTANTS.SELECTORS.taskFormModal);
         if (modal) {
             modal.classList.add('hidden');
-            console.log('Task form modal hidden successfully');
+            logger.debug('Task form modal hidden successfully');
         } else {
-            console.warn('Task form modal element not found');
+            logger.warn('Task form modal element not found');
         }
         this.currentEditingTaskId = null;
     }
@@ -957,18 +886,9 @@ export class TaskUIManager {
             }
             this.hideTaskForm();
         } catch (error) {
-            console.error('Failed to save task:', error);
+            logger.error('Failed to save task:', error);
             alert('Failed to save task. Please try again.');
         }
-    }
-
-    /**
-     * Escape HTML to prevent XSS
-     */
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     /**
@@ -1049,7 +969,7 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
             );
             notifySuccess('Jira tasks synced successfully.');
         } catch (err) {
-            console.error('Failed to import Jira tasks:', err);
+            logger.error('Failed to import Jira tasks:', err);
             notifyError(`Jira sync failed: ${err?.message || 'Unknown error'}`);
         } finally {
             btn.disabled = false;
