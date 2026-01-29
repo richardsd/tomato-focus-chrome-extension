@@ -504,9 +504,12 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage(ACTIONS.SET_CURRENT_TASK, {
-                taskId,
-            });
+            const state = await this.messenger.sendMessage(
+                ACTIONS.SET_CURRENT_TASK,
+                {
+                    taskId,
+                }
+            );
             this.onStateUpdate?.(state);
             if (taskId) {
                 this.toastManager?.show('Current task updated.', {
@@ -573,9 +576,12 @@ export class DashboardTaskManager {
                     variant: 'success',
                 });
             } else {
-                state = await this.messenger.sendMessage(ACTIONS.COMPLETE_TASKS, {
-                    taskIds: [taskId],
-                });
+                state = await this.messenger.sendMessage(
+                    ACTIONS.COMPLETE_TASKS,
+                    {
+                        taskIds: [taskId],
+                    }
+                );
                 this.toastManager?.show('Task completed. Nice work!', {
                     variant: 'success',
                 });
@@ -603,9 +609,12 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage(ACTIONS.DELETE_TASKS, {
-                taskIds: [taskId],
-            });
+            const state = await this.messenger.sendMessage(
+                ACTIONS.DELETE_TASKS,
+                {
+                    taskIds: [taskId],
+                }
+            );
             this.onStateUpdate?.(state);
             this.toastManager?.show('Task deleted.', { variant: 'success' });
         } catch (error) {

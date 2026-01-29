@@ -321,7 +321,9 @@ export class DashboardStatisticsManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage(ACTIONS.CLEAR_STATISTICS);
+            const state = await this.messenger.sendMessage(
+                ACTIONS.CLEAR_STATISTICS
+            );
             this.onStateUpdate?.(state);
             await this.refreshHistory();
             this.toastManager?.show('Statistics cleared.', {

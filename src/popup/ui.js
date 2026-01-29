@@ -580,8 +580,9 @@ class NotificationController {
      */
     async checkPermissions() {
         try {
-            const response =
-                await this.messageHandler.sendMessage(ACTIONS.CHECK_NOTIFICATIONS);
+            const response = await this.messageHandler.sendMessage(
+                ACTIONS.CHECK_NOTIFICATIONS
+            );
             if (response && response.permissionLevel) {
                 this.showNotificationStatus(response.permissionLevel);
             }
@@ -805,7 +806,9 @@ class PopupController {
     async loadInitialState() {
         try {
             console.log('Loading initial state...');
-            const state = await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             console.log('Received state:', state);
             this.updateState(state);
         } catch (error) {
@@ -1035,8 +1038,9 @@ class PopupController {
         if (startBtn) {
             startBtn.addEventListener('click', async () => {
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.TOGGLE_TIMER);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.TOGGLE_TIMER
+                    );
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to start timer:', error);
@@ -1047,8 +1051,9 @@ class PopupController {
         if (pauseBtn) {
             pauseBtn.addEventListener('click', async () => {
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.TOGGLE_TIMER);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.TOGGLE_TIMER
+                    );
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to pause timer:', error);
@@ -1059,8 +1064,9 @@ class PopupController {
         if (resetBtn) {
             resetBtn.addEventListener('click', async () => {
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.RESET_TIMER);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.RESET_TIMER
+                    );
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to reset timer:', error);
@@ -1071,8 +1077,9 @@ class PopupController {
         if (skipBreakBtn) {
             skipBreakBtn.addEventListener('click', async () => {
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.SKIP_BREAK);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.SKIP_BREAK
+                    );
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to skip break:', error);
@@ -1099,8 +1106,9 @@ class PopupController {
 
                 // Load current settings when showing the settings panel
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.GET_STATE
+                    );
                     // Force update settings form when navigating to settings panel
                     this.uiManager.forceUpdateSettings(state);
                 } catch (error) {
@@ -1116,8 +1124,9 @@ class PopupController {
 
                 // Refresh the task list when showing the tasks panel
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.GET_STATE
+                    );
                     console.log('Refreshed state for tasks panel:', state);
                     if (state.tasks && this.taskUIManager) {
                         this.taskUIManager.renderTasksList(
@@ -1135,8 +1144,9 @@ class PopupController {
             statsBtn.addEventListener('click', async () => {
                 this.navigationManager.showStatsPanel();
                 try {
-                    const state =
-                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                    const state = await this.messageHandler.sendMessage(
+                        ACTIONS.GET_STATE
+                    );
                     await this.ensureStatisticsHistory();
                     this.renderStatisticsPanel(state);
                 } catch (e) {
@@ -1407,8 +1417,9 @@ class PopupController {
                     console.error('Failed to reset settings:', error);
                     notifyError('Failed to reset settings. Please try again.');
                     try {
-                        const state =
-                            await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                        const state = await this.messageHandler.sendMessage(
+                            ACTIONS.GET_STATE
+                        );
                         this.updateState(state);
                     } catch (refreshError) {
                         console.error(
@@ -1443,8 +1454,9 @@ class PopupController {
                         );
 
                         // Refresh the UI to show updated statistics
-                        const state =
-                            await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                        const state = await this.messageHandler.sendMessage(
+                            ACTIONS.GET_STATE
+                        );
                         this.updateState(state);
                     } catch (error) {
                         console.error(

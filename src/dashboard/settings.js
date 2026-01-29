@@ -425,9 +425,12 @@ export class DashboardSettingsManager {
                 ]);
                 return;
             }
-            const state = await this.messenger.sendMessage(ACTIONS.SAVE_SETTINGS, {
-                settings,
-            });
+            const state = await this.messenger.sendMessage(
+                ACTIONS.SAVE_SETTINGS,
+                {
+                    settings,
+                }
+            );
             this.onStateUpdate?.(state);
             this.showStatus('Settings saved successfully.');
             this.toastManager?.show('Settings saved.', { variant: 'success' });

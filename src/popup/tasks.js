@@ -502,7 +502,9 @@ export class TaskUIManager {
 
         if (!state || !Array.isArray(state.tasks)) {
             try {
-                state = await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                state = await this.messageHandler.sendMessage(
+                    ACTIONS.GET_STATE
+                );
             } catch (stateError) {
                 console.error(
                     'Failed to refresh state after deletion:',
@@ -551,7 +553,9 @@ export class TaskUIManager {
 
         if (!state || !Array.isArray(state.tasks)) {
             try {
-                state = await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+                state = await this.messageHandler.sendMessage(
+                    ACTIONS.GET_STATE
+                );
             } catch (stateError) {
                 console.error(
                     'Failed to refresh state after completion:',
@@ -570,9 +574,12 @@ export class TaskUIManager {
 
     async performBulkCompleteRequest(taskIds) {
         try {
-            return await this.messageHandler.sendMessage(ACTIONS.COMPLETE_TASKS, {
-                taskIds,
-            });
+            return await this.messageHandler.sendMessage(
+                ACTIONS.COMPLETE_TASKS,
+                {
+                    taskIds,
+                }
+            );
         } catch (error) {
             if (error && error.message === 'Unknown action') {
                 console.warn(
@@ -751,8 +758,9 @@ export class TaskUIManager {
     async selectTask(taskId) {
         try {
             // Fetch latest full state to determine current selection
-            const stateResponse =
-                await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+            const stateResponse = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             const tasks = stateResponse.tasks || [];
             const task = tasks.find((t) => t.id === taskId);
             const currentTaskId = stateResponse.currentTaskId;
@@ -811,7 +819,9 @@ export class TaskUIManager {
      */
     async editTask(taskId) {
         try {
-            const response = await this.messageHandler.sendMessage(ACTIONS.GET_TASKS);
+            const response = await this.messageHandler.sendMessage(
+                ACTIONS.GET_TASKS
+            );
             const task = response.tasks.find((t) => t.id === taskId);
             if (task) {
                 this.showTaskForm(task);
@@ -830,9 +840,12 @@ export class TaskUIManager {
         }
 
         try {
-            const state = await this.messageHandler.sendMessage(ACTIONS.DELETE_TASK, {
-                taskId,
-            });
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.DELETE_TASK,
+                {
+                    taskId,
+                }
+            );
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -847,10 +860,13 @@ export class TaskUIManager {
      */
     async toggleTaskCompletion(taskId, isCompleted) {
         try {
-            const state = await this.messageHandler.sendMessage(ACTIONS.UPDATE_TASK, {
-                taskId,
-                updates: { isCompleted },
-            });
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.UPDATE_TASK,
+                {
+                    taskId,
+                    updates: { isCompleted },
+                }
+            );
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -998,7 +1014,9 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
-            const state = await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             const settings = state?.settings || {};
             if (
                 !settings.jiraUrl ||
@@ -1019,9 +1037,12 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
                 );
                 return;
             }
-            await this.messageHandler.sendMessage(ACTIONS.RECONFIGURE_JIRA_SYNC);
-            const updatedState =
-                await this.messageHandler.sendMessage(ACTIONS.IMPORT_JIRA_TASKS);
+            await this.messageHandler.sendMessage(
+                ACTIONS.RECONFIGURE_JIRA_SYNC
+            );
+            const updatedState = await this.messageHandler.sendMessage(
+                ACTIONS.IMPORT_JIRA_TASKS
+            );
             this.renderTasksList(
                 updatedState.tasks || [],
                 updatedState.currentTaskId
