@@ -1,3 +1,5 @@
+import { DEFAULT_SETTINGS } from '../shared/stateDefaults.js';
+
 export const CONSTANTS = {
     ALARM_NAME: 'pomodoroTimer',
     JIRA_SYNC_ALARM: 'jiraSyncAlarm',
@@ -6,22 +8,7 @@ export const CONSTANTS = {
     TASKS_KEY: 'pomodoroTasks',
     NOTIFICATION_ID: 'pomodoroNotification',
     BADGE_UPDATE_INTERVAL: 1000,
-    DEFAULT_SETTINGS: {
-        workDuration: 25,
-        shortBreak: 5,
-        longBreak: 15,
-        longBreakInterval: 4,
-        autoStart: false,
-        theme: 'system',
-        pauseOnIdle: true,
-        playSound: true,
-        volume: 0.7,
-        jiraUrl: '',
-        jiraUsername: '',
-        jiraToken: '',
-        autoSyncJira: false,
-        jiraSyncInterval: 30,
-    },
+    DEFAULT_SETTINGS,
 };
 
 // Utility function to promisify Chrome APIs

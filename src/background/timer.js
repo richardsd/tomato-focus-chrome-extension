@@ -6,6 +6,7 @@ import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
 import { hasJiraPermission } from '../shared/jiraPermissions.js';
+import { DEFAULT_SETTINGS, createDefaultState } from '../shared/stateDefaults.js';
 
 class TimerState {
     constructor() {
@@ -13,17 +14,7 @@ class TimerState {
     }
 
     reset() {
-        this.isRunning = false;
-        this.timeLeft = CONSTANTS.DEFAULT_SETTINGS.workDuration * 60;
-        this.endTime = null;
-        this.currentSession = 1;
-        this.isWorkSession = true;
-        this.settings = { ...CONSTANTS.DEFAULT_SETTINGS };
-        this.wasPausedForIdle = false;
-        this.statistics = null; // Will be loaded async
-        this.currentTaskId = null; // Currently selected task
-        this.tasks = []; // Will be loaded async
-        this.uiPreferences = { hideCompleted: false }; // lightweight UI prefs
+        Object.assign(this, createDefaultState());
     }
 
     getState() {
@@ -120,11 +111,19 @@ export class TimerController {
 
     async loadState() {
         const savedState = await StorageManager.loadState();
+        const defaultState = createDefaultState();
         if (savedState) {
-            Object.assign(this.state, savedState);
+            Object.assign(this.state, defaultState, savedState);
             this.state.settings = {
-                ...CONSTANTS.DEFAULT_SETTINGS,
+                ...DEFAULT_SETTINGS,
                 ...(savedState.settings || {}),
+            };
+            this.state.tasks = Array.isArray(savedState.tasks)
+                ? savedState.tasks
+                : defaultState.tasks;
+            this.state.uiPreferences = {
+                ...defaultState.uiPreferences,
+                ...(savedState.uiPreferences || {}),
             };
             if (savedState.endTime) {
                 const remainingMs = savedState.endTime - Date.now();
@@ -184,7 +183,7 @@ export class TimerController {
 
         const interval =
             Number.parseInt(jiraSyncInterval, 10) ||
-            CONSTANTS.DEFAULT_SETTINGS.jiraSyncInterval;
+            DEFAULT_SETTINGS.jiraSyncInterval;
         const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
         chrome.alarms.create(this.jiraAlarmName, {
             periodInMinutes: sanitizedInterval,
