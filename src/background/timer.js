@@ -1,16 +1,13 @@
-import { CONSTANTS, chromePromise } from './constants.js';
+import { CONSTANTS } from './constants.js';
 import { StatisticsManager } from './statistics.js';
 import { TaskManager } from './tasks.js';
 import { NotificationManager } from './notifications.js';
-import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
-import { fetchAssignedIssues } from './jira.js';
-import { hasJiraPermission } from '../shared/jiraPermissions.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
-import {
-    DEFAULT_SETTINGS,
-    createDefaultState,
-} from '../shared/stateDefaults.js';
+import { createDefaultState } from '../shared/stateDefaults.js';
+import { JiraSyncManager } from './jiraSync.js';
+import { StorageManager } from './storageManager.js';
+import { UiNotifier } from './uiNotifier.js';
 
 class TimerState {
     constructor() {
@@ -66,35 +63,17 @@ class TimerState {
     }
 }
 
-class StorageManager {
-    static async saveState(state) {
-        try {
-            await chromePromise.storage.local.set({
-                [CONSTANTS.STORAGE_KEY]: state,
-            });
-        } catch (error) {
-            console.error('Failed to save state:', error);
-        }
-    }
-
-    static async loadState() {
-        try {
-            const result = await chromePromise.storage.local.get([
-                CONSTANTS.STORAGE_KEY,
-            ]);
-            return result[CONSTANTS.STORAGE_KEY] || null;
-        } catch (error) {
-            console.error('Failed to load state:', error);
-            return null;
-        }
-    }
-}
-
 export class TimerController {
     constructor() {
         this.state = new TimerState();
         this.alarmName = CONSTANTS.ALARM_NAME;
         this.jiraAlarmName = CONSTANTS.JIRA_SYNC_ALARM;
+        this.jiraSync = new JiraSyncManager({
+            alarmName: this.jiraAlarmName,
+        });
+        this.uiNotifier = new UiNotifier({
+            saveState: () => this.saveState(),
+        });
         this.isInitialized = false;
 
         this.init();
@@ -115,28 +94,11 @@ export class TimerController {
 
     async loadState() {
         const savedState = await StorageManager.loadState();
-        const defaultState = createDefaultState();
-        if (savedState) {
-            Object.assign(this.state, defaultState, savedState);
-            this.state.settings = {
-                ...DEFAULT_SETTINGS,
-                ...(savedState.settings || {}),
-            };
-            this.state.tasks = Array.isArray(savedState.tasks)
-                ? savedState.tasks
-                : defaultState.tasks;
-            this.state.uiPreferences = {
-                ...defaultState.uiPreferences,
-                ...(savedState.uiPreferences || {}),
-            };
-            if (savedState.endTime) {
-                const remainingMs = savedState.endTime - Date.now();
-                this.state.timeLeft = Math.max(
-                    0,
-                    Math.ceil(remainingMs / 1000)
-                );
-            }
-        } else {
+        const hasSavedState = StorageManager.applySavedState(
+            this.state,
+            savedState
+        );
+        if (!hasSavedState) {
             await this.saveState();
         }
     }
@@ -154,88 +116,18 @@ export class TimerController {
     }
 
     async configureJiraSyncAlarm() {
-        const settings = this.state.settings || {};
-        await new Promise((resolve) =>
-            chrome.alarms.clear(this.jiraAlarmName, resolve)
-        );
-
-        const {
-            autoSyncJira,
-            jiraSyncInterval,
-            jiraUrl,
-            jiraUsername,
-            jiraToken,
-        } = settings;
-        if (!autoSyncJira) {
-            return;
-        }
-
-        if (!jiraUrl || !jiraUsername || !jiraToken) {
-            console.warn(
-                'Jira auto-sync is enabled but configuration is incomplete. Skipping alarm registration.'
-            );
-            return;
-        }
-
-        const hasPermission = await hasJiraPermission(jiraUrl);
-        if (!hasPermission) {
-            console.warn(
-                'Jira auto-sync is enabled but host permission is not granted. Skipping alarm registration.'
-            );
-            return;
-        }
-
-        const interval =
-            Number.parseInt(jiraSyncInterval, 10) ||
-            DEFAULT_SETTINGS.jiraSyncInterval;
-        const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
-        chrome.alarms.create(this.jiraAlarmName, {
-            periodInMinutes: sanitizedInterval,
-        });
+        await this.jiraSync.configureAlarm(this.state.settings);
     }
 
     async performJiraSync() {
-        const { jiraUrl, jiraUsername, jiraToken } = this.state.settings;
-        const hasPermission = await hasJiraPermission(jiraUrl);
-        if (!hasPermission) {
-            throw new Error(
-                'Jira permission not granted. Please enable Jira access in settings.'
-            );
-        }
-        const issues = await fetchAssignedIssues({
-            jiraUrl,
-            jiraUsername,
-            jiraToken,
-        });
-        const existingTasks = await TaskManager.getTasks();
-        const existingTitles = new Set(
-            existingTasks.map((task) => (task.title || '').trim().toLowerCase())
-        );
-        let createdCount = 0;
-
-        for (const issue of issues) {
-            const normalizedTitle = (issue.title || '').trim();
-            const fallbackTitle = normalizedTitle || issue.key || 'Jira Task';
-            const dedupeKey = fallbackTitle.toLowerCase();
-
-            if (existingTitles.has(dedupeKey)) {
-                continue;
-            }
-
-            await TaskManager.createTask({
-                title: fallbackTitle,
-                description: issue.description,
-                estimatedPomodoros: 1,
-            });
-            existingTitles.add(dedupeKey);
-            createdCount++;
-        }
-
-        this.state.tasks = await TaskManager.getTasks();
+        const result = await this.jiraSync.performJiraSync(this.state.settings);
+        this.state.tasks = result.tasks;
         await this.saveState();
-        this.sendMessageToPopup(ACTIONS.UPDATE_TIMER, this.state.getState());
-
-        return { importedCount: createdCount, totalIssues: issues.length };
+        this.uiNotifier.sendTimerUpdate(this.state);
+        return {
+            importedCount: result.importedCount,
+            totalIssues: result.totalIssues,
+        };
     }
 
     async handleJiraSyncAlarm() {
@@ -249,14 +141,14 @@ export class TimerController {
             } else {
                 message = 'Jira sync complete – no assigned issues found.';
             }
-            await NotificationManager.show(
+            await this.uiNotifier.notify(
                 'Tomato Focus',
                 message,
                 this.state.settings
             );
         } catch (error) {
             console.error('Automatic Jira sync failed:', error);
-            await NotificationManager.show(
+            await this.uiNotifier.notify(
                 'Tomato Focus',
                 `Jira sync failed: ${error.message}`,
                 this.state.settings
@@ -265,24 +157,7 @@ export class TimerController {
     }
 
     updateUI() {
-        const { timeLeft, isRunning, isWorkSession } = this.state;
-
-        BadgeManager.update(timeLeft, isRunning, isWorkSession);
-        ContextMenuManager.update(isRunning, isWorkSession, timeLeft);
-
-        // Send message to popup if it's open
-        this.sendMessageToPopup(ACTIONS.UPDATE_TIMER, this.state.getState());
-
-        this.saveState();
-    }
-
-    sendMessageToPopup(action, data) {
-        chrome.runtime.sendMessage({ action, state: data }).catch((error) => {
-            // Ignore connection errors when no popup is open
-            if (!error.message.includes('Receiving end does not exist')) {
-                console.warn('Failed to send message to popup:', error.message);
-            }
-        });
+        this.uiNotifier.updateUI(this.state);
     }
 
     setupAlarmListener() {
@@ -343,12 +218,8 @@ export class TimerController {
         await this.saveState();
         await this.scheduleAlarm();
         this.startBadgeUpdater();
-        this.updateBadge();
-        ContextMenuManager.update(
-            true,
-            this.state.isWorkSession,
-            this.state.timeLeft
-        );
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
         this.updateUI();
     }
 
@@ -362,12 +233,8 @@ export class TimerController {
         await chrome.alarms.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
-        this.updateBadge();
-        ContextMenuManager.update(
-            false,
-            this.state.isWorkSession,
-            this.state.timeLeft
-        );
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
         this.updateUI();
     }
 
@@ -379,12 +246,8 @@ export class TimerController {
         await chrome.alarms.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
-        this.updateBadge();
-        ContextMenuManager.update(
-            false,
-            this.state.isWorkSession,
-            this.state.timeLeft
-        );
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
         this.updateUI();
     }
 
@@ -427,7 +290,7 @@ export class TimerController {
         await this.saveState();
 
         if (this.state.settings.playSound || NotificationManager) {
-            await NotificationManager.show(
+            await this.uiNotifier.notify(
                 'Tomato Focus',
                 `${sessionType} session complete`,
                 this.state.settings
@@ -442,12 +305,8 @@ export class TimerController {
             this.stopBadgeUpdater();
         }
 
-        this.updateBadge();
-        ContextMenuManager.update(
-            this.state.isRunning,
-            this.state.isWorkSession,
-            this.state.timeLeft
-        );
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
         this.updateUI();
     }
 
@@ -474,12 +333,8 @@ export class TimerController {
                 this.stopBadgeUpdater();
             }
             await this.saveState();
-            this.updateBadge();
-            ContextMenuManager.update(
-                this.state.isRunning,
-                this.state.isWorkSession,
-                this.state.timeLeft
-            );
+            this.uiNotifier.updateBadge(this.state);
+            this.uiNotifier.updateContextMenu(this.state);
             this.updateUI();
         }
     }
@@ -492,17 +347,9 @@ export class TimerController {
         await this.scheduleAlarm();
         this.stopBadgeUpdater();
         this.startBadgeUpdater();
-        this.updateBadge();
-        ContextMenuManager.update(true, true, this.state.timeLeft);
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
         this.updateUI();
-    }
-
-    updateBadge() {
-        BadgeManager.update(
-            this.state.timeLeft,
-            this.state.isRunning,
-            this.state.isWorkSession
-        );
     }
 
     startBadgeUpdater() {
@@ -514,18 +361,12 @@ export class TimerController {
                 this.state.timeLeft--;
                 if (this.state.timeLeft <= 0) {
                     this.state.timeLeft = 0;
-                    this.updateBadge();
-                    this.sendMessageToPopup(
-                        ACTIONS.UPDATE_TIMER,
-                        this.state.getState()
-                    );
+                    this.uiNotifier.updateBadge(this.state);
+                    this.uiNotifier.sendTimerUpdate(this.state);
                     this.stopBadgeUpdater();
                 } else {
-                    this.updateBadge();
-                    this.sendMessageToPopup(
-                        ACTIONS.UPDATE_TIMER,
-                        this.state.getState()
-                    );
+                    this.uiNotifier.updateBadge(this.state);
+                    this.uiNotifier.sendTimerUpdate(this.state);
                 }
             }
         }, CONSTANTS.BADGE_UPDATE_INTERVAL);
