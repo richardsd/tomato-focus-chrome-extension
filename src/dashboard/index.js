@@ -1,4 +1,4 @@
-import { POPUP_CONSTANTS } from '../popup/common.js';
+import { DEFAULT_STATE, RETRY_DELAY } from '../shared/uiConstants.js';
 import {
     RuntimeMessenger,
     addRuntimeActionListener,
@@ -46,8 +46,8 @@ class DashboardToastManager {
 class DashboardApp {
     constructor() {
         this.messenger = new RuntimeMessenger({
-            retryDelay: POPUP_CONSTANTS.RETRY_DELAY,
-            fallbacks: { [ACTIONS.GET_STATE]: POPUP_CONSTANTS.DEFAULT_STATE },
+            retryDelay: RETRY_DELAY,
+            fallbacks: { [ACTIONS.GET_STATE]: DEFAULT_STATE },
         });
 
         this.sections = {
@@ -74,7 +74,7 @@ class DashboardApp {
         this.activeSection = null;
         this.handleHashChange = this.handleHashChange.bind(this);
         this.state = {
-            core: { ...POPUP_CONSTANTS.DEFAULT_STATE },
+            core: { ...DEFAULT_STATE },
             history: {},
         };
 

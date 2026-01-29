@@ -1,4 +1,4 @@
-import { POPUP_CONSTANTS } from '../popup/common.js';
+import { DEFAULT_STATE } from '../shared/uiConstants.js';
 import { validateSettingsValues } from '../popup/settings.js';
 import { isValidJiraUrl, validateJiraUrl } from '../shared/jiraUrlValidator.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
@@ -121,7 +121,7 @@ export class DashboardSettingsManager {
 
         if (this.resetButton) {
             this.resetButton.addEventListener('click', () => {
-                this.render(POPUP_CONSTANTS.DEFAULT_STATE.settings);
+                this.render(DEFAULT_STATE.settings);
                 this.showStatus('Settings reset — save to persist changes.');
             });
         }
@@ -153,7 +153,7 @@ export class DashboardSettingsManager {
 
     render(settings) {
         const values = {
-            ...POPUP_CONSTANTS.DEFAULT_STATE.settings,
+            ...DEFAULT_STATE.settings,
             ...(settings || {}),
         };
 
@@ -300,7 +300,7 @@ export class DashboardSettingsManager {
             playSound: Boolean(inputs.playSound?.checked),
             volume: Number.isFinite(parsedVolume)
                 ? parsedVolume
-                : POPUP_CONSTANTS.DEFAULT_STATE.settings.volume,
+                : DEFAULT_STATE.settings.volume,
             theme: inputs.theme?.value || 'system',
             jiraUrl: inputs.jiraUrl?.value?.trim() || '',
             jiraUsername: inputs.jiraUsername?.value?.trim() || '',
@@ -308,7 +308,7 @@ export class DashboardSettingsManager {
             autoSyncJira: Boolean(inputs.autoSyncJira?.checked),
             jiraSyncInterval:
                 parseInt(inputs.jiraSyncInterval?.value, 10) ||
-                POPUP_CONSTANTS.DEFAULT_STATE.settings.jiraSyncInterval,
+                DEFAULT_STATE.settings.jiraSyncInterval,
         };
     }
 

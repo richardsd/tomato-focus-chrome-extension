@@ -1,15 +1,8 @@
-import { POPUP_CONSTANTS, utils } from '../popup/common.js';
+import { DEFAULT_STATE } from '../shared/uiConstants.js';
+import { debounce, escapeHtml, formatTime } from '../shared/uiUtils.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
 
 const QUOTE_STORAGE_KEY = 'tomato-focus-dashboard-quote-hidden';
-
-function debounce(fn, delay) {
-    let timeoutId;
-    return (...args) => {
-        window.clearTimeout(timeoutId);
-        timeoutId = window.setTimeout(() => fn(...args), delay);
-    };
-}
 
 function formatDate(value) {
     if (!value) {
@@ -29,18 +22,6 @@ function formatDate(value) {
         console.warn('Failed to format date', error);
         return 'Unknown';
     }
-}
-
-function escapeHtml(value) {
-    if (value === null || value === undefined) {
-        return '';
-    }
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
 }
 
 function getTaskStatus(task, currentTaskId) {
@@ -159,7 +140,7 @@ export class DashboardTaskManager {
         this.state = {
             tasks: [],
             currentTaskId: null,
-            timeLeft: POPUP_CONSTANTS.DEFAULT_STATE.timeLeft,
+            timeLeft: DEFAULT_STATE.timeLeft,
             isRunning: false,
             isWorkSession: true,
         };
@@ -690,7 +671,7 @@ export class DashboardTaskManager {
             currentTaskId: state.currentTaskId || null,
             timeLeft: Number.isFinite(state.timeLeft)
                 ? state.timeLeft
-                : POPUP_CONSTANTS.DEFAULT_STATE.timeLeft,
+                : DEFAULT_STATE.timeLeft,
             isRunning: Boolean(state.isRunning),
             isWorkSession: Boolean(state.isWorkSession),
         };
@@ -736,7 +717,7 @@ export class DashboardTaskManager {
                 this.focusMeta.textContent = '';
             }
             if (this.focusTimer) {
-                this.focusTimer.textContent = utils.formatTime(timeLeft);
+                this.focusTimer.textContent = formatTime(timeLeft);
             }
             if (this.focusPhase) {
                 this.focusPhase.textContent = isWorkSession
@@ -796,7 +777,7 @@ export class DashboardTaskManager {
             this.focusMeta.textContent = meta.join(' · ');
         }
         if (this.focusTimer) {
-            this.focusTimer.textContent = utils.formatTime(timeLeft);
+            this.focusTimer.textContent = formatTime(timeLeft);
         }
         if (this.focusPhase) {
             this.focusPhase.textContent = isWorkSession
