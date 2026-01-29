@@ -1,3 +1,5 @@
+import { ACTIONS } from './runtimeActions.js';
+
 const DEFAULT_RETRY_DELAY = 100;
 
 /**
@@ -92,6 +94,86 @@ export class RuntimeMessenger {
 
             attemptSend();
         });
+    }
+
+    getState(options) {
+        return this.sendMessage(ACTIONS.GET_STATE, {}, options);
+    }
+
+    saveSettings(settings, options) {
+        return this.sendMessage(ACTIONS.SAVE_SETTINGS, { settings }, options);
+    }
+
+    updateUiPreferences(uiPreferences, options) {
+        return this.sendMessage(
+            ACTIONS.UPDATE_UI_PREFERENCES,
+            { uiPreferences },
+            options
+        );
+    }
+
+    toggleTimer(options) {
+        return this.sendMessage(ACTIONS.TOGGLE_TIMER, {}, options);
+    }
+
+    resetTimer(options) {
+        return this.sendMessage(ACTIONS.RESET_TIMER, {}, options);
+    }
+
+    skipBreak(options) {
+        return this.sendMessage(ACTIONS.SKIP_BREAK, {}, options);
+    }
+
+    checkNotifications(options) {
+        return this.sendMessage(ACTIONS.CHECK_NOTIFICATIONS, {}, options);
+    }
+
+    getStatisticsHistory(options) {
+        return this.sendMessage(ACTIONS.GET_STATISTICS_HISTORY, {}, options);
+    }
+
+    clearStatistics(options) {
+        return this.sendMessage(ACTIONS.CLEAR_STATISTICS, {}, options);
+    }
+
+    getTasks(options) {
+        return this.sendMessage(ACTIONS.GET_TASKS, {}, options);
+    }
+
+    createTask(task, options) {
+        return this.sendMessage(ACTIONS.CREATE_TASK, { task }, options);
+    }
+
+    updateTask(taskId, updates, options) {
+        return this.sendMessage(
+            ACTIONS.UPDATE_TASK,
+            { taskId, updates },
+            options
+        );
+    }
+
+    deleteTask(taskId, options) {
+        return this.sendMessage(ACTIONS.DELETE_TASK, { taskId }, options);
+    }
+
+    completeTasks(taskIds, options) {
+        return this.sendMessage(ACTIONS.COMPLETE_TASKS, { taskIds }, options);
+    }
+
+    deleteTasks(taskIds, options) {
+        return this.sendMessage(ACTIONS.DELETE_TASKS, { taskIds }, options);
+    }
+
+    setCurrentTask(taskId, options) {
+        return this.sendMessage(ACTIONS.SET_CURRENT_TASK, { taskId }, options);
+    }
+
+    reconfigureJiraSync(options) {
+        return this.sendMessage(ACTIONS.RECONFIGURE_JIRA_SYNC, {}, options);
+    }
+
+    importJiraTasks(options) {
+        return this.sendMessage(ACTIONS.IMPORT_JIRA_TASKS, {}, options);
     }
 }
 

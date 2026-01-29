@@ -1,6 +1,7 @@
 import { POPUP_CONSTANTS } from '../popup/common.js';
 import { validateSettingsValues } from '../popup/settings.js';
 import { isValidJiraUrl, validateJiraUrl } from '../shared/jiraUrlValidator.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 
 const TOKEN_PLACEHOLDER = '••••••••••';
 
@@ -424,7 +425,7 @@ export class DashboardSettingsManager {
                 ]);
                 return;
             }
-            const state = await this.messenger.sendMessage('saveSettings', {
+            const state = await this.messenger.sendMessage(ACTIONS.SAVE_SETTINGS, {
                 settings,
             });
             this.onStateUpdate?.(state);

@@ -3,6 +3,7 @@ import {
     RuntimeMessenger,
     addRuntimeActionListener,
 } from '../shared/runtimeMessaging.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 import { DashboardTaskManager } from './tasks.js';
 import { DashboardSettingsManager } from './settings.js';
 import { DashboardStatisticsManager } from './statistics.js';
@@ -46,7 +47,7 @@ class DashboardApp {
     constructor() {
         this.messenger = new RuntimeMessenger({
             retryDelay: POPUP_CONSTANTS.RETRY_DELAY,
-            fallbacks: { getState: POPUP_CONSTANTS.DEFAULT_STATE },
+            fallbacks: { [ACTIONS.GET_STATE]: POPUP_CONSTANTS.DEFAULT_STATE },
         });
 
         this.sections = {
@@ -214,7 +215,7 @@ class DashboardApp {
     async fetchAndSyncState(options = {}) {
         const { silent = false } = options;
         try {
-            const state = await this.messenger.sendMessage('getState');
+            const state = await this.messenger.sendMessage(ACTIONS.GET_STATE);
             this.updateCoreState(state, { silent });
             return state;
         } catch (error) {
@@ -226,7 +227,7 @@ class DashboardApp {
     async fetchStatisticsHistory() {
         try {
             const response = await this.messenger.sendMessage(
-                'getStatisticsHistory',
+                ACTIONS.GET_STATISTICS_HISTORY,
                 {},
                 { fallbackValue: { success: true, history: {} } }
             );
@@ -245,7 +246,7 @@ class DashboardApp {
         }
 
         this.unsubscribeRuntimeUpdates = addRuntimeActionListener(
-            'updateTimer',
+            ACTIONS.UPDATE_TIMER,
             (request) => {
                 if (request.state) {
                     this.updateCoreState(request.state, { silent: false });

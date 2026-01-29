@@ -6,6 +6,7 @@ import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
 import { hasJiraPermission } from '../shared/jiraPermissions.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 import {
     DEFAULT_SETTINGS,
     createDefaultState,
@@ -232,7 +233,7 @@ export class TimerController {
 
         this.state.tasks = await TaskManager.getTasks();
         await this.saveState();
-        this.sendMessageToPopup('updateTimer', this.state.getState());
+        this.sendMessageToPopup(ACTIONS.UPDATE_TIMER, this.state.getState());
 
         return { importedCount: createdCount, totalIssues: issues.length };
     }
@@ -270,7 +271,7 @@ export class TimerController {
         ContextMenuManager.update(isRunning, isWorkSession, timeLeft);
 
         // Send message to popup if it's open
-        this.sendMessageToPopup('updateTimer', this.state.getState());
+        this.sendMessageToPopup(ACTIONS.UPDATE_TIMER, this.state.getState());
 
         this.saveState();
     }
@@ -515,14 +516,14 @@ export class TimerController {
                     this.state.timeLeft = 0;
                     this.updateBadge();
                     this.sendMessageToPopup(
-                        'updateTimer',
+                        ACTIONS.UPDATE_TIMER,
                         this.state.getState()
                     );
                     this.stopBadgeUpdater();
                 } else {
                     this.updateBadge();
                     this.sendMessageToPopup(
-                        'updateTimer',
+                        ACTIONS.UPDATE_TIMER,
                         this.state.getState()
                     );
                 }
@@ -540,46 +541,46 @@ export class TimerController {
     async handleMessage(request, sender, sendResponse) {
         try {
             switch (request.action) {
-                case 'getState':
+                case ACTIONS.GET_STATE:
                     sendResponse({ state: this.state.getState() });
                     break;
-                case 'start':
+                case ACTIONS.START:
                     await this.start();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
                     });
                     break;
-                case 'pause':
+                case ACTIONS.PAUSE:
                     await this.pause();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
                     });
                     break;
-                case 'reset':
-                case 'resetTimer':
+                case ACTIONS.RESET:
+                case ACTIONS.RESET_TIMER:
                     await this.reset();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
                     });
                     break;
-                case 'skipBreak':
+                case ACTIONS.SKIP_BREAK:
                     await this.skipBreak();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
                     });
                     break;
-                case 'toggleTimer':
+                case ACTIONS.TOGGLE_TIMER:
                     await this.toggle();
                     sendResponse({
                         success: true,
                         state: this.state.getState(),
                     });
                     break;
-                case 'saveSettings': {
+                case ACTIONS.SAVE_SETTINGS: {
                     this.state.updateSettings(request.settings);
 
                     const newDuration = this.state.isWorkSession
@@ -610,7 +611,7 @@ export class TimerController {
                     });
                     break;
                 }
-                case 'createTask':
+                case ACTIONS.CREATE_TASK:
                     await TaskManager.createTask(request.task);
                     this.state.tasks = await TaskManager.getTasks();
                     await this.saveState();
@@ -619,7 +620,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'updateTask':
+                case ACTIONS.UPDATE_TASK:
                     await TaskManager.updateTask(
                         request.taskId,
                         request.updates
@@ -637,7 +638,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'deleteTask':
+                case ACTIONS.DELETE_TASK:
                     await TaskManager.deleteTask(request.taskId);
                     if (this.state.currentTaskId === request.taskId) {
                         this.state.currentTaskId = null;
@@ -649,7 +650,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'completeTasks': {
+                case ACTIONS.COMPLETE_TASKS: {
                     const taskIds = Array.isArray(request.taskIds)
                         ? request.taskIds
                         : [];
@@ -672,7 +673,7 @@ export class TimerController {
                     });
                     break;
                 }
-                case 'deleteTasks': {
+                case ACTIONS.DELETE_TASKS: {
                     const taskIds = Array.isArray(request.taskIds)
                         ? request.taskIds
                         : [];
@@ -692,17 +693,17 @@ export class TimerController {
                     });
                     break;
                 }
-                case 'getTasks': {
+                case ACTIONS.GET_TASKS: {
                     const tasks = await TaskManager.getTasks();
                     sendResponse({ success: true, tasks });
                     break;
                 }
-                case 'reconfigureJiraSync': {
+                case ACTIONS.RECONFIGURE_JIRA_SYNC: {
                     await this.configureJiraSyncAlarm();
                     sendResponse({ success: true });
                     break;
                 }
-                case 'importJiraTasks': {
+                case ACTIONS.IMPORT_JIRA_TASKS: {
                     try {
                         const result = await this.performJiraSync();
                         sendResponse({
@@ -717,7 +718,7 @@ export class TimerController {
                     }
                     break;
                 }
-                case 'setCurrentTask':
+                case ACTIONS.SET_CURRENT_TASK:
                     this.state.currentTaskId = request.taskId;
                     await this.saveState();
                     sendResponse({
@@ -725,7 +726,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'updateUiPreferences':
+                case ACTIONS.UPDATE_UI_PREFERENCES:
                     this.state.uiPreferences = {
                         ...this.state.uiPreferences,
                         ...(request.uiPreferences || request.updates || {}),
@@ -736,7 +737,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'clearCompletedTasks':
+                case ACTIONS.CLEAR_COMPLETED_TASKS:
                     await TaskManager.clearCompletedTasks();
                     this.state.tasks = await TaskManager.getTasks();
                     if (this.state.currentTaskId) {
@@ -753,7 +754,7 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'clearStatistics':
+                case ACTIONS.CLEAR_STATISTICS:
                     await StatisticsManager.clearAll();
                     await this.loadStatistics();
                     sendResponse({
@@ -761,12 +762,12 @@ export class TimerController {
                         state: this.state.getState(),
                     });
                     break;
-                case 'getStatisticsHistory': {
+                case ACTIONS.GET_STATISTICS_HISTORY: {
                     const all = await StatisticsManager.getAllStatistics();
                     sendResponse({ success: true, history: all });
                     break;
                 }
-                case 'checkNotifications': {
+                case ACTIONS.CHECK_NOTIFICATIONS: {
                     const permissionLevel =
                         await NotificationManager.checkPermissions();
                     sendResponse({ success: true, permissionLevel });

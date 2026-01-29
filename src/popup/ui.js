@@ -6,6 +6,7 @@ import {
     RuntimeMessenger,
     addRuntimeActionListener,
 } from '../shared/runtimeMessaging.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 import { requestJiraPermission } from '../shared/jiraPermissions.js';
 
 function isElementNode(value) {
@@ -169,7 +170,7 @@ class MessageHandler extends RuntimeMessenger {
     constructor() {
         super({
             retryDelay: POPUP_CONSTANTS.RETRY_DELAY,
-            fallbacks: { getState: POPUP_CONSTANTS.DEFAULT_STATE },
+            fallbacks: { [ACTIONS.GET_STATE]: POPUP_CONSTANTS.DEFAULT_STATE },
         });
         this.unsubscribe = null;
         this.setupMessageListener();
@@ -184,7 +185,7 @@ class MessageHandler extends RuntimeMessenger {
         }
 
         this.unsubscribe = addRuntimeActionListener(
-            'updateTimer',
+            ACTIONS.UPDATE_TIMER,
             (request) => {
                 if (request.state) {
                     document.dispatchEvent(
@@ -580,7 +581,7 @@ class NotificationController {
     async checkPermissions() {
         try {
             const response =
-                await this.messageHandler.sendMessage('checkNotifications');
+                await this.messageHandler.sendMessage(ACTIONS.CHECK_NOTIFICATIONS);
             if (response && response.permissionLevel) {
                 this.showNotificationStatus(response.permissionLevel);
             }
@@ -773,7 +774,9 @@ class PopupController {
             this.checkNotifications();
 
             // Make sure the tasks list is rendered with empty state if no tasks
-            const state = await this.messageHandler.sendMessage('getState');
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             if (this.taskUIManager) {
                 this.taskUIManager.renderTasksList(
                     state.tasks || [],
@@ -802,7 +805,7 @@ class PopupController {
     async loadInitialState() {
         try {
             console.log('Loading initial state...');
-            const state = await this.messageHandler.sendMessage('getState');
+            const state = await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
             console.log('Received state:', state);
             this.updateState(state);
         } catch (error) {
@@ -829,7 +832,7 @@ class PopupController {
                 state.uiPreferences.tasksFilter = 'in-progress';
                 // Persist updated preference
                 chrome.runtime.sendMessage({
-                    action: 'updateUiPreferences',
+                    action: ACTIONS.UPDATE_UI_PREFERENCES,
                     updates: { tasksFilter: 'in-progress' },
                 });
             }
@@ -1033,7 +1036,7 @@ class PopupController {
             startBtn.addEventListener('click', async () => {
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('toggleTimer');
+                        await this.messageHandler.sendMessage(ACTIONS.TOGGLE_TIMER);
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to start timer:', error);
@@ -1045,7 +1048,7 @@ class PopupController {
             pauseBtn.addEventListener('click', async () => {
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('toggleTimer');
+                        await this.messageHandler.sendMessage(ACTIONS.TOGGLE_TIMER);
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to pause timer:', error);
@@ -1057,7 +1060,7 @@ class PopupController {
             resetBtn.addEventListener('click', async () => {
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('resetTimer');
+                        await this.messageHandler.sendMessage(ACTIONS.RESET_TIMER);
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to reset timer:', error);
@@ -1069,7 +1072,7 @@ class PopupController {
             skipBreakBtn.addEventListener('click', async () => {
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('skipBreak');
+                        await this.messageHandler.sendMessage(ACTIONS.SKIP_BREAK);
                     this.updateState(state);
                 } catch (error) {
                     console.error('Failed to skip break:', error);
@@ -1097,7 +1100,7 @@ class PopupController {
                 // Load current settings when showing the settings panel
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('getState');
+                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
                     // Force update settings form when navigating to settings panel
                     this.uiManager.forceUpdateSettings(state);
                 } catch (error) {
@@ -1114,7 +1117,7 @@ class PopupController {
                 // Refresh the task list when showing the tasks panel
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('getState');
+                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
                     console.log('Refreshed state for tasks panel:', state);
                     if (state.tasks && this.taskUIManager) {
                         this.taskUIManager.renderTasksList(
@@ -1133,7 +1136,7 @@ class PopupController {
                 this.navigationManager.showStatsPanel();
                 try {
                     const state =
-                        await this.messageHandler.sendMessage('getState');
+                        await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
                     await this.ensureStatisticsHistory();
                     this.renderStatisticsPanel(state);
                 } catch (e) {
@@ -1173,7 +1176,7 @@ class PopupController {
                 }
                 try {
                     const state = await this.messageHandler.sendMessage(
-                        'updateUiPreferences',
+                        ACTIONS.UPDATE_UI_PREFERENCES,
                         { uiPreferences: { tasksFilter: selected } }
                     );
                     if (state && this.taskUIManager) {
@@ -1247,7 +1250,7 @@ class PopupController {
             clearTaskBtn.addEventListener('click', async () => {
                 try {
                     const state = await this.messageHandler.sendMessage(
-                        'setCurrentTask',
+                        ACTIONS.SET_CURRENT_TASK,
                         { taskId: null }
                     );
 
@@ -1319,7 +1322,7 @@ class PopupController {
                 }
                 try {
                     const state = await this.messageHandler.sendMessage(
-                        'clearCompletedTasks'
+                        ACTIONS.CLEAR_COMPLETED_TASKS
                     );
                     this.updateState(state);
                 } catch (e) {
@@ -1361,7 +1364,7 @@ class PopupController {
                     }
 
                     const state = await this.messageHandler.sendMessage(
-                        'saveSettings',
+                        ACTIONS.SAVE_SETTINGS,
                         { settings }
                     );
                     this.updateState(state);
@@ -1395,7 +1398,7 @@ class PopupController {
 
                 try {
                     const state = await this.messageHandler.sendMessage(
-                        'saveSettings',
+                        ACTIONS.SAVE_SETTINGS,
                         { settings: defaults }
                     );
                     this.updateState(state);
@@ -1405,7 +1408,7 @@ class PopupController {
                     notifyError('Failed to reset settings. Please try again.');
                     try {
                         const state =
-                            await this.messageHandler.sendMessage('getState');
+                            await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
                         this.updateState(state);
                     } catch (refreshError) {
                         console.error(
@@ -1433,7 +1436,7 @@ class PopupController {
                 if (confirmed) {
                     try {
                         await this.messageHandler.sendMessage(
-                            'clearStatistics'
+                            ACTIONS.CLEAR_STATISTICS
                         );
                         notifySuccess(
                             'All statistics data has been cleared successfully.'
@@ -1441,7 +1444,7 @@ class PopupController {
 
                         // Refresh the UI to show updated statistics
                         const state =
-                            await this.messageHandler.sendMessage('getState');
+                            await this.messageHandler.sendMessage(ACTIONS.GET_STATE);
                         this.updateState(state);
                     } catch (error) {
                         console.error(
@@ -1521,7 +1524,7 @@ class PopupController {
         }
         try {
             const resp = await this.messageHandler.sendMessage(
-                'getStatisticsHistory'
+                ACTIONS.GET_STATISTICS_HISTORY
             );
             this._statsHistoryCache = resp && resp.history ? resp.history : {};
             return this._statsHistoryCache;

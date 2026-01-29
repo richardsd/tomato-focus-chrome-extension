@@ -1,4 +1,5 @@
 import { CONSTANTS, chromePromise } from './constants.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 
 export class NotificationManager {
     static offscreenCreated = false;
@@ -93,7 +94,7 @@ export class NotificationManager {
 
             // Send message to offscreen document to play sound
             const response = await chrome.runtime.sendMessage({
-                action: 'playSound',
+                action: ACTIONS.PLAY_SOUND,
                 soundUrl: chrome.runtime.getURL('sounds/notification.mp3'),
                 volume:
                     typeof volume === 'number'

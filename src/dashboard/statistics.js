@@ -1,4 +1,5 @@
 import { utils } from '../popup/common.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 
 function normaliseHistory(history = {}) {
     return Object.entries(history)
@@ -320,7 +321,7 @@ export class DashboardStatisticsManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage('clearStatistics');
+            const state = await this.messenger.sendMessage(ACTIONS.CLEAR_STATISTICS);
             this.onStateUpdate?.(state);
             await this.refreshHistory();
             this.toastManager?.show('Statistics cleared.', {
