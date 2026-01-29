@@ -6,7 +6,10 @@ import { BadgeManager } from './badge.js';
 import { ContextMenuManager } from './contextMenus.js';
 import { fetchAssignedIssues } from './jira.js';
 import { hasJiraPermission } from '../shared/jiraPermissions.js';
-import { DEFAULT_SETTINGS, createDefaultState } from '../shared/stateDefaults.js';
+import {
+    DEFAULT_SETTINGS,
+    createDefaultState,
+} from '../shared/stateDefaults.js';
 
 class TimerState {
     constructor() {
