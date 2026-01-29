@@ -1,4 +1,5 @@
 import { POPUP_CONSTANTS, utils } from '../popup/common.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 
 const QUOTE_STORAGE_KEY = 'tomato-focus-dashboard-quote-hidden';
 
@@ -471,7 +472,7 @@ export class DashboardTaskManager {
         try {
             let state;
             if (this.editingTaskId) {
-                state = await this.messenger.sendMessage('updateTask', {
+                state = await this.messenger.sendMessage(ACTIONS.UPDATE_TASK, {
                     taskId: this.editingTaskId,
                     updates: payload,
                 });
@@ -479,7 +480,7 @@ export class DashboardTaskManager {
                     variant: 'success',
                 });
             } else {
-                state = await this.messenger.sendMessage('createTask', {
+                state = await this.messenger.sendMessage(ACTIONS.CREATE_TASK, {
                     task: payload,
                 });
                 this.toastManager?.show('Task added.', { variant: 'success' });
@@ -503,9 +504,12 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage('setCurrentTask', {
-                taskId,
-            });
+            const state = await this.messenger.sendMessage(
+                ACTIONS.SET_CURRENT_TASK,
+                {
+                    taskId,
+                }
+            );
             this.onStateUpdate?.(state);
             if (taskId) {
                 this.toastManager?.show('Current task updated.', {
@@ -532,7 +536,7 @@ export class DashboardTaskManager {
         try {
             if (this.state.currentTaskId !== taskId) {
                 const state = await this.messenger.sendMessage(
-                    'setCurrentTask',
+                    ACTIONS.SET_CURRENT_TASK,
                     {
                         taskId,
                     }
@@ -541,7 +545,7 @@ export class DashboardTaskManager {
             }
 
             if (!this.state.isRunning) {
-                await this.messenger.sendMessage('toggleTimer');
+                await this.messenger.sendMessage(ACTIONS.TOGGLE_TIMER);
             }
             await this.refreshState?.();
             this.toastManager?.show('Timer started.', { variant: 'success' });
@@ -564,7 +568,7 @@ export class DashboardTaskManager {
         try {
             let state;
             if (task.isCompleted) {
-                state = await this.messenger.sendMessage('updateTask', {
+                state = await this.messenger.sendMessage(ACTIONS.UPDATE_TASK, {
                     taskId,
                     updates: { isCompleted: false },
                 });
@@ -572,9 +576,12 @@ export class DashboardTaskManager {
                     variant: 'success',
                 });
             } else {
-                state = await this.messenger.sendMessage('completeTasks', {
-                    taskIds: [taskId],
-                });
+                state = await this.messenger.sendMessage(
+                    ACTIONS.COMPLETE_TASKS,
+                    {
+                        taskIds: [taskId],
+                    }
+                );
                 this.toastManager?.show('Task completed. Nice work!', {
                     variant: 'success',
                 });
@@ -602,9 +609,12 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            const state = await this.messenger.sendMessage('deleteTasks', {
-                taskIds: [taskId],
-            });
+            const state = await this.messenger.sendMessage(
+                ACTIONS.DELETE_TASKS,
+                {
+                    taskIds: [taskId],
+                }
+            );
             this.onStateUpdate?.(state);
             this.toastManager?.show('Task deleted.', { variant: 'success' });
         } catch (error) {
@@ -645,7 +655,7 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            await this.messenger.sendMessage('toggleTimer');
+            await this.messenger.sendMessage(ACTIONS.TOGGLE_TIMER);
             await this.refreshState?.();
         } catch (error) {
             console.error('Failed to toggle timer', error);
@@ -660,7 +670,7 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            await this.messenger.sendMessage('resetTimer');
+            await this.messenger.sendMessage(ACTIONS.RESET_TIMER);
             await this.refreshState?.();
             this.toastManager?.show('Timer reset.', { variant: 'success' });
         } catch (error) {

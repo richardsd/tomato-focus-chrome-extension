@@ -1,6 +1,7 @@
 import { POPUP_CONSTANTS, utils } from './common.js';
 import { notifyError, notifySuccess } from './notifications.js';
 import { requestJiraPermission } from '../shared/jiraPermissions.js';
+import { ACTIONS } from '../shared/runtimeActions.js';
 
 export class TaskUIManager {
     constructor(messageHandler) {
@@ -501,7 +502,9 @@ export class TaskUIManager {
 
         if (!state || !Array.isArray(state.tasks)) {
             try {
-                state = await this.messageHandler.sendMessage('getState');
+                state = await this.messageHandler.sendMessage(
+                    ACTIONS.GET_STATE
+                );
             } catch (stateError) {
                 console.error(
                     'Failed to refresh state after deletion:',
@@ -550,7 +553,9 @@ export class TaskUIManager {
 
         if (!state || !Array.isArray(state.tasks)) {
             try {
-                state = await this.messageHandler.sendMessage('getState');
+                state = await this.messageHandler.sendMessage(
+                    ACTIONS.GET_STATE
+                );
             } catch (stateError) {
                 console.error(
                     'Failed to refresh state after completion:',
@@ -569,9 +574,12 @@ export class TaskUIManager {
 
     async performBulkCompleteRequest(taskIds) {
         try {
-            return await this.messageHandler.sendMessage('completeTasks', {
-                taskIds,
-            });
+            return await this.messageHandler.sendMessage(
+                ACTIONS.COMPLETE_TASKS,
+                {
+                    taskIds,
+                }
+            );
         } catch (error) {
             if (error && error.message === 'Unknown action') {
                 console.warn(
@@ -580,7 +588,7 @@ export class TaskUIManager {
                 let latestState = null;
                 for (const taskId of taskIds) {
                     latestState = await this.messageHandler.sendMessage(
-                        'updateTask',
+                        ACTIONS.UPDATE_TASK,
                         {
                             taskId,
                             updates: { isCompleted: true },
@@ -595,7 +603,7 @@ export class TaskUIManager {
 
     async performBulkDeleteRequest(taskIds) {
         try {
-            return await this.messageHandler.sendMessage('deleteTasks', {
+            return await this.messageHandler.sendMessage(ACTIONS.DELETE_TASKS, {
                 taskIds,
             });
         } catch (error) {
@@ -606,7 +614,7 @@ export class TaskUIManager {
                 let latestState = null;
                 for (const taskId of taskIds) {
                     latestState = await this.messageHandler.sendMessage(
-                        'deleteTask',
+                        ACTIONS.DELETE_TASK,
                         { taskId }
                     );
                 }
@@ -750,8 +758,9 @@ export class TaskUIManager {
     async selectTask(taskId) {
         try {
             // Fetch latest full state to determine current selection
-            const stateResponse =
-                await this.messageHandler.sendMessage('getState');
+            const stateResponse = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             const tasks = stateResponse.tasks || [];
             const task = tasks.find((t) => t.id === taskId);
             const currentTaskId = stateResponse.currentTaskId;
@@ -759,7 +768,7 @@ export class TaskUIManager {
             // If clicking the currently active task, unset it
             if (currentTaskId === taskId) {
                 const state = await this.messageHandler.sendMessage(
-                    'setCurrentTask',
+                    ACTIONS.SET_CURRENT_TASK,
                     { taskId: null }
                 );
                 this.renderTasksList(state.tasks, state.currentTaskId);
@@ -786,7 +795,7 @@ export class TaskUIManager {
             }
 
             const state = await this.messageHandler.sendMessage(
-                'setCurrentTask',
+                ACTIONS.SET_CURRENT_TASK,
                 { taskId }
             );
 
@@ -810,7 +819,9 @@ export class TaskUIManager {
      */
     async editTask(taskId) {
         try {
-            const response = await this.messageHandler.sendMessage('getTasks');
+            const response = await this.messageHandler.sendMessage(
+                ACTIONS.GET_TASKS
+            );
             const task = response.tasks.find((t) => t.id === taskId);
             if (task) {
                 this.showTaskForm(task);
@@ -829,9 +840,12 @@ export class TaskUIManager {
         }
 
         try {
-            const state = await this.messageHandler.sendMessage('deleteTask', {
-                taskId,
-            });
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.DELETE_TASK,
+                {
+                    taskId,
+                }
+            );
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -846,10 +860,13 @@ export class TaskUIManager {
      */
     async toggleTaskCompletion(taskId, isCompleted) {
         try {
-            const state = await this.messageHandler.sendMessage('updateTask', {
-                taskId,
-                updates: { isCompleted },
-            });
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.UPDATE_TASK,
+                {
+                    taskId,
+                    updates: { isCompleted },
+                }
+            );
 
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
@@ -911,7 +928,7 @@ export class TaskUIManager {
             if (this.currentEditingTaskId) {
                 // Update existing task
                 const state = await this.messageHandler.sendMessage(
-                    'updateTask',
+                    ACTIONS.UPDATE_TASK,
                     {
                         taskId: this.currentEditingTaskId,
                         updates: {
@@ -928,7 +945,7 @@ export class TaskUIManager {
             } else {
                 // Create new task
                 const state = await this.messageHandler.sendMessage(
-                    'createTask',
+                    ACTIONS.CREATE_TASK,
                     {
                         task: formData,
                     }
@@ -997,7 +1014,9 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
     btn.addEventListener('click', async () => {
         btn.disabled = true;
         try {
-            const state = await this.messageHandler.sendMessage('getState');
+            const state = await this.messageHandler.sendMessage(
+                ACTIONS.GET_STATE
+            );
             const settings = state?.settings || {};
             if (
                 !settings.jiraUrl ||
@@ -1018,9 +1037,12 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
                 );
                 return;
             }
-            await this.messageHandler.sendMessage('reconfigureJiraSync');
-            const updatedState =
-                await this.messageHandler.sendMessage('importJiraTasks');
+            await this.messageHandler.sendMessage(
+                ACTIONS.RECONFIGURE_JIRA_SYNC
+            );
+            const updatedState = await this.messageHandler.sendMessage(
+                ACTIONS.IMPORT_JIRA_TASKS
+            );
             this.renderTasksList(
                 updatedState.tasks || [],
                 updatedState.currentTaskId
