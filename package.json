@@ -14,7 +14,8 @@
     "lint:eslint": "eslint \"{*.js,src/**/*.js,*.html,src/**/*.html}\"",
     "lint:stylelint": "node tools/run-stylelint.mjs",
     "format": "prettier \"**/*.{js,css,html}\" --write",
-    "format:check": "prettier \"**/*.{js,css,html}\" --check"
+    "format:check": "prettier \"**/*.{js,css,html}\" --check",
+    "test:unit": "vitest"
   },
   "keywords": [
     "chrome-extension",
@@ -41,7 +42,9 @@
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.4.2",
+    "jsdom": "^26.1.0",
     "stylelint": "^16.10.0",
-    "stylelint-config-standard": "^36.0.0"
+    "stylelint-config-standard": "^36.0.0",
+    "vitest": "^3.2.4"
   }
 }
