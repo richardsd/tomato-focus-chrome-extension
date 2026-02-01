@@ -52,6 +52,8 @@ export const createChromeMock = (overrides = {}) => {
     return {
         runtime: {
             lastError: null,
+            getContexts: vi.fn(() => []),
+            getURL: vi.fn((path = '') => `chrome-extension://mock/${path}`),
             sendMessage: vi.fn(),
             onMessage: {
                 addListener: vi.fn(),
