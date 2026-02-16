@@ -25,6 +25,7 @@ public final class UserDefaultsStorageService: StorageServicing {
         static let tasks = "tasks"
         static let stats = "stats"
         static let settings = "settings"
+        static let timerState = "timerState"
     }
 
     private let defaults: UserDefaults
@@ -57,6 +58,26 @@ public final class UserDefaultsStorageService: StorageServicing {
 
     public func saveStats(_ stats: PomodoroStats) {
         encode(stats, forKey: Keys.stats)
+    }
+
+    public func loadTimerState() -> TimerState {
+        let state = decode(TimerState.self, forKey: Keys.timerState) ?? TimerState()
+        if state.secondsRemaining > 0 {
+            return state
+        }
+
+        var repaired = state
+        let settings = loadSettings()
+        repaired.secondsRemaining = settings.focusDurationMinutes * 60
+        repaired.endTimestamp = nil
+        repaired.isRunning = false
+        repaired.currentSession = max(repaired.currentSession, 1)
+        repaired.sessionKind = .work
+        return repaired
+    }
+
+    public func saveTimerState(_ state: TimerState) {
+        encode(state, forKey: Keys.timerState)
     }
 
     private func encode<T: Encodable>(_ value: T, forKey key: String) {
