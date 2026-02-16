@@ -3,12 +3,75 @@ import Foundation
 public struct TaskItem: Identifiable, Codable, Equatable {
     public let id: UUID
     public var title: String
-    public var isDone: Bool
+    public var details: String
+    public var estimatedPomodoros: Int
+    public var completedPomodoros: Int
+    public var isCompleted: Bool
+    public var createdAt: Date
+    public var completedAt: Date?
 
-    public init(id: UUID = UUID(), title: String, isDone: Bool = false) {
+    public init(
+        id: UUID = UUID(),
+        title: String,
+        details: String = "",
+        estimatedPomodoros: Int = 1,
+        completedPomodoros: Int = 0,
+        isCompleted: Bool = false,
+        createdAt: Date = Date(),
+        completedAt: Date? = nil
+    ) {
         self.id = id
         self.title = title
-        self.isDone = isDone
+        self.details = details
+        self.estimatedPomodoros = max(estimatedPomodoros, 1)
+        self.completedPomodoros = max(completedPomodoros, 0)
+        self.isCompleted = isCompleted
+        self.createdAt = createdAt
+        self.completedAt = completedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case details
+        case estimatedPomodoros
+        case completedPomodoros
+        case isCompleted
+        case createdAt
+        case completedAt
+        case isDone
+        case description
+    }
+
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(details, forKey: .details)
+        try container.encode(estimatedPomodoros, forKey: .estimatedPomodoros)
+        try container.encode(completedPomodoros, forKey: .completedPomodoros)
+        try container.encode(isCompleted, forKey: .isCompleted)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(completedAt, forKey: .completedAt)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Untitled Task"
+
+        let legacyDescription = try container.decodeIfPresent(String.self, forKey: .description)
+        details = try container.decodeIfPresent(String.self, forKey: .details) ?? legacyDescription ?? ""
+
+        estimatedPomodoros = max(try container.decodeIfPresent(Int.self, forKey: .estimatedPomodoros) ?? 1, 1)
+        completedPomodoros = max(try container.decodeIfPresent(Int.self, forKey: .completedPomodoros) ?? 0, 0)
+
+        let legacyDone = try container.decodeIfPresent(Bool.self, forKey: .isDone)
+        isCompleted = try container.decodeIfPresent(Bool.self, forKey: .isCompleted) ?? legacyDone ?? false
+
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+        completedAt = try container.decodeIfPresent(Date.self, forKey: .completedAt)
     }
 }
 
@@ -84,6 +147,10 @@ public protocol NotificationServicing {
 public protocol StorageServicing {
     func loadTasks() -> [TaskItem]
     func saveTasks(_ tasks: [TaskItem])
+    func loadCurrentTaskID() -> UUID?
+    func saveCurrentTaskID(_ taskID: UUID?)
+    @discardableResult
+    func incrementPomodoroForCurrentTask() -> TaskItem?
     func loadSettings() -> AppSettings
     func saveSettings(_ settings: AppSettings)
     func loadStats() -> PomodoroStats
@@ -103,4 +170,9 @@ public protocol IdleMonitoring {
 
 public protocol JiraServicing {
     func fetchAssignedIssues() async throws -> [TaskItem]
+}
+
+public extension Notification.Name {
+    static let tasksDidChange = Notification.Name("tomatoFocus.tasksDidChange")
+    static let currentTaskDidChange = Notification.Name("tomatoFocus.currentTaskDidChange")
 }

@@ -23,6 +23,7 @@ public final class NotificationService: NotificationServicing {
 public final class UserDefaultsStorageService: StorageServicing {
     private enum Keys {
         static let tasks = "tasks"
+        static let currentTaskID = "currentTaskID"
         static let stats = "stats"
         static let settings = "settings"
         static let timerState = "timerState"
@@ -42,6 +43,36 @@ public final class UserDefaultsStorageService: StorageServicing {
 
     public func saveTasks(_ tasks: [TaskItem]) {
         encode(tasks, forKey: Keys.tasks)
+        NotificationCenter.default.post(name: .tasksDidChange, object: nil)
+    }
+
+    public func loadCurrentTaskID() -> UUID? {
+        guard let rawID = defaults.string(forKey: Keys.currentTaskID) else {
+            return nil
+        }
+        return UUID(uuidString: rawID)
+    }
+
+    public func saveCurrentTaskID(_ taskID: UUID?) {
+        defaults.set(taskID?.uuidString, forKey: Keys.currentTaskID)
+        NotificationCenter.default.post(name: .currentTaskDidChange, object: nil)
+    }
+
+    @discardableResult
+    public func incrementPomodoroForCurrentTask() -> TaskItem? {
+        guard let currentTaskID = loadCurrentTaskID() else {
+            return nil
+        }
+
+        var tasks = loadTasks()
+        guard let index = tasks.firstIndex(where: { $0.id == currentTaskID }) else {
+            saveCurrentTaskID(nil)
+            return nil
+        }
+
+        tasks[index].completedPomodoros += 1
+        saveTasks(tasks)
+        return tasks[index]
     }
 
     public func loadSettings() -> AppSettings {
