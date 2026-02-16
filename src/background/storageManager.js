@@ -1,13 +1,15 @@
-import { CONSTANTS, chromePromise } from './constants.js';
+import { CONSTANTS } from './constants.js';
+import { createChromeStorageAdapter } from './adapters/chromeAdapters.js';
 import {
     DEFAULT_SETTINGS,
     createDefaultState,
 } from '../shared/stateDefaults.js';
 
 export class StorageManager {
+    static storage = createChromeStorageAdapter();
     static async saveState(state) {
         try {
-            await chromePromise.storage.local.set({
+            await this.storage.set({
                 [CONSTANTS.STORAGE_KEY]: state,
             });
         } catch (error) {
@@ -17,9 +19,7 @@ export class StorageManager {
 
     static async loadState() {
         try {
-            const result = await chromePromise.storage.local.get([
-                CONSTANTS.STORAGE_KEY,
-            ]);
+            const result = await this.storage.get([CONSTANTS.STORAGE_KEY]);
             return result[CONSTANTS.STORAGE_KEY] || null;
         } catch (error) {
             console.error('Failed to load state:', error);

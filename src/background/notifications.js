@@ -1,12 +1,14 @@
-import { CONSTANTS, chromePromise } from './constants.js';
+import { CONSTANTS } from './constants.js';
+import { createChromeNotificationsAdapter } from './adapters/chromeAdapters.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
 
 export class NotificationManager {
+    static notifications = createChromeNotificationsAdapter();
     static offscreenCreated = false;
     static async show(title, message, settings = {}) {
         try {
             const permissionLevel =
-                await chromePromise.notifications.getPermissionLevel();
+                await this.notifications.getPermissionLevel();
 
             if (permissionLevel !== 'granted') {
                 console.warn(
@@ -25,10 +27,7 @@ export class NotificationManager {
                 requireInteraction: false,
             };
 
-            await chromePromise.notifications.create(
-                CONSTANTS.NOTIFICATION_ID,
-                options
-            );
+            await this.notifications.create(CONSTANTS.NOTIFICATION_ID, options);
             console.log('Notification created successfully');
 
             // Play custom sound if enabled
@@ -43,15 +42,12 @@ export class NotificationManager {
             console.error('Failed to create notification:', error);
             // Fallback notification without icon
             try {
-                await chromePromise.notifications.create(
-                    CONSTANTS.NOTIFICATION_ID,
-                    {
-                        type: 'basic',
-                        title,
-                        message,
-                        silent: true,
-                    }
-                );
+                await this.notifications.create(CONSTANTS.NOTIFICATION_ID, {
+                    type: 'basic',
+                    title,
+                    message,
+                    silent: true,
+                });
 
                 // Still try to play sound on fallback
                 if (settings.playSound) {
@@ -118,7 +114,7 @@ export class NotificationManager {
             );
             // Fallback: try using system notification sound
             try {
-                await chromePromise.notifications.create('fallback-sound', {
+                await this.notifications.create('fallback-sound', {
                     type: 'basic',
                     iconUrl: 'icons/icon48.png',
                     title: 'Tomato Focus',
@@ -126,10 +122,9 @@ export class NotificationManager {
                     silent: false,
                 });
                 // Clear the fallback notification immediately
-                setTimeout(
-                    () => chrome.notifications.clear('fallback-sound'),
-                    100
-                );
+                setTimeout(() => {
+                    this.notifications.clear('fallback-sound');
+                }, 100);
             } catch (fallbackError) {
                 console.error(
                     'Fallback sound notification also failed:',
@@ -141,7 +136,7 @@ export class NotificationManager {
 
     static async checkPermissions() {
         try {
-            return await chromePromise.notifications.getPermissionLevel();
+            return await this.notifications.getPermissionLevel();
         } catch (error) {
             console.error('Failed to check notification permissions:', error);
             return 'denied';

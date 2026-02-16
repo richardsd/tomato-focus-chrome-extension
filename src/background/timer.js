@@ -14,6 +14,7 @@ import {
     getSessionDurationSeconds,
 } from '../core/timerStateMachine.js';
 import {
+    createChromeContextMenusAdapter,
     createChromeIdleProvider,
     createChromeSchedulerAdapter,
 } from './adapters/chromeAdapters.js';
@@ -176,7 +177,7 @@ export class TimerController {
     }
 
     setupAlarmListener() {
-        chrome.alarms.onAlarm.addListener((alarm) => {
+        this.scheduler.onAlarm((alarm) => {
             if (alarm.name === this.alarmName) {
                 this.onTimerComplete();
             } else if (alarm.name === this.jiraAlarmName) {
@@ -633,8 +634,9 @@ export class TimerController {
 
 export function initializeBackground() {
     const timerController = new TimerController();
+    const contextMenus = createChromeContextMenusAdapter();
 
-    chrome.contextMenus.onClicked.addListener((info) => {
+    contextMenus.onClicked((info) => {
         const { menuItemId } = info;
         switch (menuItemId) {
             case 'start-pause':
@@ -669,7 +671,7 @@ export function initializeBackground() {
 
     chrome.runtime.onInstalled.addListener((details) => {
         console.log('Extension installed/updated:', details.reason);
-        ContextMenuManager.create();
+        void ContextMenuManager.create();
         NotificationManager.checkPermissions().then((level) => {
             console.log('Notification permission level:', level);
             if (level !== 'granted') {
