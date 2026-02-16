@@ -1,17 +1,21 @@
-import { DEFAULT_SETTINGS } from '../shared/stateDefaults.js';
 import { hasJiraPermission } from '../shared/jiraPermissions.js';
+import {
+    buildTaskImports,
+    sanitizeJiraSyncInterval,
+    shouldRetryJiraSync,
+} from '../core/jiraCore.js';
 import { fetchAssignedIssues } from './jira.js';
 import { TaskManager } from './tasks.js';
+import { createChromeSchedulerAdapter } from './adapters/chromeAdapters.js';
 
 export class JiraSyncManager {
-    constructor({ alarmName }) {
+    constructor({ alarmName, scheduler = createChromeSchedulerAdapter() }) {
         this.alarmName = alarmName;
+        this.scheduler = scheduler;
     }
 
     async configureAlarm(settings) {
-        await new Promise((resolve) =>
-            chrome.alarms.clear(this.alarmName, resolve)
-        );
+        await this.scheduler.clear(this.alarmName);
 
         const {
             autoSyncJira,
@@ -40,12 +44,8 @@ export class JiraSyncManager {
             return;
         }
 
-        const interval =
-            Number.parseInt(jiraSyncInterval, 10) ||
-            DEFAULT_SETTINGS.jiraSyncInterval;
-        const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
-        chrome.alarms.create(this.alarmName, {
-            periodInMinutes: sanitizedInterval,
+        await this.scheduler.create(this.alarmName, {
+            periodInMinutes: sanitizeJiraSyncInterval(jiraSyncInterval),
         });
     }
 
@@ -58,39 +58,36 @@ export class JiraSyncManager {
             );
         }
 
-        const issues = await fetchAssignedIssues({
-            jiraUrl,
-            jiraUsername,
-            jiraToken,
-        });
-        const existingTasks = await TaskManager.getTasks();
-        const existingTitles = new Set(
-            existingTasks.map((task) => (task.title || '').trim().toLowerCase())
-        );
-        let createdCount = 0;
-
-        for (const issue of issues) {
-            const normalizedTitle = (issue.title || '').trim();
-            const fallbackTitle = normalizedTitle || issue.key || 'Jira Task';
-            const dedupeKey = fallbackTitle.toLowerCase();
-
-            if (existingTitles.has(dedupeKey)) {
-                continue;
-            }
-
-            await TaskManager.createTask({
-                title: fallbackTitle,
-                description: issue.description,
-                estimatedPomodoros: 1,
+        let issues;
+        try {
+            issues = await fetchAssignedIssues({
+                jiraUrl,
+                jiraUsername,
+                jiraToken,
             });
-            existingTitles.add(dedupeKey);
-            createdCount++;
+        } catch (error) {
+            if (shouldRetryJiraSync(error)) {
+                issues = await fetchAssignedIssues({
+                    jiraUrl,
+                    jiraUsername,
+                    jiraToken,
+                });
+            } else {
+                throw error;
+            }
+        }
+
+        const existingTasks = await TaskManager.getTasks();
+        const toCreate = buildTaskImports(issues, existingTasks);
+
+        for (const taskInput of toCreate) {
+            await TaskManager.createTask(taskInput);
         }
 
         const tasks = await TaskManager.getTasks();
 
         return {
-            importedCount: createdCount,
+            importedCount: toCreate.length,
             totalIssues: issues.length,
             tasks,
         };

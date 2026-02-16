@@ -8,6 +8,15 @@ import { createDefaultState } from '../shared/stateDefaults.js';
 import { JiraSyncManager } from './jiraSync.js';
 import { StorageManager } from './storageManager.js';
 import { UiNotifier } from './uiNotifier.js';
+import {
+    computeNextSessionOnComplete,
+    computeSkipBreakState,
+    getSessionDurationSeconds,
+} from '../core/timerStateMachine.js';
+import {
+    createChromeIdleProvider,
+    createChromeSchedulerAdapter,
+} from './adapters/chromeAdapters.js';
 
 class TimerState {
     constructor() {
@@ -64,12 +73,18 @@ class TimerState {
 }
 
 export class TimerController {
-    constructor() {
+    constructor({
+        scheduler = createChromeSchedulerAdapter(),
+        idleProvider = createChromeIdleProvider(),
+    } = {}) {
         this.state = new TimerState();
         this.alarmName = CONSTANTS.ALARM_NAME;
         this.jiraAlarmName = CONSTANTS.JIRA_SYNC_ALARM;
+        this.scheduler = scheduler;
+        this.idleProvider = idleProvider;
         this.jiraSync = new JiraSyncManager({
             alarmName: this.jiraAlarmName,
+            scheduler: this.scheduler,
         });
         this.uiNotifier = new UiNotifier({
             saveState: () => this.saveState(),
@@ -182,7 +197,7 @@ export class TimerController {
     }
 
     setupIdleListener() {
-        chrome.idle.onStateChanged.addListener(async (newState) => {
+        this.idleProvider.onStateChanged(async (newState) => {
             if (
                 newState === 'idle' &&
                 this.state.isRunning &&
@@ -198,7 +213,7 @@ export class TimerController {
 
     checkIdleResume() {
         if (this.state.wasPausedForIdle && this.state.settings.pauseOnIdle) {
-            chrome.idle.queryState(60, async (state) => {
+            this.idleProvider.queryState(60, async (state) => {
                 if (state === 'active') {
                     console.log('Resuming after idle');
                     this.state.wasPausedForIdle = false;
@@ -230,7 +245,7 @@ export class TimerController {
 
         this.state.isRunning = false;
         this.state.endTime = null;
-        await chrome.alarms.clear(this.alarmName);
+        await this.scheduler.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
         this.uiNotifier.updateBadge(this.state);
@@ -243,7 +258,7 @@ export class TimerController {
         this.state.currentSession = 1;
         this.state.startWork();
         this.state.endTime = null;
-        await chrome.alarms.clear(this.alarmName);
+        await this.scheduler.clear(this.alarmName);
         await this.saveState();
         this.stopBadgeUpdater();
         this.uiNotifier.updateBadge(this.state);
@@ -255,7 +270,7 @@ export class TimerController {
         const now = Date.now();
         const when = now + this.state.timeLeft * 1000;
         this.state.endTime = when;
-        await chrome.alarms.create(this.alarmName, { when });
+        await this.scheduler.create(this.alarmName, { when });
     }
 
     async onTimerComplete() {
@@ -274,19 +289,12 @@ export class TimerController {
                 );
                 this.state.tasks = await TaskManager.getTasks();
             }
-
-            const takeLongBreak = this.state.shouldTakeLongBreak();
-            if (takeLongBreak) {
-                this.state.startLongBreak();
-            } else {
-                this.state.startShortBreak();
-            }
-        } else {
-            this.state.incrementSession();
-            this.state.startWork();
         }
-
-        this.state.isRunning = this.state.settings.autoStart;
+        const nextSession = computeNextSessionOnComplete(this.state);
+        this.state.currentSession = nextSession.currentSession;
+        this.state.isWorkSession = nextSession.isWorkSession;
+        this.state.timeLeft = nextSession.timeLeft;
+        this.state.isRunning = nextSession.isRunning;
         await this.saveState();
 
         if (this.state.settings.playSound || NotificationManager) {
@@ -319,24 +327,27 @@ export class TimerController {
     }
 
     async skipBreak() {
-        if (!this.state.isWorkSession) {
-            this.state.incrementSession();
-            this.state.startWork();
-            this.state.isRunning =
-                this.state.settings.autoStart || this.state.isRunning;
-            await chrome.alarms.clear(this.alarmName);
-            if (this.state.isRunning) {
-                await this.scheduleAlarm();
-                this.startBadgeUpdater();
-            } else {
-                this.state.endTime = null;
-                this.stopBadgeUpdater();
-            }
-            await this.saveState();
-            this.uiNotifier.updateBadge(this.state);
-            this.uiNotifier.updateContextMenu(this.state);
-            this.updateUI();
+        const nextState = computeSkipBreakState(this.state);
+        if (!nextState) {
+            return;
         }
+
+        this.state.currentSession = nextState.currentSession;
+        this.state.isWorkSession = nextState.isWorkSession;
+        this.state.timeLeft = nextState.timeLeft;
+        this.state.isRunning = nextState.isRunning;
+        await this.scheduler.clear(this.alarmName);
+        if (this.state.isRunning) {
+            await this.scheduleAlarm();
+            this.startBadgeUpdater();
+        } else {
+            this.state.endTime = null;
+            this.stopBadgeUpdater();
+        }
+        await this.saveState();
+        this.uiNotifier.updateBadge(this.state);
+        this.uiNotifier.updateContextMenu(this.state);
+        this.updateUI();
     }
 
     async startQuickTimer(minutes) {
@@ -426,11 +437,7 @@ export class TimerController {
 
                     const newDuration = this.state.isWorkSession
                         ? this.state.settings.workDuration * 60
-                        : this.state.currentSession %
-                                this.state.settings.longBreakInterval ===
-                            0
-                          ? this.state.settings.longBreak * 60
-                          : this.state.settings.shortBreak * 60;
+                        : getSessionDurationSeconds(this.state);
 
                     // Reset remaining time to the newly selected duration rather than
                     // adjusting by the previously elapsed amount which was causing the
@@ -438,7 +445,7 @@ export class TimerController {
                     this.state.timeLeft = newDuration;
 
                     if (this.state.isRunning) {
-                        await chrome.alarms.clear(this.alarmName);
+                        await this.scheduler.clear(this.alarmName);
                         await this.scheduleAlarm();
                     } else {
                         this.state.endTime = null;
@@ -678,6 +685,6 @@ export function initializeBackground() {
 
     self.addEventListener('beforeunload', () => {
         timerController.stopBadgeUpdater();
-        chrome.alarms.clearAll();
+        timerController.scheduler.clearAll();
     });
 }

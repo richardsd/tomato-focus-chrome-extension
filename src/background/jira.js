@@ -1,4 +1,5 @@
 import { validateJiraUrl } from '../shared/jiraUrlValidator.js';
+import { buildJiraSearchRequest, mapIssuesToTasks } from '../core/jiraCore.js';
 
 export async function fetchAssignedIssues(settings) {
     const { jiraUrl, jiraUsername, jiraToken } = settings || {};
@@ -10,29 +11,25 @@ export async function fetchAssignedIssues(settings) {
         throw new Error(message);
     }
 
-    const base = jiraUrl.replace(/\/$/, '');
-    const escapedUsername = jiraUsername.replace(/"/g, '\\"');
-    const jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
-    const fields = 'key,summary,description';
-    const search = `${base}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=${encodeURIComponent(fields)}`;
-    const auth = btoa(`${jiraUsername}:${jiraToken}`);
+    const request = buildJiraSearchRequest({
+        jiraUrl,
+        jiraUsername,
+        jiraToken,
+    });
 
     let response;
     try {
-        response = await fetch(search, {
-            headers: {
-                Authorization: `Basic ${auth}`,
-                Accept: 'application/json',
-            },
-        });
+        response = await fetch(request.url, request.requestInit);
     } catch (error) {
         throw new Error(`Failed to connect to Jira: ${error.message}`);
     }
 
     if (!response.ok) {
-        throw new Error(
+        const err = new Error(
             `Jira request failed: ${response.status} ${response.statusText || ''}`.trim()
         );
+        err.status = response.status;
+        throw err;
     }
 
     let data;
@@ -41,21 +38,6 @@ export async function fetchAssignedIssues(settings) {
     } catch {
         throw new Error('Jira response was not valid JSON');
     }
-    const issues = data.issues || [];
-    return issues.map((issue) => {
-        const fields = issue.fields || {};
-        const summary = fields.summary || '';
-        let description = '';
-        const rawDesc = fields.description;
-        if (typeof rawDesc === 'string') {
-            description = rawDesc;
-        } else if (rawDesc && Array.isArray(rawDesc.content)) {
-            description = rawDesc.content
-                .map((block) =>
-                    (block.content || []).map((c) => c.text || '').join('')
-                )
-                .join('\n');
-        }
-        return { key: issue.key, title: summary, description };
-    });
+
+    return mapIssuesToTasks(data.issues || []);
 }

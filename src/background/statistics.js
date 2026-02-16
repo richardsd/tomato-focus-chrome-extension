@@ -1,58 +1,46 @@
-import { CONSTANTS, chromePromise } from './constants.js';
+import { CONSTANTS } from './constants.js';
+import { createChromeStorageAdapter } from './adapters/chromeAdapters.js';
+import {
+    createEmptyDailyStatistics,
+    getDateKey,
+    getTodayStatistics,
+    pruneStatisticsHistory,
+    withCompletedIncrement,
+    withFocusTimeAdded,
+} from '../core/statisticsCore.js';
 
 export class StatisticsManager {
+    static storage = createChromeStorageAdapter();
+
     static getTodayKey() {
-        const today = new Date();
-        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        return getDateKey(new Date());
     }
 
     static async getStatistics() {
         try {
-            const result = await chromePromise.storage.local.get([
-                CONSTANTS.STATISTICS_KEY,
-            ]);
+            const result = await this.storage.get([CONSTANTS.STATISTICS_KEY]);
             const allStats = result[CONSTANTS.STATISTICS_KEY] || {};
-            const todayKey = this.getTodayKey();
-
-            // Return today's statistics, initializing if needed
-            return (
-                allStats[todayKey] || {
-                    completedToday: 0,
-                    focusTimeToday: 0,
-                }
-            );
+            return getTodayStatistics(allStats, new Date());
         } catch (error) {
             console.error('Failed to load statistics:', error);
-            return {
-                completedToday: 0,
-                focusTimeToday: 0,
-            };
+            return createEmptyDailyStatistics();
         }
     }
 
     static async saveStatistics(todayStats) {
         try {
-            const result = await chromePromise.storage.local.get([
-                CONSTANTS.STATISTICS_KEY,
-            ]);
+            const result = await this.storage.get([CONSTANTS.STATISTICS_KEY]);
             const allStats = result[CONSTANTS.STATISTICS_KEY] || {};
             const todayKey = this.getTodayKey();
 
-            allStats[todayKey] = todayStats;
+            const merged = {
+                ...allStats,
+                [todayKey]: todayStats,
+            };
+            const pruned = pruneStatisticsHistory(merged, 30, new Date());
 
-            // Clean up old statistics (keep only last 30 days)
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - 30);
-
-            Object.keys(allStats).forEach((dateKey) => {
-                const statDate = new Date(dateKey);
-                if (statDate < cutoffDate) {
-                    delete allStats[dateKey];
-                }
-            });
-
-            await chromePromise.storage.local.set({
-                [CONSTANTS.STATISTICS_KEY]: allStats,
+            await this.storage.set({
+                [CONSTANTS.STATISTICS_KEY]: pruned,
             });
         } catch (error) {
             console.error('Failed to save statistics:', error);
@@ -61,23 +49,21 @@ export class StatisticsManager {
 
     static async incrementCompleted() {
         const stats = await this.getStatistics();
-        stats.completedToday++;
-        await this.saveStatistics(stats);
-        return stats;
+        const next = withCompletedIncrement(stats);
+        await this.saveStatistics(next);
+        return next;
     }
 
     static async addFocusTime(minutes) {
         const stats = await this.getStatistics();
-        stats.focusTimeToday += minutes;
-        await this.saveStatistics(stats);
-        return stats;
+        const next = withFocusTimeAdded(stats, minutes);
+        await this.saveStatistics(next);
+        return next;
     }
 
     static async clearAll() {
         try {
-            await chromePromise.storage.local.set({
-                [CONSTANTS.STATISTICS_KEY]: {},
-            });
+            await this.storage.set({ [CONSTANTS.STATISTICS_KEY]: {} });
             console.log('All statistics data cleared');
         } catch (error) {
             console.error('Failed to clear statistics data:', error);
@@ -87,9 +73,7 @@ export class StatisticsManager {
 
     static async getAllStatistics() {
         try {
-            const result = await chromePromise.storage.local.get([
-                CONSTANTS.STATISTICS_KEY,
-            ]);
+            const result = await this.storage.get([CONSTANTS.STATISTICS_KEY]);
             return result[CONSTANTS.STATISTICS_KEY] || {};
         } catch (e) {
             console.error('Failed to get all statistics map', e);
