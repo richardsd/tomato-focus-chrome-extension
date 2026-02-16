@@ -29,6 +29,8 @@ public struct SettingsView: View {
             Stepper("Focus: \(viewModel.settings.focusDurationMinutes) min", value: $viewModel.settings.focusDurationMinutes, in: 10...90)
             Stepper("Short break: \(viewModel.settings.shortBreakMinutes) min", value: $viewModel.settings.shortBreakMinutes, in: 1...30)
             Stepper("Long break: \(viewModel.settings.longBreakMinutes) min", value: $viewModel.settings.longBreakMinutes, in: 5...60)
+            Stepper("Long break cadence: every \(viewModel.settings.longBreakInterval) sessions", value: $viewModel.settings.longBreakInterval, in: 2...8)
+            Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
             Button("Save", action: viewModel.save)
         }
         .padding()

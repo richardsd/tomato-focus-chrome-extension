@@ -19,7 +19,7 @@ public struct RootNavigationView: View {
                 viewModel: TimerViewModel(
                     notifications: container.dependencies.notifications,
                     scheduler: container.dependencies.scheduler,
-                    initialSeconds: container.dependencies.storage.loadSettings().focusDurationMinutes * 60
+                    storage: container.dependencies.storage
                 )
             )
             .tabItem { Label("Timer", systemImage: "timer") }
