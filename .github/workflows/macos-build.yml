@@ -1,0 +1,356 @@
+name: macOS Build & Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+      - 'hotfix/**'
+  workflow_dispatch:
+    inputs:
+      notarize:
+        description: 'Run signing + notarization job'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: macos-build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  macos-build-test:
+    name: macOS build/test
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      XCODE_VERSION: '15.4'
+      DERIVED_DATA_PATH: ${{ github.workspace }}/DerivedData
+      BUILD_CONFIGURATION: Release
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+    outputs:
+      has_project: ${{ steps.detect.outputs.has_project }}
+      project_type: ${{ steps.detect.outputs.project_type }}
+      project_path: ${{ steps.detect.outputs.project_path }}
+      scheme: ${{ steps.detect.outputs.scheme }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Detect build target and scheme
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          workspace="${XCODE_WORKSPACE:-}"
+          project="${XCODE_PROJECT:-}"
+          scheme="${XCODE_SCHEME:-}"
+
+          if [[ -z "$workspace" ]]; then
+            workspace=$(find . -maxdepth 3 -name '*.xcworkspace' -print -quit || true)
+          fi
+
+          if [[ -z "$workspace" && -z "$project" ]]; then
+            project=$(find . -maxdepth 3 -name '*.xcodeproj' -print -quit || true)
+          fi
+
+          if [[ -n "$workspace" ]]; then
+            project_type="workspace"
+            project_path="$workspace"
+          elif [[ -n "$project" ]]; then
+            project_type="project"
+            project_path="$project"
+          elif [[ -f Package.swift ]]; then
+            project_type="spm"
+            project_path="Package.swift"
+          else
+            project_type="none"
+            project_path=""
+          fi
+
+          if [[ "$project_type" != "none" && -z "$scheme" ]]; then
+            if [[ "$project_type" == "workspace" ]]; then
+              scheme=$(xcodebuild -workspace "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('workspace',{}).get('schemes') or [''])[0])")
+            elif [[ "$project_type" == "project" ]]; then
+              scheme=$(xcodebuild -project "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('project',{}).get('schemes') or [''])[0])")
+            fi
+          fi
+
+          if [[ "$project_type" == "none" ]]; then
+            echo "has_project=false" >> "$GITHUB_OUTPUT"
+            echo "project_type=$project_type" >> "$GITHUB_OUTPUT"
+            echo "project_path=$project_path" >> "$GITHUB_OUTPUT"
+            echo "scheme=$scheme" >> "$GITHUB_OUTPUT"
+            echo "No macOS project/workspace/SPM package found. Build/test steps will be skipped."
+            exit 0
+          fi
+
+          echo "has_project=true" >> "$GITHUB_OUTPUT"
+          echo "project_type=$project_type" >> "$GITHUB_OUTPUT"
+          echo "project_path=$project_path" >> "$GITHUB_OUTPUT"
+          echo "scheme=$scheme" >> "$GITHUB_OUTPUT"
+
+          echo "Detected project_type=$project_type"
+          echo "Detected project_path=$project_path"
+          echo "Detected scheme=$scheme"
+
+      - name: Cache SwiftPM and DerivedData
+        if: steps.detect.outputs.has_project == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.swiftpm
+            ~/Library/Caches/org.swift.swiftpm
+            ${{ env.DERIVED_DATA_PATH }}
+          key: macos-${{ runner.os }}-xcode-${{ env.XCODE_VERSION }}-${{ hashFiles('**/Package.resolved', '**/*.xcodeproj/project.pbxproj', '**/*.xcworkspace/contents.xcworkspacedata') }}
+          restore-keys: |
+            macos-${{ runner.os }}-xcode-${{ env.XCODE_VERSION }}-
+
+      - name: Resolve dependencies
+        if: steps.detect.outputs.has_project == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DESTINATION="${XCODE_DESTINATION:-platform=macOS}"
+
+          if [[ "${{ steps.detect.outputs.project_type }}" == "workspace" ]]; then
+            xcodebuild -resolvePackageDependencies \
+              -workspace "${{ steps.detect.outputs.project_path }}" \
+              -scheme "${{ steps.detect.outputs.scheme }}" \
+              -derivedDataPath "$DERIVED_DATA_PATH"
+          elif [[ "${{ steps.detect.outputs.project_type }}" == "project" ]]; then
+            xcodebuild -resolvePackageDependencies \
+              -project "${{ steps.detect.outputs.project_path }}" \
+              -scheme "${{ steps.detect.outputs.scheme }}" \
+              -derivedDataPath "$DERIVED_DATA_PATH"
+          else
+            swift package resolve
+          fi
+
+      - name: Clean build (simulator-compatible destination)
+        if: steps.detect.outputs.has_project == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          DESTINATION="${XCODE_DESTINATION:-platform=macOS}"
+
+          if [[ "${{ steps.detect.outputs.project_type }}" == "workspace" ]]; then
+            xcodebuild clean build \
+              -workspace "${{ steps.detect.outputs.project_path }}" \
+              -scheme "${{ steps.detect.outputs.scheme }}" \
+              -configuration "$BUILD_CONFIGURATION" \
+              -destination "$DESTINATION" \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              CODE_SIGNING_ALLOWED=NO
+          elif [[ "${{ steps.detect.outputs.project_type }}" == "project" ]]; then
+            xcodebuild clean build \
+              -project "${{ steps.detect.outputs.project_path }}" \
+              -scheme "${{ steps.detect.outputs.scheme }}" \
+              -configuration "$BUILD_CONFIGURATION" \
+              -destination "$DESTINATION" \
+              -derivedDataPath "$DERIVED_DATA_PATH" \
+              CODE_SIGNING_ALLOWED=NO
+          else
+            swift build --configuration release
+          fi
+
+      - name: Run tests (if available)
+        if: steps.detect.outputs.has_project == 'true'
+        shell: bash
+        continue-on-error: false
+        run: |
+          set -euo pipefail
+          TEST_SCHEME="${XCODE_TEST_SCHEME:-${{ steps.detect.outputs.scheme }}}"
+          DESTINATION="${XCODE_TEST_DESTINATION:-platform=macOS}"
+
+          if [[ "${{ steps.detect.outputs.project_type }}" == "workspace" ]]; then
+            xcodebuild test \
+              -workspace "${{ steps.detect.outputs.project_path }}" \
+              -scheme "$TEST_SCHEME" \
+              -destination "$DESTINATION" \
+              -derivedDataPath "$DERIVED_DATA_PATH"
+          elif [[ "${{ steps.detect.outputs.project_type }}" == "project" ]]; then
+            xcodebuild test \
+              -project "${{ steps.detect.outputs.project_path }}" \
+              -scheme "$TEST_SCHEME" \
+              -destination "$DESTINATION" \
+              -derivedDataPath "$DERIVED_DATA_PATH"
+          else
+            swift test
+          fi
+
+      - name: Package build artifacts
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+
+          if [[ -d "$DERIVED_DATA_PATH/Build/Products" ]]; then
+            find "$DERIVED_DATA_PATH/Build/Products" -maxdepth 3 -name '*.app' -exec cp -R {} artifacts/ \;
+            cp -R "$DERIVED_DATA_PATH/Build/Products" artifacts/products
+          fi
+
+          if [[ -d .build ]]; then
+            cp -R .build artifacts/swift-build
+          fi
+
+          if [[ ! -d artifacts/products && ! -d artifacts/swift-build && -z "$(find artifacts -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
+            echo "No build outputs found; creating diagnostic artifact."
+            xcodebuild -version > artifacts/xcode-version.txt
+          fi
+
+          zip -r macos-build-artifacts.zip artifacts
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build-artifacts-${{ github.run_number }}
+          path: macos-build-artifacts.zip
+          if-no-files-found: error
+
+  sign-and-notarize:
+    name: Sign + Notarize (optional)
+    runs-on: macos-latest
+    needs: macos-build-test
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    if: |
+      needs.macos-build-test.outputs.has_project == 'true' && (
+        startsWith(github.ref, 'refs/tags/') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.notarize == 'true')
+      )
+    env:
+      XCODE_VERSION: '15.4'
+      DERIVED_DATA_PATH: ${{ github.workspace }}/DerivedData
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: ${{ env.XCODE_VERSION }}
+
+      - name: Import certificate and provisioning profile
+        shell: bash
+        env:
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          CERT_PATH="$RUNNER_TEMP/build_certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+
+          echo -n "$APPLE_CERTIFICATE_P12_BASE64" | base64 --decode -o "$CERT_PATH"
+          echo -n "$APPLE_PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles"
+
+      - name: Archive signed app
+        shell: bash
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+        run: |
+          set -euo pipefail
+          DESTINATION="${XCODE_DESTINATION:-platform=macOS}"
+          ARCHIVE_PATH="$RUNNER_TEMP/macos-app.xcarchive"
+          EXPORT_PATH="$RUNNER_TEMP/export"
+
+          if [[ "${{ needs.macos-build-test.outputs.project_type }}" == "workspace" ]]; then
+            xcodebuild clean archive \
+              -workspace "${{ needs.macos-build-test.outputs.project_path }}" \
+              -scheme "${{ needs.macos-build-test.outputs.scheme }}" \
+              -destination "$DESTINATION" \
+              -archivePath "$ARCHIVE_PATH" \
+              DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+              CODE_SIGN_IDENTITY="$APPLE_SIGNING_IDENTITY"
+          else
+            xcodebuild clean archive \
+              -project "${{ needs.macos-build-test.outputs.project_path }}" \
+              -scheme "${{ needs.macos-build-test.outputs.scheme }}" \
+              -destination "$DESTINATION" \
+              -archivePath "$ARCHIVE_PATH" \
+              DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+              CODE_SIGN_IDENTITY="$APPLE_SIGNING_IDENTITY"
+          fi
+
+          mkdir -p "$EXPORT_PATH"
+          cp -R "$ARCHIVE_PATH/Products/Applications" "$EXPORT_PATH/"
+
+      - name: Notarize and staple
+        shell: bash
+        env:
+          APPLE_NOTARY_KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
+          APPLE_NOTARY_ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
+          APPLE_NOTARY_API_PRIVATE_KEY_BASE64: ${{ secrets.APPLE_NOTARY_API_PRIVATE_KEY_BASE64 }}
+          APPLE_NOTARY_KEYCHAIN_PROFILE: ${{ secrets.APPLE_NOTARY_KEYCHAIN_PROFILE }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+
+          KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_NOTARY_KEY_ID}.p8"
+          APP_PATH=$(find "$RUNNER_TEMP/export/Applications" -maxdepth 2 -name '*.app' -print -quit)
+          ZIP_PATH="$RUNNER_TEMP/notarization-upload.zip"
+
+          if [[ -z "${APP_PATH:-}" ]]; then
+            echo "No .app produced for notarization"
+            exit 1
+          fi
+
+          echo -n "$APPLE_NOTARY_API_PRIVATE_KEY_BASE64" | base64 --decode -o "$KEY_PATH"
+
+          ditto -c -k --keepParent "$APP_PATH" "$ZIP_PATH"
+
+          xcrun notarytool store-credentials "$APPLE_NOTARY_KEYCHAIN_PROFILE" \
+            --key "$KEY_PATH" \
+            --key-id "$APPLE_NOTARY_KEY_ID" \
+            --issuer "$APPLE_NOTARY_ISSUER_ID" \
+            --team-id "$APPLE_TEAM_ID"
+
+          xcrun notarytool submit "$ZIP_PATH" \
+            --keychain-profile "$APPLE_NOTARY_KEYCHAIN_PROFILE" \
+            --wait
+
+          xcrun stapler staple "$APP_PATH"
+
+      - name: Upload notarized app
+        uses: actions/upload-artifact@v4
+        with:
+          name: notarized-macos-app-${{ github.run_number }}
+          path: ${{ runner.temp }}/export

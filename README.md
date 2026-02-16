@@ -28,6 +28,7 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Usage](#usage)
 - [Technical Details](#technical-details)
 - [Development](#development)
+- [CI/CD](#cicd)
 - [Privacy Policy](#privacy-policy)
 - [Acknowledgments](#acknowledgments)
 - [Support](#support)
@@ -197,6 +198,11 @@ This project uses a combination of ESLint, Stylelint, and Prettier for code qual
 
 ### Testing
 There are no automated tests beyond linting at this time. Use `npm test` (or `npm run lint`) to run the linting and formatting checks. Always run `npm run lint` before submitting changes.
+
+## CI/CD
+
+- GitHub Actions PR validation is defined in `.github/workflows/pr.yml`.
+- macOS build/test and optional notarization guidance is documented in [`docs/ci-macos.md`](docs/ci-macos.md), including required variables, secrets, and branch protection recommendations.
 
 ### Contributing
 1. Fork the repository
