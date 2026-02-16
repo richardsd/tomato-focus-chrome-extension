@@ -1,0 +1,84 @@
+name: macOS Release Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_path:
+        description: Path to built .app bundle
+        required: true
+        default: dist/TomatoFocus.app
+      update_channel:
+        description: Distribution channel
+        required: true
+        default: app-store
+        type: choice
+        options:
+          - app-store
+          - direct
+      run_sign_and_notarize:
+        description: Run signing + notarization steps
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  preflight:
+    name: Preflight release checks
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Review entitlements
+        run: tools/macos-release.sh entitlements macos-app/Config/TomatoFocus.entitlements
+
+      - name: Validate versioned migrations
+        run: tools/macos-release.sh migrations
+
+      - name: Validate crash/error logging configuration
+        run: tools/macos-release.sh crash-logging
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: production
+
+      - name: Validate update channel strategy
+        run: tools/macos-release.sh update-channel "${{ github.event.inputs.update_channel }}"
+        env:
+          SPARKLE_APPCAST_URL: ${{ secrets.SPARKLE_APPCAST_URL }}
+
+  sign-and-notarize:
+    name: Apple signing and notarization
+    runs-on: macos-latest
+    needs: preflight
+    if: ${{ github.event.inputs.run_sign_and_notarize == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sign app bundle
+        run: tools/macos-release.sh sign "${{ github.event.inputs.app_path }}"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+
+      - name: Notarize app bundle
+        run: tools/macos-release.sh notarize "${{ github.event.inputs.app_path }}"
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
