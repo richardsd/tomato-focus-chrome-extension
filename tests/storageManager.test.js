@@ -129,4 +129,38 @@ describe('StorageManager.applySavedState', () => {
 
         expect(state.timeLeft).toBe(0);
     });
+
+    it('restores persisted running state via saveState -> loadState -> applySavedState with recalculated endTime', async () => {
+        vi.setSystemTime(new Date('2025-01-01T00:00:00.000Z'));
+
+        const persistedState = {
+            ...createDefaultState(),
+            isRunning: true,
+            endTime: Date.now() + 65000,
+            timeLeft: 999,
+            currentSession: 2,
+            tasks: [{ id: 'task-1', title: 'Resume Task' }],
+        };
+
+        await StorageManager.saveState(persistedState);
+
+        vi.setSystemTime(new Date('2025-01-01T00:00:20.000Z'));
+
+        const loadedState = await StorageManager.loadState();
+        const resumedState = createDefaultState();
+
+        const applied = StorageManager.applySavedState(
+            resumedState,
+            loadedState
+        );
+
+        expect(applied).toBe(true);
+        expect(resumedState.isRunning).toBe(true);
+        expect(resumedState.currentSession).toBe(2);
+        expect(resumedState.endTime).toBe(persistedState.endTime);
+        expect(resumedState.tasks).toEqual([
+            { id: 'task-1', title: 'Resume Task' },
+        ]);
+        expect(resumedState.timeLeft).toBe(45);
+    });
 });
