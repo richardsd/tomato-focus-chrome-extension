@@ -5,14 +5,19 @@ import { ContextMenuManager } from '../src/background/contextMenus.js';
 describe('ContextMenuManager.create', () => {
     beforeEach(() => {
         // Spy on the adapter methods to track calls
-        vi.spyOn(ContextMenuManager.contextMenus, 'removeAll').mockResolvedValue();
+        vi.spyOn(
+            ContextMenuManager.contextMenus,
+            'removeAll'
+        ).mockResolvedValue();
         vi.spyOn(ContextMenuManager.contextMenus, 'create').mockResolvedValue();
     });
 
     it('registers all context menu items after clearing existing ones', async () => {
         await ContextMenuManager.create();
 
-        expect(ContextMenuManager.contextMenus.removeAll).toHaveBeenCalledOnce();
+        expect(
+            ContextMenuManager.contextMenus.removeAll
+        ).toHaveBeenCalledOnce();
         expect(ContextMenuManager.contextMenus.create).toHaveBeenCalledTimes(9);
         expect(ContextMenuManager.contextMenus.create).toHaveBeenNthCalledWith(
             1,
