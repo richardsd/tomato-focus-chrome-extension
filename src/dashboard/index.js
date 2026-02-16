@@ -8,7 +8,7 @@ import { DashboardTaskManager } from './tasks.js';
 import { DashboardSettingsManager } from './settings.js';
 import { DashboardStatisticsManager } from './statistics.js';
 
-class DashboardToastManager {
+export class DashboardToastManager {
     constructor(container) {
         this.container = container;
         this.activeToasts = new Set();
@@ -43,7 +43,7 @@ class DashboardToastManager {
     }
 }
 
-class DashboardApp {
+export class DashboardApp {
     constructor() {
         this.messenger = new RuntimeMessenger({
             retryDelay: RETRY_DELAY,
