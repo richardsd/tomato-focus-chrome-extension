@@ -99,6 +99,7 @@ export const createChromeMock = (overrides = {}) => {
         contextMenus: {
             create: vi.fn(),
             removeAll: vi.fn(),
+            update: vi.fn(),
             onClicked: {
                 addListener: vi.fn(),
                 removeListener: vi.fn(),
