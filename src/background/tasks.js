@@ -8,6 +8,19 @@ import {
     updateTaskRecord,
 } from '../core/tasksCore.js';
 
+function normalizeTaskPayload(taskData = {}) {
+    const normalizedTitle = String(taskData.title || '').trim();
+    const estimate = Number.parseInt(taskData.estimatedPomodoros, 10);
+
+    return {
+        ...taskData,
+        title: normalizedTitle || 'Untitled Task',
+        description: String(taskData.description || '').trim(),
+        estimatedPomodoros:
+            Number.isFinite(estimate) && estimate > 0 ? estimate : 1,
+    };
+}
+
 export class TaskManager {
     static storage = createChromeStorageAdapter();
 
@@ -33,7 +46,7 @@ export class TaskManager {
 
     static async createTask(taskData) {
         const tasks = await this.getTasks();
-        const newTask = createTaskRecord(taskData);
+        const newTask = createTaskRecord(normalizeTaskPayload(taskData));
         tasks.push(newTask);
         await this.saveTasks(tasks);
         return newTask;
@@ -47,7 +60,10 @@ export class TaskManager {
             throw new Error('Task not found');
         }
 
-        tasks[taskIndex] = updateTaskRecord(tasks[taskIndex], updates);
+        tasks[taskIndex] = updateTaskRecord(
+            tasks[taskIndex],
+            normalizeTaskPayload({ ...tasks[taskIndex], ...updates })
+        );
         await this.saveTasks(tasks);
         return tasks[taskIndex];
     }

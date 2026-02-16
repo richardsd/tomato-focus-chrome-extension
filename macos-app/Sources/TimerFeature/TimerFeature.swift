@@ -176,6 +176,10 @@ public final class TimerViewModel: ObservableObject {
         scheduler.cancelTask(identifier: timerIdentifier)
 
         let previousKind = sessionKind
+        if previousKind == .work {
+            storage.incrementPomodoroForCurrentTask()
+        }
+
         let transitioned = transitionAfterCompletion(from: currentState())
         apply(transitioned)
 

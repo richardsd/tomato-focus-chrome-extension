@@ -446,6 +446,7 @@ export class TaskUIManager {
         if (state && Array.isArray(state.tasks)) {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            this.applyCurrentTaskLayoutState(state);
         }
 
         this.updateSelectionBar();
@@ -497,6 +498,7 @@ export class TaskUIManager {
         if (state && Array.isArray(state.tasks)) {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            this.applyCurrentTaskLayoutState(state);
         }
 
         this.updateSelectionBar();
@@ -703,12 +705,7 @@ export class TaskUIManager {
                 );
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-                const hasCurrent = !!state.currentTaskId;
-                document.body.classList.toggle('compact-mode', hasCurrent);
-                document.body.classList.toggle('has-current-task', hasCurrent);
-                (window.requestAnimationFrame || window.setTimeout)(() => {
-                    window._popupController?.syncCurrentTaskLayout?.();
-                });
+                this.applyCurrentTaskLayoutState(state);
                 return;
             }
 
@@ -732,13 +729,7 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            // Immediate compact mode toggle
-            const hasCurrent = !!state.currentTaskId;
-            document.body.classList.toggle('compact-mode', hasCurrent);
-            document.body.classList.toggle('has-current-task', hasCurrent);
-            (window.requestAnimationFrame || window.setTimeout)(() => {
-                window._popupController?.syncCurrentTaskLayout?.();
-            });
+            this.applyCurrentTaskLayoutState(state);
         } catch (error) {
             logger.error('Failed to select task:', error);
         }
@@ -780,6 +771,7 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            this.applyCurrentTaskLayoutState(state);
         } catch (error) {
             logger.error('Failed to delete task:', error);
         }
@@ -801,6 +793,7 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+            this.applyCurrentTaskLayoutState(state);
         } catch (error) {
             logger.error('Failed to update task completion:', error);
         }
@@ -871,6 +864,7 @@ export class TaskUIManager {
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+                this.applyCurrentTaskLayoutState(state);
             } else {
                 // Create new task
                 const state = await this.messageHandler.sendMessage(
@@ -883,6 +877,7 @@ export class TaskUIManager {
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
+                this.applyCurrentTaskLayoutState(state);
             }
             this.hideTaskForm();
         } catch (error) {
@@ -923,6 +918,15 @@ export class TaskUIManager {
         currentTaskElement.classList.remove('hidden');
         currentTaskName.textContent = currentTask.title;
         currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
+    }
+
+    applyCurrentTaskLayoutState(state) {
+        const hasCurrent = Boolean(state?.currentTaskId);
+        document.body.classList.toggle('compact-mode', hasCurrent);
+        document.body.classList.toggle('has-current-task', hasCurrent);
+        (window.requestAnimationFrame || window.setTimeout)(() => {
+            window._popupController?.syncCurrentTaskLayout?.();
+        });
     }
 }
 
