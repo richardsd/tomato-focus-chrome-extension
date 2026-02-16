@@ -192,19 +192,98 @@ public struct AppSettings: Codable, Equatable {
     public var longBreakMinutes: Int
     public var longBreakInterval: Int
     public var autoStart: Bool
+    public var theme: AppTheme
+    public var pauseOnIdle: Bool
+    public var playSound: Bool
+    public var volume: Double
+    public var jiraURL: String
+    public var jiraUsername: String
+    public var jiraToken: String
+    public var autoSyncJira: Bool
+    public var jiraSyncIntervalMinutes: Int
+
+    private enum CodingKeys: String, CodingKey {
+        case focusDurationMinutes
+        case shortBreakMinutes
+        case longBreakMinutes
+        case longBreakInterval
+        case autoStart
+        case theme
+        case pauseOnIdle
+        case playSound
+        case volume
+        case jiraURL
+        case jiraUsername
+        case jiraToken
+        case autoSyncJira
+        case jiraSyncIntervalMinutes
+    }
 
     public init(
         focusDurationMinutes: Int = 25,
         shortBreakMinutes: Int = 5,
         longBreakMinutes: Int = 15,
         longBreakInterval: Int = 4,
-        autoStart: Bool = false
+        autoStart: Bool = false,
+        theme: AppTheme = .system,
+        pauseOnIdle: Bool = true,
+        playSound: Bool = true,
+        volume: Double = 0.7,
+        jiraURL: String = "",
+        jiraUsername: String = "",
+        jiraToken: String = "",
+        autoSyncJira: Bool = false,
+        jiraSyncIntervalMinutes: Int = 30
     ) {
         self.focusDurationMinutes = focusDurationMinutes
         self.shortBreakMinutes = shortBreakMinutes
         self.longBreakMinutes = longBreakMinutes
         self.longBreakInterval = longBreakInterval
         self.autoStart = autoStart
+        self.theme = theme
+        self.pauseOnIdle = pauseOnIdle
+        self.playSound = playSound
+        self.volume = volume
+        self.jiraURL = jiraURL
+        self.jiraUsername = jiraUsername
+        self.jiraToken = jiraToken
+        self.autoSyncJira = autoSyncJira
+        self.jiraSyncIntervalMinutes = jiraSyncIntervalMinutes
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        focusDurationMinutes = try container.decodeIfPresent(Int.self, forKey: .focusDurationMinutes) ?? 25
+        shortBreakMinutes = try container.decodeIfPresent(Int.self, forKey: .shortBreakMinutes) ?? 5
+        longBreakMinutes = try container.decodeIfPresent(Int.self, forKey: .longBreakMinutes) ?? 15
+        longBreakInterval = try container.decodeIfPresent(Int.self, forKey: .longBreakInterval) ?? 4
+        autoStart = try container.decodeIfPresent(Bool.self, forKey: .autoStart) ?? false
+        theme = try container.decodeIfPresent(AppTheme.self, forKey: .theme) ?? .system
+        pauseOnIdle = try container.decodeIfPresent(Bool.self, forKey: .pauseOnIdle) ?? true
+        playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? true
+        volume = try container.decodeIfPresent(Double.self, forKey: .volume) ?? 0.7
+        jiraURL = try container.decodeIfPresent(String.self, forKey: .jiraURL) ?? ""
+        jiraUsername = try container.decodeIfPresent(String.self, forKey: .jiraUsername) ?? ""
+        jiraToken = try container.decodeIfPresent(String.self, forKey: .jiraToken) ?? ""
+        autoSyncJira = try container.decodeIfPresent(Bool.self, forKey: .autoSyncJira) ?? false
+        jiraSyncIntervalMinutes = try container.decodeIfPresent(Int.self, forKey: .jiraSyncIntervalMinutes) ?? 30
+    }
+}
+
+public enum AppTheme: String, Codable, Equatable, CaseIterable {
+    case system
+    case light
+    case dark
+
+    public var displayName: String {
+        switch self {
+        case .system:
+            "System"
+        case .light:
+            "Light"
+        case .dark:
+            "Dark"
+        }
     }
 }
 
