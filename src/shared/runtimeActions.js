@@ -23,4 +23,5 @@ export const ACTIONS = Object.freeze({
     CHECK_NOTIFICATIONS: 'checkNotifications',
     UPDATE_TIMER: 'updateTimer',
     PLAY_SOUND: 'playSound',
+    EXPORT_USER_DATA_SCHEMA: 'exportUserDataSchema',
 });

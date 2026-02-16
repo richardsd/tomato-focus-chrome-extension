@@ -163,6 +163,24 @@ public final class UserDefaultsStorageService: StorageServicing {
         encode(state, forKey: Keys.timerState)
     }
 
+    @discardableResult
+    public func importExtensionUserData(_ data: Data) throws -> UserDataImportReport {
+        let payload = try UserDataImportPayload.parse(from: data)
+
+        // Conflict policy is enforced here: sourceFileReplacesLocal overwrites local model values.
+        saveSettings(payload.settings)
+        saveTasks(payload.tasks)
+        saveCurrentTaskID(payload.currentTaskID)
+        saveStats(payload.stats)
+        saveTimerState(payload.timerState)
+
+        return UserDataImportReport(
+            schemaVersion: payload.schemaVersion,
+            importedTaskCount: payload.tasks.count,
+            importedStatisticsDayCount: payload.stats.daily.count
+        )
+    }
+
     private func encode<T: Encodable>(_ value: T, forKey key: String) {
         guard let data = try? encoder.encode(value) else { return }
         defaults.set(data, forKey: key)

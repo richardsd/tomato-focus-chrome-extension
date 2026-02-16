@@ -13,6 +13,7 @@ import {
     computeSkipBreakState,
     getSessionDurationSeconds,
 } from '../core/timerStateMachine.js';
+import { exportUserDataSchema } from '../core/userDataExchange.js';
 import {
     createChromeContextMenusAdapter,
     createChromeIdleProvider,
@@ -631,6 +632,13 @@ export class TimerController {
                     const permissionLevel =
                         await NotificationManager.checkPermissions();
                     sendResponse({ success: true, permissionLevel });
+                    break;
+                }
+                case ACTIONS.EXPORT_USER_DATA_SCHEMA: {
+                    sendResponse({
+                        success: true,
+                        export: exportUserDataSchema(this.state.getState()),
+                    });
                     break;
                 }
                 default:
