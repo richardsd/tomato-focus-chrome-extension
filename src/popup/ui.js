@@ -1703,3 +1703,10 @@ export function initializePopup() {
         }
     });
 }
+export {
+    ThemeManager,
+    UIManager,
+    NotificationController,
+    NavigationManager,
+    PopupController,
+};
