@@ -32,6 +32,7 @@ export class RuntimeMessenger {
      * @param {Object} [options]
      * @param {number} [options.retryDelay]
      * @param {T} [options.fallbackValue]
+     * @param {boolean} [options.unwrapState]
      * @returns {Promise<T|any>}
      */
     async sendMessage(action, data = {}, options = {}) {
@@ -50,6 +51,12 @@ export class RuntimeMessenger {
             Object.prototype.hasOwnProperty.call(options, 'fallbackValue')
                 ? options.fallbackValue
                 : this.fallbacks[action];
+        const shouldUnwrapState = Object.prototype.hasOwnProperty.call(
+            options,
+            'unwrapState'
+        )
+            ? Boolean(options.unwrapState)
+            : this.unwrapState;
 
         return new Promise((resolve, reject) => {
             const attemptSend = (attempt = 0) => {
@@ -79,11 +86,24 @@ export class RuntimeMessenger {
                     }
 
                     if (response && response.error) {
-                        reject(new Error(response.error));
+                        const rawError = response.error;
+                        const normalizedMessage =
+                            typeof rawError === 'string'
+                                ? rawError
+                                : rawError?.message || 'Unknown runtime error';
+                        const runtimeError = new Error(normalizedMessage);
+                        if (
+                            rawError &&
+                            typeof rawError === 'object' &&
+                            rawError.code
+                        ) {
+                            runtimeError.code = rawError.code;
+                        }
+                        reject(runtimeError);
                         return;
                     }
 
-                    if (this.unwrapState && response && 'state' in response) {
+                    if (shouldUnwrapState && response && 'state' in response) {
                         resolve(response.state);
                         return;
                     }
