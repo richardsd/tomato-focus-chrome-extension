@@ -178,6 +178,11 @@ public final class TimerViewModel: ObservableObject {
         let previousKind = sessionKind
         if previousKind == .work {
             storage.incrementPomodoroForCurrentTask()
+
+            var stats = storage.loadStats()
+            stats.recordCompletedSession(focusMinutes: currentSettings.focusDurationMinutes)
+            stats.pruneHistory()
+            storage.saveStats(stats)
         }
 
         let transitioned = transitionAfterCompletion(from: currentState())
