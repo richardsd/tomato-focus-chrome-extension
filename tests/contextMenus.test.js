@@ -1,8 +1,14 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ContextMenuManager } from '../src/background/contextMenus.js';
 
 describe('ContextMenuManager.create', () => {
+    beforeEach(() => {
+        // Spy on the adapter methods to track calls
+        vi.spyOn(ContextMenuManager.contextMenus, 'removeAll').mockResolvedValue();
+        vi.spyOn(ContextMenuManager.contextMenus, 'create').mockResolvedValue();
+    });
+
     it('registers all context menu items after clearing existing ones', async () => {
         await ContextMenuManager.create();
 
@@ -30,7 +36,7 @@ describe('ContextMenuManager.create', () => {
             .spyOn(console, 'error')
             .mockImplementation(() => {});
 
-        vi.spyOn(ContextMenuManager.contextMenus, 'create')
+        ContextMenuManager.contextMenus.create
             .mockResolvedValueOnce() // first item succeeds
             .mockRejectedValueOnce(new Error('duplicate id')); // second item fails
 
@@ -44,6 +50,11 @@ describe('ContextMenuManager.create', () => {
 });
 
 describe('ContextMenuManager.update', () => {
+    beforeEach(() => {
+        // Spy on the adapter methods
+        vi.spyOn(ContextMenuManager.contextMenus, 'update').mockResolvedValue();
+    });
+
     it('updates start/pause title and skip-break enabled state', async () => {
         await ContextMenuManager.update(true, true, 60);
 
@@ -58,7 +69,7 @@ describe('ContextMenuManager.update', () => {
             { enabled: false }
         );
 
-        vi.spyOn(ContextMenuManager.contextMenus, 'update').mockClear();
+        ContextMenuManager.contextMenus.update.mockClear();
 
         await ContextMenuManager.update(false, false, 30);
 
@@ -77,7 +88,7 @@ describe('ContextMenuManager.update', () => {
     it('logs update errors reported by the adapter', async () => {
         const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-        vi.spyOn(ContextMenuManager.contextMenus, 'update').mockRejectedValueOnce(
+        ContextMenuManager.contextMenus.update.mockRejectedValueOnce(
             new Error('menu not found')
         );
 
