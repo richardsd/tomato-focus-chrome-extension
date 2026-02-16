@@ -1,22 +1,68 @@
+import AVFoundation
+import AppKit
 import CoreInterfaces
 import Foundation
 import UserNotifications
 
-public final class NotificationService: NotificationServicing {
-    public init() {}
+public final class NotificationService: NSObject, NotificationServicing {
+    private let notificationCenter: UNUserNotificationCenter
+    private var audioPlayer: AVAudioPlayer?
 
-    public func requestAuthorization() async {
-        _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+    public override init() {
+        self.notificationCenter = UNUserNotificationCenter.current()
+        super.init()
     }
 
-    public func scheduleNotification(title: String, body: String, in seconds: TimeInterval) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
+    public func requestAuthorization() async {
+        _ = try? await notificationCenter.requestAuthorization(options: [.alert, .sound])
+    }
 
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
+    public func dispatchSessionBoundaryAlert(title: String, body: String, playSound: Bool, volume: Double) async {
+        let settings = await notificationCenter.notificationSettings()
+
+        if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional || settings.authorizationStatus == .ephemeral {
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = nil
+
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+            do {
+                try await notificationCenter.add(request)
+            } catch {
+                NSLog("Failed to schedule local notification: \(error.localizedDescription)")
+            }
+        } else {
+            await MainActor.run {
+                NSApplication.shared.requestUserAttention(.informationalRequest)
+            }
+            NSLog("Notification permission denied/restricted; using attention request + sound fallback")
+        }
+
+        guard playSound else { return }
+        await playBoundarySound(volume: volume)
+    }
+
+    private func playBoundarySound(volume: Double) async {
+        let normalizedVolume = Float(max(0, min(1, volume)))
+
+        do {
+            guard let soundURL = Bundle.module.url(forResource: "notification", withExtension: "mp3") else {
+                throw NSError(domain: "NotificationService", code: 404, userInfo: [NSLocalizedDescriptionKey: "notification.mp3 not found in bundle"])
+            }
+
+            let player = try AVAudioPlayer(contentsOf: soundURL)
+            player.volume = normalizedVolume
+            player.prepareToPlay()
+            player.play()
+            audioPlayer = player
+        } catch {
+            NSLog("Custom notification audio failed: \(error.localizedDescription). Falling back to system beep.")
+            await MainActor.run {
+                NSSound.beep()
+            }
+        }
     }
 }
 

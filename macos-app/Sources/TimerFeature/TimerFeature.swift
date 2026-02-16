@@ -43,6 +43,10 @@ public final class TimerViewModel: ObservableObject {
         self.endTimestamp = recovered.endTimestamp
 
         recoverStateAfterLaunch(from: recovered)
+
+        Task {
+            await notifications.requestAuthorization()
+        }
     }
 
     public func start() {
@@ -188,11 +192,14 @@ public final class TimerViewModel: ObservableObject {
         let transitioned = transitionAfterCompletion(from: currentState())
         apply(transitioned)
 
-        notifications.scheduleNotification(
-            title: "Tomato Focus",
-            body: previousKind == .work ? "Work session complete" : "Break session complete",
-            in: 1
-        )
+        Task {
+            await notifications.dispatchSessionBoundaryAlert(
+                title: "Tomato Focus",
+                body: previousKind == .work ? "Work session complete" : "Break session complete",
+                playSound: currentSettings.playSound,
+                volume: currentSettings.volume
+            )
+        }
 
         if isRunning {
             persistAndSchedule(withSecondsRemaining: secondsRemaining)

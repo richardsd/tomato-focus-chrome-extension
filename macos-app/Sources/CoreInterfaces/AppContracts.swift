@@ -321,7 +321,7 @@ public struct TimerState: Codable, Equatable {
 
 public protocol NotificationServicing {
     func requestAuthorization() async
-    func scheduleNotification(title: String, body: String, in seconds: TimeInterval)
+    func dispatchSessionBoundaryAlert(title: String, body: String, playSound: Bool, volume: Double) async
 }
 
 public protocol StorageServicing {
