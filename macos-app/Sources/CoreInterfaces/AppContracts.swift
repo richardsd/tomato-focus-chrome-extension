@@ -56,6 +56,7 @@ public struct TaskItem: Identifiable, Codable, Equatable {
         try container.encodeIfPresent(completedAt, forKey: .completedAt)
     }
 
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
@@ -75,13 +76,113 @@ public struct TaskItem: Identifiable, Codable, Equatable {
     }
 }
 
-public struct PomodoroStats: Codable, Equatable {
+public struct DailyPomodoroStats: Codable, Equatable {
     public var completedSessions: Int
     public var focusMinutes: Int
 
     public init(completedSessions: Int = 0, focusMinutes: Int = 0) {
-        self.completedSessions = completedSessions
-        self.focusMinutes = focusMinutes
+        self.completedSessions = max(completedSessions, 0)
+        self.focusMinutes = max(focusMinutes, 0)
+    }
+}
+
+public struct PomodoroStats: Codable, Equatable {
+    public var daily: [String: DailyPomodoroStats]
+
+    public init(daily: [String: DailyPomodoroStats] = [:]) {
+        self.daily = daily
+    }
+
+    public var totalFocusMinutes: Int {
+        daily.values.reduce(0) { $0 + $1.focusMinutes }
+    }
+
+    public var totalCompletedSessions: Int {
+        daily.values.reduce(0) { $0 + $1.completedSessions }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case daily
+        case completedSessions
+        case focusMinutes
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(daily, forKey: .daily)
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        if let decodedDaily = try container.decodeIfPresent([String: DailyPomodoroStats].self, forKey: .daily) {
+            daily = decodedDaily
+            return
+        }
+
+        let legacyCompleted = max(try container.decodeIfPresent(Int.self, forKey: .completedSessions) ?? 0, 0)
+        let legacyFocusMinutes = max(try container.decodeIfPresent(Int.self, forKey: .focusMinutes) ?? 0, 0)
+
+        if legacyCompleted == 0, legacyFocusMinutes == 0 {
+            daily = [:]
+        } else {
+            let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.timeZone = TimeZone.current
+            formatter.dateFormat = "yyyy-MM-dd"
+            let todayKey = formatter.string(from: Date())
+            daily = [
+                todayKey: DailyPomodoroStats(
+                    completedSessions: legacyCompleted,
+                    focusMinutes: legacyFocusMinutes
+                )
+            ]
+        }
+    }
+}
+
+public extension PomodoroStats {
+    static func dateKey(for date: Date, in timeZone: TimeZone = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
+    }
+
+    func stats(for date: Date = Date()) -> DailyPomodoroStats {
+        daily[Self.dateKey(for: date)] ?? DailyPomodoroStats()
+    }
+
+    mutating func recordCompletedSession(on date: Date = Date(), focusMinutes: Int) {
+        let key = Self.dateKey(for: date)
+        var existing = daily[key] ?? DailyPomodoroStats()
+        existing.completedSessions += 1
+        existing.focusMinutes += max(focusMinutes, 0)
+        daily[key] = existing
+    }
+
+    mutating func pruneHistory(retentionDays: Int = 30, now: Date = Date()) {
+        guard retentionDays > 0 else { return }
+
+        let cutoff = Calendar(identifier: .gregorian).date(byAdding: .day, value: -retentionDays, to: now) ?? now
+        daily = daily.filter { key, _ in
+            guard let date = Self.isoFormatter.date(from: key) else {
+                return false
+            }
+            return date >= cutoff
+        }
+    }
+
+    private static var isoFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
     }
 }
 
@@ -155,6 +256,7 @@ public protocol StorageServicing {
     func saveSettings(_ settings: AppSettings)
     func loadStats() -> PomodoroStats
     func saveStats(_ stats: PomodoroStats)
+    func clearStats()
     func loadTimerState() -> TimerState
     func saveTimerState(_ state: TimerState)
 }
@@ -175,4 +277,5 @@ public protocol JiraServicing {
 public extension Notification.Name {
     static let tasksDidChange = Notification.Name("tomatoFocus.tasksDidChange")
     static let currentTaskDidChange = Notification.Name("tomatoFocus.currentTaskDidChange")
+    static let statsDidChange = Notification.Name("tomatoFocus.statsDidChange")
 }

@@ -89,6 +89,12 @@ public final class UserDefaultsStorageService: StorageServicing {
 
     public func saveStats(_ stats: PomodoroStats) {
         encode(stats, forKey: Keys.stats)
+        NotificationCenter.default.post(name: .statsDidChange, object: nil)
+    }
+
+    public func clearStats() {
+        defaults.removeObject(forKey: Keys.stats)
+        NotificationCenter.default.post(name: .statsDidChange, object: nil)
     }
 
     public func loadTimerState() -> TimerState {
