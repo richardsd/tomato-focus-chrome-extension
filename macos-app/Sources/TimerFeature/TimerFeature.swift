@@ -103,6 +103,20 @@ public final class TimerViewModel: ObservableObject {
         }
     }
 
+    public func toggle() {
+        isRunning ? pause() : start()
+    }
+
+    public func startQuickTimer(minutes: Int) {
+        guard minutes > 0 else { return }
+
+        sessionKind = .work
+        secondsRemaining = minutes * 60
+        isRunning = true
+
+        persistAndSchedule(withSecondsRemaining: secondsRemaining)
+    }
+
     private var currentSettings: AppSettings {
         storage.loadSettings()
     }
@@ -275,7 +289,7 @@ public struct TimerView: View {
                 .monospacedDigit()
             HStack {
                 Button(viewModel.isRunning ? "Pause" : startButtonTitle) {
-                    viewModel.isRunning ? viewModel.pause() : viewModel.start()
+                    viewModel.toggle()
                 }
 
                 Button("Reset") {
