@@ -8,20 +8,16 @@ import TimerFeature
 
 public struct RootNavigationView: View {
     private let container: AppContainer
+    @ObservedObject private var timerViewModel: TimerViewModel
 
-    public init(container: AppContainer) {
+    public init(container: AppContainer, timerViewModel: TimerViewModel) {
         self.container = container
+        self.timerViewModel = timerViewModel
     }
 
     public var body: some View {
         TabView {
-            TimerView(
-                viewModel: TimerViewModel(
-                    notifications: container.dependencies.notifications,
-                    scheduler: container.dependencies.scheduler,
-                    storage: container.dependencies.storage
-                )
-            )
+            TimerView(viewModel: timerViewModel)
             .tabItem { Label("Timer", systemImage: "timer") }
 
             TasksView(
