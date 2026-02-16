@@ -5,6 +5,7 @@ import {
     shouldRetryJiraSync,
 } from '../core/jiraCore.js';
 import { fetchAssignedIssues } from './jira.js';
+import { JiraErrorCodes } from '../shared/jiraErrors.js';
 import { TaskManager } from './tasks.js';
 import { createChromeSchedulerAdapter } from './adapters/chromeAdapters.js';
 
@@ -51,23 +52,34 @@ export class JiraSyncManager {
 
     async performJiraSync(settings) {
         const { jiraUrl, jiraUsername, jiraToken } = settings || {};
-        const hasPermission = await hasJiraPermission(jiraUrl);
-        if (!hasPermission) {
-            throw new Error(
-                'Jira permission not granted. Please enable Jira access in settings.'
+
+        if (!jiraUrl || !jiraUsername || !jiraToken) {
+            const missingConfigurationError = new Error(
+                'Missing Jira configuration. Enter Jira URL, username, and API token before syncing.'
             );
+            missingConfigurationError.code = JiraErrorCodes.CONFIGURATION;
+            throw missingConfigurationError;
         }
 
-        let issues;
+        const hasPermission = await hasJiraPermission(jiraUrl);
+        if (!hasPermission) {
+            const permissionError = new Error(
+                'Jira permission not granted. Please enable Jira access in settings.'
+            );
+            permissionError.code = JiraErrorCodes.CONFIGURATION;
+            throw permissionError;
+        }
+
+        let issuesPayload;
         try {
-            issues = await fetchAssignedIssues({
+            issuesPayload = await fetchAssignedIssues({
                 jiraUrl,
                 jiraUsername,
                 jiraToken,
             });
         } catch (error) {
             if (shouldRetryJiraSync(error)) {
-                issues = await fetchAssignedIssues({
+                issuesPayload = await fetchAssignedIssues({
                     jiraUrl,
                     jiraUsername,
                     jiraToken,
@@ -76,6 +88,8 @@ export class JiraSyncManager {
                 throw error;
             }
         }
+
+        const { issues, totalIssues, mappingErrors } = issuesPayload;
 
         const existingTasks = await TaskManager.getTasks();
         const toCreate = buildTaskImports(issues, existingTasks);
@@ -88,7 +102,8 @@ export class JiraSyncManager {
 
         return {
             importedCount: toCreate.length,
-            totalIssues: issues.length,
+            totalIssues,
+            mappingErrorCount: mappingErrors.length,
             tasks,
         };
     }

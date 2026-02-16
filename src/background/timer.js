@@ -143,12 +143,14 @@ export class TimerController {
         return {
             importedCount: result.importedCount,
             totalIssues: result.totalIssues,
+            mappingErrorCount: result.mappingErrorCount,
         };
     }
 
     async handleJiraSyncAlarm() {
         try {
-            const { importedCount, totalIssues } = await this.performJiraSync();
+            const { importedCount, totalIssues, mappingErrorCount } =
+                await this.performJiraSync();
             let message;
             if (importedCount > 0) {
                 message = `Imported ${importedCount} Jira ${importedCount === 1 ? 'task' : 'tasks'}.`;
@@ -156,6 +158,9 @@ export class TimerController {
                 message = 'Jira sync complete – tasks are already up to date.';
             } else {
                 message = 'Jira sync complete – no assigned issues found.';
+            }
+            if (mappingErrorCount > 0) {
+                message += ` ${mappingErrorCount} issue${mappingErrorCount === 1 ? '' : 's'} could not be mapped.`;
             }
             await this.uiNotifier.notify(
                 'Tomato Focus',
@@ -560,10 +565,16 @@ export class TimerController {
                             state: this.state.getState(),
                             importedCount: result.importedCount,
                             totalIssues: result.totalIssues,
+                            mappingErrorCount: result.mappingErrorCount,
                         });
                     } catch (err) {
                         console.error('Failed to import Jira tasks:', err);
-                        sendResponse({ error: err.message });
+                        sendResponse({
+                            error: {
+                                message: err.message,
+                                code: err.code,
+                            },
+                        });
                     }
                     break;
                 }

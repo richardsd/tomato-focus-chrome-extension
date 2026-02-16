@@ -4,6 +4,7 @@ import { requestJiraPermission } from '../shared/jiraPermissions.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
 import { renderTaskItem } from './taskTemplates.js';
 import { createLogger } from '../shared/logger.js';
+import { formatJiraSyncFailure } from '../shared/jiraErrors.js';
 
 const logger = createLogger('TaskUI');
 
@@ -964,17 +965,44 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
             await this.messageHandler.sendMessage(
                 ACTIONS.RECONFIGURE_JIRA_SYNC
             );
-            const updatedState = await this.messageHandler.sendMessage(
-                ACTIONS.IMPORT_JIRA_TASKS
+            const syncResult = await this.messageHandler.sendMessage(
+                ACTIONS.IMPORT_JIRA_TASKS,
+                {},
+                { unwrapState: false }
             );
+
+            const nextState = syncResult?.state || state;
             this.renderTasksList(
-                updatedState.tasks || [],
-                updatedState.currentTaskId
+                nextState.tasks || [],
+                nextState.currentTaskId
             );
-            notifySuccess('Jira tasks synced successfully.');
+
+            const importedCount = Number(syncResult?.importedCount || 0);
+            const totalIssues = Number(syncResult?.totalIssues || 0);
+            const mappingErrorCount = Number(
+                syncResult?.mappingErrorCount || 0
+            );
+
+            if (importedCount > 0) {
+                notifySuccess(
+                    `Imported ${importedCount} Jira ${importedCount === 1 ? 'task' : 'tasks'}.`
+                );
+            } else if (totalIssues > 0) {
+                notifySuccess(
+                    'Jira sync complete — tasks are already up to date.'
+                );
+            } else {
+                notifySuccess('Jira sync complete — no assigned issues found.');
+            }
+
+            if (mappingErrorCount > 0) {
+                notifyError(
+                    `Some Jira issues could not be imported due to missing fields (${mappingErrorCount} mapping ${mappingErrorCount === 1 ? 'error' : 'errors'}).`
+                );
+            }
         } catch (err) {
             logger.error('Failed to import Jira tasks:', err);
-            notifyError(`Jira sync failed: ${err?.message || 'Unknown error'}`);
+            notifyError(formatJiraSyncFailure(err));
         } finally {
             btn.disabled = false;
         }
