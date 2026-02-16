@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tomato-focus.app/schemas/user-data-exchange/v1",
+  "title": "Tomato Focus User Data Exchange",
+  "type": "object",
+  "required": ["schemaId", "schemaVersion", "exportedAt", "conflictPolicy", "data"],
+  "properties": {
+    "schemaId": { "const": "com.tomatofocus.user-data" },
+    "schemaVersion": { "const": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "conflictPolicy": { "const": "sourceFileReplacesLocal" },
+    "data": {
+      "type": "object",
+      "required": ["settings", "tasks", "statistics", "timer"],
+      "properties": {
+        "settings": { "type": "object" },
+        "tasks": { "type": "array", "items": { "type": "object" } },
+        "statistics": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["completedToday", "focusTimeToday"],
+            "properties": {
+              "completedToday": { "type": "integer", "minimum": 0 },
+              "focusTimeToday": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "currentTaskId": { "type": ["string", "null"] },
+        "timer": {
+          "type": "object",
+          "required": ["isRunning", "timeLeft", "currentSession", "isWorkSession"],
+          "properties": {
+            "isRunning": { "type": "boolean" },
+            "timeLeft": { "type": "integer", "minimum": 0 },
+            "endTime": { "type": ["string", "number", "null"] },
+            "currentSession": { "type": "integer", "minimum": 1 },
+            "isWorkSession": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import CoreInterfaces
 import Foundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 @MainActor
 public final class SettingsViewModel: ObservableObject {
@@ -26,6 +27,24 @@ public final class SettingsViewModel: ObservableObject {
         validationErrors = []
         storage.saveSettings(settings)
         saveStatusMessage = "Settings saved."
+    }
+
+    public func importExtensionData(from fileURL: URL) {
+        do {
+            let fileData = try Data(contentsOf: fileURL)
+            let report = try storage.importExtensionUserData(fileData)
+            settings = storage.loadSettings()
+            validationErrors = []
+            saveStatusMessage = "Imported schema v\(report.schemaVersion): \(report.importedTaskCount) tasks, \(report.importedStatisticsDayCount) statistics days."
+        } catch {
+            validationErrors = [error.localizedDescription]
+            saveStatusMessage = ""
+        }
+    }
+
+    public func handleImportError(_ error: Error) {
+        validationErrors = [error.localizedDescription]
+        saveStatusMessage = ""
     }
 
     private func validate(settings: AppSettings) -> [String] {
@@ -79,6 +98,7 @@ public final class SettingsViewModel: ObservableObject {
 
 public struct SettingsView: View {
     @ObservedObject private var viewModel: SettingsViewModel
+    @State private var isImportingExchangeFile = false
 
     public init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
@@ -132,6 +152,15 @@ public struct SettingsView: View {
                 )
             }
 
+            Section("Data exchange") {
+                Text("Conflict policy: source file replaces all local settings, tasks, statistics, current task, and timer state.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button("Import extension data JSON…") {
+                    isImportingExchangeFile = true
+                }
+            }
+
             if !viewModel.validationErrors.isEmpty {
                 Section {
                     ForEach(viewModel.validationErrors, id: \.self) { error in
@@ -147,6 +176,19 @@ public struct SettingsView: View {
                     Text(viewModel.saveStatusMessage)
                         .foregroundStyle(.green)
                 }
+            }
+        }
+        .fileImporter(
+            isPresented: $isImportingExchangeFile,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                guard let first = urls.first else { return }
+                viewModel.importExtensionData(from: first)
+            case .failure(let error):
+                viewModel.handleImportError(error)
             }
         }
         .padding()

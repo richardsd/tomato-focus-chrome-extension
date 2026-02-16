@@ -338,6 +338,8 @@ public protocol StorageServicing {
     func clearStats()
     func loadTimerState() -> TimerState
     func saveTimerState(_ state: TimerState)
+    @discardableResult
+    func importExtensionUserData(_ data: Data) throws -> UserDataImportReport
 }
 
 public protocol SchedulingServicing {
