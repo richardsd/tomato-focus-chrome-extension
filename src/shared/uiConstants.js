@@ -1,1 +1,4 @@
-export { DEFAULT_STATE, RETRY_DELAY } from '../core/uiConstants.js';
+import { createDefaultState } from './stateDefaults.js';
+
+export const DEFAULT_STATE = createDefaultState();
+export const RETRY_DELAY = 100;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSTANTS } from '../src/background/constants.js';
+import { CONSTANTS, chromePromise } from '../src/background/constants.js';
 import { StatisticsManager } from '../src/background/statistics.js';
 
 describe('StatisticsManager', () => {
@@ -86,7 +86,9 @@ describe('StatisticsManager', () => {
 
     it('getAllStatistics returns empty object when storage read fails', async () => {
         const error = new Error('storage read failed');
-        vi.spyOn(StatisticsManager.storage, 'get').mockRejectedValueOnce(error);
+        vi.spyOn(chromePromise.storage.local, 'get').mockRejectedValueOnce(
+            error
+        );
         const consoleErrorSpy = vi
             .spyOn(console, 'error')
             .mockImplementation(() => {});

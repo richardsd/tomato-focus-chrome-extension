@@ -1,118 +1,63 @@
 import { validateJiraUrl } from '../shared/jiraUrlValidator.js';
-import { buildJiraSearchRequest, mapIssuesToTasks } from '../core/jiraCore.js';
-import { JiraErrorCodes } from '../shared/jiraErrors.js';
-
-const JIRA_REQUEST_TIMEOUT_MS = 15000;
-
-function createJiraError(message, code, extras = {}) {
-    const error = new Error(message);
-    error.code = code;
-    Object.assign(error, extras);
-    return error;
-}
-
-function classifyHttpError(response) {
-    if (response.status === 401 || response.status === 403) {
-        return createJiraError(
-            'Jira authentication failed. Verify your URL, username, and API token.',
-            JiraErrorCodes.AUTH,
-            { status: response.status }
-        );
-    }
-
-    return createJiraError(
-        `Jira request failed: ${response.status} ${response.statusText || ''}`.trim(),
-        JiraErrorCodes.RESPONSE,
-        { status: response.status }
-    );
-}
-
-function collectMappingErrors(issues = []) {
-    const mappingErrors = [];
-
-    issues.forEach((issue, index) => {
-        const hasKey = typeof issue?.key === 'string' && issue.key.trim();
-        const hasSummary =
-            typeof issue?.fields?.summary === 'string' &&
-            issue.fields.summary.trim();
-
-        if (!hasKey && !hasSummary) {
-            mappingErrors.push({
-                index,
-                reason: 'Missing issue key and summary',
-            });
-        }
-    });
-
-    return mappingErrors;
-}
 
 export async function fetchAssignedIssues(settings) {
     const { jiraUrl, jiraUsername, jiraToken } = settings || {};
     if (!jiraUrl || !jiraUsername || !jiraToken) {
-        throw createJiraError(
-            'Missing Jira configuration',
-            JiraErrorCodes.CONFIGURATION
-        );
+        throw new Error('Missing Jira configuration');
     }
     const { isValid, message } = validateJiraUrl(jiraUrl);
     if (!isValid) {
-        throw createJiraError(message, JiraErrorCodes.CONFIGURATION);
+        throw new Error(message);
     }
 
-    const request = buildJiraSearchRequest({
-        jiraUrl,
-        jiraUsername,
-        jiraToken,
-    });
-
-    const AbortControllerImpl = globalThis.AbortController;
-    const controller = AbortControllerImpl ? new AbortControllerImpl() : null;
-    const timeoutId = setTimeout(() => {
-        controller?.abort();
-    }, JIRA_REQUEST_TIMEOUT_MS);
+    const base = jiraUrl.replace(/\/$/, '');
+    const escapedUsername = jiraUsername
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"');
+    const jql = `status in ("Open","In Progress","In Review","Verify") AND assignee = "${escapedUsername}" AND resolution = Unresolved`;
+    const fields = 'key,summary,description';
+    const search = `${base}/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=${encodeURIComponent(fields)}`;
+    const auth = btoa(`${jiraUsername}:${jiraToken}`);
 
     let response;
     try {
-        response = await fetch(request.url, {
-            ...request.requestInit,
-            signal: controller?.signal,
+        response = await fetch(search, {
+            headers: {
+                Authorization: `Basic ${auth}`,
+                Accept: 'application/json',
+            },
         });
     } catch (error) {
-        if (error?.name === 'AbortError') {
-            throw createJiraError(
-                'Jira request timed out. Please try again.',
-                JiraErrorCodes.TIMEOUT
-            );
-        }
-
-        throw createJiraError(
-            `Failed to connect to Jira: ${error.message}`,
-            JiraErrorCodes.NETWORK
-        );
-    } finally {
-        clearTimeout(timeoutId);
+        throw new Error(`Failed to connect to Jira: ${error.message}`);
     }
 
     if (!response.ok) {
-        throw classifyHttpError(response);
+        throw new Error(
+            `Jira request failed: ${response.status} ${response.statusText || ''}`.trim()
+        );
     }
 
     let data;
     try {
         data = await response.json();
     } catch {
-        throw createJiraError(
-            'Jira response was not valid JSON',
-            JiraErrorCodes.RESPONSE
-        );
+        throw new Error('Jira response was not valid JSON');
     }
-
-    const issues = Array.isArray(data.issues) ? data.issues : [];
-
-    return {
-        issues: mapIssuesToTasks(issues),
-        totalIssues: issues.length,
-        mappingErrors: collectMappingErrors(issues),
-    };
+    const issues = data.issues || [];
+    return issues.map((issue) => {
+        const fields = issue.fields || {};
+        const summary = fields.summary || '';
+        let description = '';
+        const rawDesc = fields.description;
+        if (typeof rawDesc === 'string') {
+            description = rawDesc;
+        } else if (rawDesc && Array.isArray(rawDesc.content)) {
+            description = rawDesc.content
+                .map((block) =>
+                    (block.content || []).map((c) => c.text || '').join('')
+                )
+                .join('\n');
+        }
+        return { key: issue.key, title: summary, description };
+    });
 }

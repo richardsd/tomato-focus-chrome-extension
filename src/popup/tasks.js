@@ -4,7 +4,6 @@ import { requestJiraPermission } from '../shared/jiraPermissions.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
 import { renderTaskItem } from './taskTemplates.js';
 import { createLogger } from '../shared/logger.js';
-import { formatJiraSyncFailure } from '../shared/jiraErrors.js';
 
 const logger = createLogger('TaskUI');
 
@@ -447,7 +446,6 @@ export class TaskUIManager {
         if (state && Array.isArray(state.tasks)) {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            this.applyCurrentTaskLayoutState(state);
         }
 
         this.updateSelectionBar();
@@ -499,7 +497,6 @@ export class TaskUIManager {
         if (state && Array.isArray(state.tasks)) {
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            this.applyCurrentTaskLayoutState(state);
         }
 
         this.updateSelectionBar();
@@ -706,7 +703,12 @@ export class TaskUIManager {
                 );
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-                this.applyCurrentTaskLayoutState(state);
+                const hasCurrent = !!state.currentTaskId;
+                document.body.classList.toggle('compact-mode', hasCurrent);
+                document.body.classList.toggle('has-current-task', hasCurrent);
+                (window.requestAnimationFrame || window.setTimeout)(() => {
+                    window._popupController?.syncCurrentTaskLayout?.();
+                });
                 return;
             }
 
@@ -730,7 +732,13 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            this.applyCurrentTaskLayoutState(state);
+            // Immediate compact mode toggle
+            const hasCurrent = !!state.currentTaskId;
+            document.body.classList.toggle('compact-mode', hasCurrent);
+            document.body.classList.toggle('has-current-task', hasCurrent);
+            (window.requestAnimationFrame || window.setTimeout)(() => {
+                window._popupController?.syncCurrentTaskLayout?.();
+            });
         } catch (error) {
             logger.error('Failed to select task:', error);
         }
@@ -772,7 +780,6 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            this.applyCurrentTaskLayoutState(state);
         } catch (error) {
             logger.error('Failed to delete task:', error);
         }
@@ -794,7 +801,6 @@ export class TaskUIManager {
             // Refresh UI with updated state
             this.renderTasksList(state.tasks, state.currentTaskId);
             this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-            this.applyCurrentTaskLayoutState(state);
         } catch (error) {
             logger.error('Failed to update task completion:', error);
         }
@@ -865,7 +871,6 @@ export class TaskUIManager {
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-                this.applyCurrentTaskLayoutState(state);
             } else {
                 // Create new task
                 const state = await this.messageHandler.sendMessage(
@@ -878,7 +883,6 @@ export class TaskUIManager {
                 // Refresh UI with updated state
                 this.renderTasksList(state.tasks, state.currentTaskId);
                 this.updateCurrentTaskDisplay(state.currentTaskId, state.tasks);
-                this.applyCurrentTaskLayoutState(state);
             }
             this.hideTaskForm();
         } catch (error) {
@@ -920,15 +924,6 @@ export class TaskUIManager {
         currentTaskName.textContent = currentTask.title;
         currentTaskProgress.textContent = `${currentTask.completedPomodoros}/${currentTask.estimatedPomodoros} 🍅`;
     }
-
-    applyCurrentTaskLayoutState(state) {
-        const hasCurrent = Boolean(state?.currentTaskId);
-        document.body.classList.toggle('compact-mode', hasCurrent);
-        document.body.classList.toggle('has-current-task', hasCurrent);
-        (window.requestAnimationFrame || window.setTimeout)(() => {
-            window._popupController?.syncCurrentTaskLayout?.();
-        });
-    }
 }
 
 TaskUIManager.prototype.setupJiraSyncButton = function () {
@@ -965,44 +960,17 @@ TaskUIManager.prototype.setupJiraSyncButton = function () {
             await this.messageHandler.sendMessage(
                 ACTIONS.RECONFIGURE_JIRA_SYNC
             );
-            const syncResult = await this.messageHandler.sendMessage(
-                ACTIONS.IMPORT_JIRA_TASKS,
-                {},
-                { unwrapState: false }
+            const updatedState = await this.messageHandler.sendMessage(
+                ACTIONS.IMPORT_JIRA_TASKS
             );
-
-            const nextState = syncResult?.state || state;
             this.renderTasksList(
-                nextState.tasks || [],
-                nextState.currentTaskId
+                updatedState.tasks || [],
+                updatedState.currentTaskId
             );
-
-            const importedCount = Number(syncResult?.importedCount || 0);
-            const totalIssues = Number(syncResult?.totalIssues || 0);
-            const mappingErrorCount = Number(
-                syncResult?.mappingErrorCount || 0
-            );
-
-            if (importedCount > 0) {
-                notifySuccess(
-                    `Imported ${importedCount} Jira ${importedCount === 1 ? 'task' : 'tasks'}.`
-                );
-            } else if (totalIssues > 0) {
-                notifySuccess(
-                    'Jira sync complete — tasks are already up to date.'
-                );
-            } else {
-                notifySuccess('Jira sync complete — no assigned issues found.');
-            }
-
-            if (mappingErrorCount > 0) {
-                notifyError(
-                    `Some Jira issues could not be imported due to missing fields (${mappingErrorCount} mapping ${mappingErrorCount === 1 ? 'error' : 'errors'}).`
-                );
-            }
+            notifySuccess('Jira tasks synced successfully.');
         } catch (err) {
             logger.error('Failed to import Jira tasks:', err);
-            notifyError(formatJiraSyncFailure(err));
+            notifyError(`Jira sync failed: ${err?.message || 'Unknown error'}`);
         } finally {
             btn.disabled = false;
         }

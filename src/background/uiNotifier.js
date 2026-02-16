@@ -17,7 +17,7 @@ export class UiNotifier {
     }
 
     updateContextMenu(state) {
-        void ContextMenuManager.update(
+        ContextMenuManager.update(
             state.isRunning,
             state.isWorkSession,
             state.timeLeft

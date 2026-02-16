@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { StorageManager } from '../src/background/storageManager.js';
-import { CONSTANTS } from '../src/background/constants.js';
+import { CONSTANTS, chromePromise } from '../src/background/constants.js';
 import { createDefaultState } from '../src/shared/stateDefaults.js';
 
 describe('StorageManager.saveState/loadState error handling', () => {
@@ -11,7 +11,9 @@ describe('StorageManager.saveState/loadState error handling', () => {
 
     it('saveState logs errors when storage write fails', async () => {
         const error = new Error('write failed');
-        vi.spyOn(StorageManager.storage, 'set').mockRejectedValueOnce(error);
+        vi.spyOn(chromePromise.storage.local, 'set').mockRejectedValueOnce(
+            error
+        );
         const consoleErrorSpy = vi
             .spyOn(console, 'error')
             .mockImplementation(() => {});
@@ -26,7 +28,9 @@ describe('StorageManager.saveState/loadState error handling', () => {
 
     it('loadState returns null and logs errors when storage read fails', async () => {
         const error = new Error('read failed');
-        vi.spyOn(StorageManager.storage, 'get').mockRejectedValueOnce(error);
+        vi.spyOn(chromePromise.storage.local, 'get').mockRejectedValueOnce(
+            error
+        );
         const consoleErrorSpy = vi
             .spyOn(console, 'error')
             .mockImplementation(() => {});
