@@ -12,7 +12,11 @@ let package = Package(
     targets: [
         .target(name: "CoreInterfaces"),
         .target(name: "CoreDI", dependencies: ["CoreInterfaces"]),
-        .target(name: "PlatformServices", dependencies: ["CoreInterfaces"]),
+        .target(
+            name: "PlatformServices",
+            dependencies: ["CoreInterfaces"],
+            resources: [.process("Resources")]
+        ),
         .target(name: "JiraIntegration", dependencies: ["CoreInterfaces"]),
         .target(name: "TimerFeature", dependencies: ["CoreInterfaces"]),
         .target(name: "TasksFeature", dependencies: ["CoreInterfaces"]),
