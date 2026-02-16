@@ -125,8 +125,6 @@ describe('JiraSyncManager.performJiraSync', () => {
         await expect(
             manager.performJiraSync({
                 jiraUrl: 'https://example.atlassian.net',
-                jiraUsername: 'dev@example.com',
-                jiraToken: 'abc123',
             })
         ).rejects.toThrow(
             'Jira permission not granted. Please enable Jira access in settings.'
@@ -137,32 +135,28 @@ describe('JiraSyncManager.performJiraSync', () => {
 
     it('dedupes tasks by normalized title and reports imported count with final task list', async () => {
         hasJiraPermission.mockResolvedValue(true);
-        fetchAssignedIssues.mockResolvedValue({
-            issues: [
-                {
-                    key: 'JIRA-1',
-                    title: 'build api',
-                    description: 'Duplicate of existing task',
-                },
-                {
-                    key: 'JIRA-2',
-                    title: ' Write tests ',
-                    description: 'First unique issue',
-                },
-                {
-                    key: 'JIRA-3',
-                    title: 'write tests',
-                    description: 'Duplicate within imported issues',
-                },
-                {
-                    key: 'JIRA-4',
-                    title: '',
-                    description: 'Falls back to issue key',
-                },
-            ],
-            totalIssues: 4,
-            mappingErrors: [],
-        });
+        fetchAssignedIssues.mockResolvedValue([
+            {
+                key: 'JIRA-1',
+                title: 'build api',
+                description: 'Duplicate of existing task',
+            },
+            {
+                key: 'JIRA-2',
+                title: ' Write tests ',
+                description: 'First unique issue',
+            },
+            {
+                key: 'JIRA-3',
+                title: 'write tests',
+                description: 'Duplicate within imported issues',
+            },
+            {
+                key: 'JIRA-4',
+                title: '',
+                description: 'Falls back to issue key',
+            },
+        ]);
 
         const tasks = [
             {

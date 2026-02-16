@@ -1,22 +1,17 @@
+import { DEFAULT_SETTINGS } from '../shared/stateDefaults.js';
 import { hasJiraPermission } from '../shared/jiraPermissions.js';
-import {
-    buildTaskImports,
-    sanitizeJiraSyncInterval,
-    shouldRetryJiraSync,
-} from '../core/jiraCore.js';
 import { fetchAssignedIssues } from './jira.js';
-import { JiraErrorCodes } from '../shared/jiraErrors.js';
 import { TaskManager } from './tasks.js';
-import { createChromeSchedulerAdapter } from './adapters/chromeAdapters.js';
 
 export class JiraSyncManager {
-    constructor({ alarmName, scheduler = createChromeSchedulerAdapter() }) {
+    constructor({ alarmName }) {
         this.alarmName = alarmName;
-        this.scheduler = scheduler;
     }
 
     async configureAlarm(settings) {
-        await this.scheduler.clear(this.alarmName);
+        await new Promise((resolve) =>
+            chrome.alarms.clear(this.alarmName, resolve)
+        );
 
         const {
             autoSyncJira,
@@ -45,65 +40,58 @@ export class JiraSyncManager {
             return;
         }
 
-        await this.scheduler.create(this.alarmName, {
-            periodInMinutes: sanitizeJiraSyncInterval(jiraSyncInterval),
+        const interval =
+            Number.parseInt(jiraSyncInterval, 10) ||
+            DEFAULT_SETTINGS.jiraSyncInterval;
+        const sanitizedInterval = Math.min(Math.max(interval, 5), 720);
+        chrome.alarms.create(this.alarmName, {
+            periodInMinutes: sanitizedInterval,
         });
     }
 
     async performJiraSync(settings) {
         const { jiraUrl, jiraUsername, jiraToken } = settings || {};
-
-        if (!jiraUrl || !jiraUsername || !jiraToken) {
-            const missingConfigurationError = new Error(
-                'Missing Jira configuration. Enter Jira URL, username, and API token before syncing.'
-            );
-            missingConfigurationError.code = JiraErrorCodes.CONFIGURATION;
-            throw missingConfigurationError;
-        }
-
         const hasPermission = await hasJiraPermission(jiraUrl);
         if (!hasPermission) {
-            const permissionError = new Error(
+            throw new Error(
                 'Jira permission not granted. Please enable Jira access in settings.'
             );
-            permissionError.code = JiraErrorCodes.CONFIGURATION;
-            throw permissionError;
         }
 
-        let issuesPayload;
-        try {
-            issuesPayload = await fetchAssignedIssues({
-                jiraUrl,
-                jiraUsername,
-                jiraToken,
-            });
-        } catch (error) {
-            if (shouldRetryJiraSync(error)) {
-                issuesPayload = await fetchAssignedIssues({
-                    jiraUrl,
-                    jiraUsername,
-                    jiraToken,
-                });
-            } else {
-                throw error;
-            }
-        }
-
-        const { issues, totalIssues, mappingErrors } = issuesPayload;
-
+        const issues = await fetchAssignedIssues({
+            jiraUrl,
+            jiraUsername,
+            jiraToken,
+        });
         const existingTasks = await TaskManager.getTasks();
-        const toCreate = buildTaskImports(issues, existingTasks);
+        const existingTitles = new Set(
+            existingTasks.map((task) => (task.title || '').trim().toLowerCase())
+        );
+        let createdCount = 0;
 
-        for (const taskInput of toCreate) {
-            await TaskManager.createTask(taskInput);
+        for (const issue of issues) {
+            const normalizedTitle = (issue.title || '').trim();
+            const fallbackTitle = normalizedTitle || issue.key || 'Jira Task';
+            const dedupeKey = fallbackTitle.toLowerCase();
+
+            if (existingTitles.has(dedupeKey)) {
+                continue;
+            }
+
+            await TaskManager.createTask({
+                title: fallbackTitle,
+                description: issue.description,
+                estimatedPomodoros: 1,
+            });
+            existingTitles.add(dedupeKey);
+            createdCount++;
         }
 
         const tasks = await TaskManager.getTasks();
 
         return {
-            importedCount: toCreate.length,
-            totalIssues,
-            mappingErrorCount: mappingErrors.length,
+            importedCount: createdCount,
+            totalIssues: issues.length,
             tasks,
         };
     }

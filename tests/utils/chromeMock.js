@@ -62,12 +62,7 @@ export const createChromeMock = (overrides = {}) => {
         },
         alarms: {
             create: vi.fn(),
-            clear: vi.fn((name, callback) => {
-                callback?.(true);
-            }),
-            clearAll: vi.fn((callback) => {
-                callback?.(true);
-            }),
+            clear: vi.fn(),
             onAlarm: {
                 addListener: vi.fn(),
                 removeListener: vi.fn(),
@@ -79,9 +74,6 @@ export const createChromeMock = (overrides = {}) => {
         notifications: {
             create: vi.fn((id, options, callback) => {
                 callback?.(id);
-            }),
-            clear: vi.fn((id, callback) => {
-                callback?.();
             }),
             getPermissionLevel: vi.fn((callback) => {
                 callback?.('granted');
@@ -105,15 +97,9 @@ export const createChromeMock = (overrides = {}) => {
             },
         },
         contextMenus: {
-            create: vi.fn((item, callback) => {
-                callback?.();
-            }),
-            removeAll: vi.fn((callback) => {
-                callback?.();
-            }),
-            update: vi.fn((id, updates, callback) => {
-                callback?.();
-            }),
+            create: vi.fn(),
+            removeAll: vi.fn(),
+            update: vi.fn(),
             onClicked: {
                 addListener: vi.fn(),
                 removeListener: vi.fn(),

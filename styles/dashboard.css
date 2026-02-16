@@ -1085,7 +1085,3 @@ select:focus {
         align-items: flex-start;
     }
 }
-
-.settings-field--actions {
-    margin-top: 0.5rem;
-}

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CONSTANTS } from '../src/background/constants.js';
+import { CONSTANTS, chromePromise } from '../src/background/constants.js';
 import { NotificationManager } from '../src/background/notifications.js';
 import { ACTIONS } from '../src/shared/runtimeActions.js';
 
@@ -14,10 +14,10 @@ describe('NotificationManager.show', () => {
 
     it('gates notifications when permission is not granted', async () => {
         vi.spyOn(
-            NotificationManager.notifications,
+            chromePromise.notifications,
             'getPermissionLevel'
         ).mockResolvedValue('denied');
-        const createSpy = vi.spyOn(NotificationManager.notifications, 'create');
+        const createSpy = vi.spyOn(chromePromise.notifications, 'create');
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         await NotificationManager.show('Title', 'Message');
@@ -31,10 +31,10 @@ describe('NotificationManager.show', () => {
 
     it('creates a notification with expected options', async () => {
         vi.spyOn(
-            NotificationManager.notifications,
+            chromePromise.notifications,
             'getPermissionLevel'
         ).mockResolvedValue('granted');
-        const createSpy = vi.spyOn(NotificationManager.notifications, 'create');
+        const createSpy = vi.spyOn(chromePromise.notifications, 'create');
 
         await NotificationManager.show('Focus done', 'Take a break');
 
@@ -50,12 +50,12 @@ describe('NotificationManager.show', () => {
 
     it('uses fallback notification options when primary creation fails', async () => {
         vi.spyOn(
-            NotificationManager.notifications,
+            chromePromise.notifications,
             'getPermissionLevel'
         ).mockResolvedValue('granted');
 
         const createSpy = vi
-            .spyOn(NotificationManager.notifications, 'create')
+            .spyOn(chromePromise.notifications, 'create')
             .mockRejectedValueOnce(new Error('primary failed'))
             .mockResolvedValueOnce(CONSTANTS.NOTIFICATION_ID);
 
@@ -135,7 +135,6 @@ describe('NotificationManager.playSound', () => {
         chrome.runtime.sendMessage.mockRejectedValueOnce(
             new Error('worker down')
         );
-        const clearSpy = vi.spyOn(NotificationManager.notifications, 'clear');
 
         await NotificationManager.playSound(0.5);
 
@@ -154,6 +153,8 @@ describe('NotificationManager.playSound', () => {
         vi.runAllTimers();
         await flushPromises();
 
-        expect(clearSpy).toHaveBeenCalledWith('fallback-sound');
+        expect(chrome.notifications.clear).toHaveBeenCalledWith(
+            'fallback-sound'
+        );
     });
 });

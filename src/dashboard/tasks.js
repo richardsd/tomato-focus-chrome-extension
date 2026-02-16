@@ -31,20 +31,7 @@ function getTaskStatus(task, currentTaskId) {
     if (currentTaskId && currentTaskId === task.id) {
         return 'in-progress';
     }
-    if (Number(task.completedPomodoros || 0) > 0) {
-        return 'in-progress';
-    }
     return 'pending';
-}
-
-function matchesFilter(task, filter) {
-    if (filter === 'completed') {
-        return Boolean(task.isCompleted);
-    }
-    if (filter === 'in-progress') {
-        return !task.isCompleted;
-    }
-    return true;
 }
 
 function buildMetadata(task) {
@@ -256,10 +243,6 @@ export class DashboardTaskManager {
         this.tasksList.addEventListener('click', (event) => {
             const button = event.target.closest('button[data-action]');
             if (!button) {
-                return;
-            }
-            if (button.dataset.action === 'clear-completed') {
-                this.handleClearCompletedTasks();
                 return;
             }
             const taskId = button.dataset.taskId;
@@ -502,16 +485,14 @@ export class DashboardTaskManager {
             return;
         }
         try {
-            const nextTaskId =
-                taskId && this.state.currentTaskId === taskId ? null : taskId;
             const state = await this.messenger.sendMessage(
                 ACTIONS.SET_CURRENT_TASK,
                 {
-                    taskId: nextTaskId,
+                    taskId,
                 }
             );
             this.onStateUpdate?.(state);
-            if (nextTaskId) {
+            if (taskId) {
                 this.toastManager?.show('Current task updated.', {
                     variant: 'success',
                 });
@@ -625,43 +606,6 @@ export class DashboardTaskManager {
         }
     }
 
-    async handleClearCompletedTasks() {
-        if (!this.messenger) {
-            return;
-        }
-        const completedCount = this.state.tasks.filter(
-            (task) => task.isCompleted
-        ).length;
-        if (!completedCount) {
-            this.toastManager?.show('No completed tasks to clear.', {
-                variant: 'default',
-            });
-            return;
-        }
-        const confirmed = window.confirm(
-            `Clear ${completedCount} completed task${
-                completedCount === 1 ? '' : 's'
-            }? This cannot be undone.`
-        );
-        if (!confirmed) {
-            return;
-        }
-        try {
-            const state = await this.messenger.sendMessage(
-                ACTIONS.CLEAR_COMPLETED_TASKS
-            );
-            this.onStateUpdate?.(state);
-            this.toastManager?.show('Completed tasks cleared.', {
-                variant: 'success',
-            });
-        } catch (error) {
-            console.error('Failed to clear completed tasks', error);
-            this.toastManager?.show('Unable to clear completed tasks.', {
-                variant: 'danger',
-            });
-        }
-    }
-
     showTaskDetails(taskId) {
         const task = this.state.tasks.find((item) => item.id === taskId);
         if (!task) {
@@ -737,25 +681,9 @@ export class DashboardTaskManager {
     }
 
     renderFilters() {
-        const counts = {
-            all: this.state.tasks.length,
-            'in-progress': this.state.tasks.filter((task) => !task.isCompleted)
-                .length,
-            completed: this.state.tasks.filter((task) => task.isCompleted)
-                .length,
-        };
         this.filterButtons.forEach((button) => {
             const isActive = button.dataset.taskFilter === this.activeFilter;
             button.classList.toggle('is-active', isActive);
-            const filterValue = button.dataset.taskFilter;
-            const baseLabel = button.dataset.baseLabel || button.textContent;
-            button.dataset.baseLabel = baseLabel;
-            if (
-                filterValue &&
-                Object.prototype.hasOwnProperty.call(counts, filterValue)
-            ) {
-                button.textContent = `${baseLabel} (${counts[filterValue]})`;
-            }
             if (isActive) {
                 button.setAttribute('aria-pressed', 'true');
             } else {
@@ -881,7 +809,8 @@ export class DashboardTaskManager {
         const normalizedQuery = this.searchQuery.trim().toLowerCase();
 
         const filteredTasks = tasks.filter((task) => {
-            if (!matchesFilter(task, this.activeFilter)) {
+            const status = getTaskStatus(task, currentTaskId);
+            if (this.activeFilter !== 'all' && status !== this.activeFilter) {
                 return false;
             }
             if (!normalizedQuery) {
@@ -899,24 +828,6 @@ export class DashboardTaskManager {
         }
 
         const fragment = document.createDocumentFragment();
-        if (
-            this.activeFilter === 'completed' &&
-            tasks.some((task) => task.isCompleted)
-        ) {
-            const actions = document.createElement('div');
-            actions.className = 'task-card__actions-row';
-            actions.innerHTML = `
-                <button
-                    type="button"
-                    class="btn btn-ghost"
-                    data-action="clear-completed"
-                >
-                    Clear completed
-                </button>
-            `;
-            fragment.appendChild(actions);
-        }
-
         filteredTasks.forEach((task) => {
             const status = getTaskStatus(task, currentTaskId);
             const card = document.createElement('article');

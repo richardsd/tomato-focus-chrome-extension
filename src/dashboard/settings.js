@@ -2,7 +2,6 @@ import { DEFAULT_STATE } from '../shared/uiConstants.js';
 import { validateSettingsValues } from '../popup/settings.js';
 import { isValidJiraUrl, validateJiraUrl } from '../shared/jiraUrlValidator.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
-import { formatJiraSyncFailure } from '../shared/jiraErrors.js';
 
 const TOKEN_PLACEHOLDER = '••••••••••';
 
@@ -60,9 +59,6 @@ export class DashboardSettingsManager {
         );
         this.resetButton = this.container?.querySelector(
             '#dashboardResetSettings'
-        );
-        this.syncJiraButton = this.container?.querySelector(
-            '#dashboardSyncJiraBtn'
         );
 
         this.inputs = {
@@ -127,12 +123,6 @@ export class DashboardSettingsManager {
             this.resetButton.addEventListener('click', () => {
                 this.render(DEFAULT_STATE.settings);
                 this.showStatus('Settings reset — save to persist changes.');
-            });
-        }
-
-        if (this.syncJiraButton) {
-            this.syncJiraButton.addEventListener('click', () => {
-                this.handleManualJiraSync();
             });
         }
 
@@ -450,72 +440,6 @@ export class DashboardSettingsManager {
             this.toastManager?.show('Unable to save settings.', {
                 variant: 'danger',
             });
-        }
-    }
-
-    async handleManualJiraSync() {
-        if (!this.messenger || !this.syncJiraButton) {
-            return;
-        }
-
-        this.syncJiraButton.disabled = true;
-        this.clearMessages();
-
-        try {
-            const settings = this.collectSettingsFromForm();
-            const permissionGranted = await requestJiraPermission(settings);
-            if (!permissionGranted) {
-                this.showErrors([
-                    'Jira permission not granted. Allow access to your Jira site to enable syncing.',
-                ]);
-                return;
-            }
-
-            await this.messenger.sendMessage(ACTIONS.RECONFIGURE_JIRA_SYNC);
-            const syncResult = await this.messenger.sendMessage(
-                ACTIONS.IMPORT_JIRA_TASKS,
-                {},
-                { unwrapState: false }
-            );
-
-            this.onStateUpdate?.(syncResult?.state);
-
-            const importedCount = Number(syncResult?.importedCount || 0);
-            const totalIssues = Number(syncResult?.totalIssues || 0);
-            const mappingErrorCount = Number(
-                syncResult?.mappingErrorCount || 0
-            );
-
-            if (importedCount > 0) {
-                this.toastManager?.show(
-                    `Imported ${importedCount} Jira ${importedCount === 1 ? 'task' : 'tasks'}.`,
-                    { variant: 'success' }
-                );
-            } else if (totalIssues > 0) {
-                this.toastManager?.show(
-                    'Jira sync complete — tasks are already up to date.',
-                    { variant: 'success' }
-                );
-            } else {
-                this.toastManager?.show(
-                    'Jira sync complete — no assigned issues found.',
-                    { variant: 'success' }
-                );
-            }
-
-            if (mappingErrorCount > 0) {
-                this.toastManager?.show(
-                    `Some Jira issues could not be imported due to missing fields (${mappingErrorCount} mapping ${mappingErrorCount === 1 ? 'error' : 'errors'}).`,
-                    { variant: 'danger' }
-                );
-            }
-        } catch (error) {
-            console.error('Failed to run Jira sync', error);
-            this.toastManager?.show(formatJiraSyncFailure(error), {
-                variant: 'danger',
-            });
-        } finally {
-            this.syncJiraButton.disabled = false;
         }
     }
 
