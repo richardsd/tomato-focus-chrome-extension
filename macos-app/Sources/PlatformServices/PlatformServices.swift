@@ -4,44 +4,118 @@ import CoreInterfaces
 import Foundation
 import UserNotifications
 
-public final class NotificationService: NSObject, NotificationServicing {
-    private let notificationCenter: UNUserNotificationCenter
+public final class NotificationService: NSObject, NotificationServicing, UNUserNotificationCenterDelegate {
+    private let notificationCenter: UNUserNotificationCenter?
     private var audioPlayer: AVAudioPlayer?
+    private var hasShownNotificationPermissionPrompt = false
+    private var hasLoggedUnavailableCenterFallback = false
 
     public override init() {
-        self.notificationCenter = UNUserNotificationCenter.current()
+        if Self.isRunningAsBundledApp {
+            self.notificationCenter = UNUserNotificationCenter.current()
+        } else {
+            self.notificationCenter = nil
+            NSLog("Running outside an .app bundle; disabling UNUserNotificationCenter usage")
+        }
         super.init()
+        notificationCenter?.delegate = self
+    }
+
+    private static var isRunningAsBundledApp: Bool {
+        Bundle.main.bundleURL.pathExtension.caseInsensitiveCompare("app") == .orderedSame
     }
 
     public func requestAuthorization() async {
+        guard let notificationCenter else { return }
         _ = try? await notificationCenter.requestAuthorization(options: [.alert, .sound])
+        let settings = await notificationCenter.notificationSettings()
+        await maybePromptToOpenNotificationSettings(for: settings.authorizationStatus)
     }
 
     public func dispatchSessionBoundaryAlert(title: String, body: String, playSound: Bool, volume: Double) async {
-        let settings = await notificationCenter.notificationSettings()
+        if let notificationCenter {
+            var settings = await notificationCenter.notificationSettings()
+            if settings.authorizationStatus == .notDetermined {
+                _ = try? await notificationCenter.requestAuthorization(options: [.alert, .sound])
+                settings = await notificationCenter.notificationSettings()
+            }
 
-        if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional || settings.authorizationStatus == .ephemeral {
-            let content = UNMutableNotificationContent()
-            content.title = title
-            content.body = body
-            content.sound = nil
+            if settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional {
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = body
+                content.sound = .default
 
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-            let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-            do {
-                try await notificationCenter.add(request)
-            } catch {
-                NSLog("Failed to schedule local notification: \(error.localizedDescription)")
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+                do {
+                    try await notificationCenter.add(request)
+                } catch {
+                    NSLog("Failed to schedule local notification: \(error.localizedDescription)")
+                }
+            } else {
+                _ = await MainActor.run {
+                    NSApplication.shared.requestUserAttention(.informationalRequest)
+                }
+                await maybePromptToOpenNotificationSettings(for: settings.authorizationStatus)
             }
         } else {
-            await MainActor.run {
+            _ = await MainActor.run {
                 NSApplication.shared.requestUserAttention(.informationalRequest)
             }
-            NSLog("Notification permission denied/restricted; using attention request + sound fallback")
+            // Running from non-bundled contexts can legitimately disable notification center usage.
+            if !hasLoggedUnavailableCenterFallback {
+                NSLog("UNUserNotificationCenter unavailable; using dock attention + optional sound fallback.")
+                hasLoggedUnavailableCenterFallback = true
+            }
         }
 
         guard playSound else { return }
         await playBoundarySound(volume: volume)
+    }
+
+    private func maybePromptToOpenNotificationSettings(for status: UNAuthorizationStatus) async {
+        guard status == .denied else { return }
+        guard !hasShownNotificationPermissionPrompt else { return }
+        hasShownNotificationPermissionPrompt = true
+
+        await MainActor.run {
+            let alert = NSAlert()
+            alert.messageText = "Enable Notifications for Tomato Focus"
+            alert.informativeText = "Tomato Focus cannot show session alerts until notifications are enabled in System Settings."
+            alert.alertStyle = .informational
+            alert.addButton(withTitle: "Open Settings")
+            alert.addButton(withTitle: "Not Now")
+
+            let response = alert.runModal()
+            guard response == .alertFirstButtonReturn else { return }
+            _ = self.openSystemNotificationSettings()
+        }
+    }
+
+    private func openSystemNotificationSettings() -> Bool {
+        let urls = [
+            "x-apple.systempreferences:com.apple.Notifications-Settings.extension",
+            "x-apple.systempreferences:com.apple.preference.notifications"
+        ]
+
+        for rawURL in urls {
+            guard let url = URL(string: rawURL) else { continue }
+            if NSWorkspace.shared.open(url) {
+                return true
+            }
+        }
+
+        let settingsAppURL = URL(fileURLWithPath: "/System/Applications/System Settings.app")
+        return NSWorkspace.shared.open(settingsAppURL)
+    }
+
+    public func userNotificationCenter(
+        _: UNUserNotificationCenter,
+        willPresent _: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list, .sound])
     }
 
     private func playBoundarySound(volume: Double) async {

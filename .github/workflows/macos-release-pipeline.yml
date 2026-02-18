@@ -6,7 +6,7 @@ on:
       app_path:
         description: Path to built .app bundle
         required: true
-        default: dist/TomatoFocus.app
+        default: dist/macos/Tomato Focus.app
       update_channel:
         description: Distribution channel
         required: true
@@ -70,6 +70,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Build app bundle if missing
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -d "${{ github.event.inputs.app_path }}" ]]; then
+            tools/macos-build-app.sh
+          fi
+
       - name: Sign app bundle
         run: tools/macos-release.sh sign "${{ github.event.inputs.app_path }}"
         env:
@@ -82,3 +90,14 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+
+      - name: Package DMG
+        run: tools/macos-release.sh package-dmg "${{ github.event.inputs.app_path }}" dist
+
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-signed-artifacts-${{ github.run_number }}
+          path: |
+            ${{ github.event.inputs.app_path }}
+            dist/*.dmg

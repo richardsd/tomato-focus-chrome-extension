@@ -1,4 +1,6 @@
 import CoreInterfaces
+import DesignSystem
+import Foundation
 import SwiftUI
 
 @MainActor
@@ -7,6 +9,7 @@ public final class TimerViewModel: ObservableObject {
     @Published public private(set) var isRunning = false
     @Published public private(set) var currentSession = 1
     @Published public private(set) var sessionKind: SessionKind = .work
+    @Published public private(set) var currentTaskTitle: String?
 
     public var isWorkSession: Bool {
         sessionKind.isWorkSession
@@ -29,6 +32,8 @@ public final class TimerViewModel: ObservableObject {
     private let storage: StorageServicing
     private let timerIdentifier = "pomodoro.timer"
     private var endTimestamp: Date?
+    private var isCompletingSession = false
+    private var observers: [NSObjectProtocol] = []
 
     public init(notifications: NotificationServicing, scheduler: SchedulingServicing, storage: StorageServicing) {
         self.notifications = notifications
@@ -41,11 +46,20 @@ public final class TimerViewModel: ObservableObject {
         self.currentSession = recovered.currentSession
         self.sessionKind = recovered.sessionKind
         self.endTimestamp = recovered.endTimestamp
+        self.currentTaskTitle = nil
 
         recoverStateAfterLaunch(from: recovered)
+        refreshCurrentTaskContext()
+        setupObservers()
 
         Task {
             await notifications.requestAuthorization()
+        }
+    }
+
+    deinit {
+        for observer in observers {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
@@ -121,6 +135,40 @@ public final class TimerViewModel: ObservableObject {
         storage.loadSettings()
     }
 
+    private func setupObservers() {
+        let tasksObserver = NotificationCenter.default.addObserver(
+            forName: .tasksDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshCurrentTaskContext()
+            }
+        }
+
+        let currentTaskObserver = NotificationCenter.default.addObserver(
+            forName: .currentTaskDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshCurrentTaskContext()
+            }
+        }
+
+        observers = [tasksObserver, currentTaskObserver]
+    }
+
+    private func refreshCurrentTaskContext() {
+        guard let currentTaskID = storage.loadCurrentTaskID() else {
+            currentTaskTitle = nil
+            return
+        }
+
+        let activeTask = storage.loadTasks().first(where: { $0.id == currentTaskID })
+        currentTaskTitle = activeTask?.title
+    }
+
     private func recoverStateAfterLaunch(from state: TimerState) {
         guard state.isRunning else {
             endTimestamp = nil
@@ -191,6 +239,10 @@ public final class TimerViewModel: ObservableObject {
     }
 
     private func completeCurrentSession() {
+        guard !isCompletingSession else { return }
+        isCompletingSession = true
+        defer { isCompletingSession = false }
+
         scheduler.cancelTask(identifier: timerIdentifier)
 
         let previousKind = sessionKind
@@ -275,34 +327,163 @@ public final class TimerViewModel: ObservableObject {
 
 public struct TimerView: View {
     @ObservedObject private var viewModel: TimerViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(viewModel: TimerViewModel) {
         self.viewModel = viewModel
     }
 
     public var body: some View {
-        VStack(spacing: 16) {
-            Text(sessionTitle)
-                .font(.title2)
-            Text(timeString)
-                .font(.system(size: 44, weight: .bold, design: .rounded))
-                .monospacedDigit()
-            HStack {
+        ScrollView {
+            VStack(spacing: DSSpacing.lg) {
+                headerCard
+                timerCard
+                quickStartCard
+            }
+            .padding(DSSpacing.xl)
+            .frame(maxWidth: 760)
+            .frame(maxWidth: .infinity)
+        }
+        .background(
+            LinearGradient(
+                colors: [
+                    sessionTint.opacity(0.14),
+                    DSColor.pageBackground,
+                    DSColor.tertiaryBackground.opacity(0.6)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+        )
+        .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.86), value: viewModel.sessionKind)
+    }
+
+    private var headerCard: some View {
+        HStack(alignment: .center, spacing: DSSpacing.md) {
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Text("Focus Session")
+                    .font(.caption)
+                    .foregroundStyle(DSColor.secondaryText)
+
+                Text(sessionTitle)
+                    .font(DSTypography.title)
+
+                Text("Cycle #\(viewModel.currentSession)")
+                    .font(.subheadline)
+                    .foregroundStyle(DSColor.secondaryText)
+            }
+
+            Spacer()
+
+            statusChips
+        }
+        .dsCard()
+    }
+
+    private var timerCard: some View {
+        VStack(spacing: DSSpacing.lg) {
+            ZStack {
+                DSTimerRing(progress: progress, tint: sessionTint)
+                    .frame(width: 280, height: 280)
+
+                VStack(spacing: DSSpacing.xxs) {
+                    Text(timeString)
+                        .font(DSTypography.metric)
+                        .monospacedDigit()
+
+                    Text(viewModel.isRunning ? "Session in progress" : "Ready to focus")
+                        .font(.subheadline)
+                        .foregroundStyle(DSColor.secondaryText)
+                }
+            }
+
+            if let currentTaskTitle = viewModel.currentTaskTitle, !currentTaskTitle.isEmpty {
+                HStack(spacing: DSSpacing.xs) {
+                    Image(systemName: "scope")
+                        .foregroundStyle(sessionTint)
+                    Text("Current task: \(currentTaskTitle)")
+                        .font(.subheadline)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, DSSpacing.xs)
+            }
+
+            HStack(spacing: DSSpacing.sm) {
                 Button(viewModel.isRunning ? "Pause" : startButtonTitle) {
                     viewModel.toggle()
                 }
+                .buttonStyle(DSPrimaryButtonStyle())
+                .accessibilityLabel(viewModel.isRunning ? "Pause timer" : "Start timer")
 
                 Button("Reset") {
                     viewModel.reset()
                 }
+                .buttonStyle(DSSecondaryButtonStyle())
 
                 Button("Skip Break") {
                     viewModel.skipBreak()
                 }
+                .buttonStyle(DSSecondaryButtonStyle())
                 .disabled(viewModel.isWorkSession)
             }
         }
-        .padding()
+        .padding(DSSpacing.xl)
+        .frame(maxWidth: .infinity)
+        .dsCard(padded: false)
+    }
+
+    private var quickStartCard: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text("Quick Start")
+                .font(DSTypography.subtitle)
+
+            Text("Launch a focused work sprint instantly.")
+                .font(.subheadline)
+                .foregroundStyle(DSColor.secondaryText)
+
+            HStack(spacing: DSSpacing.sm) {
+                quickStartButton(minutes: 5)
+                quickStartButton(minutes: 15)
+                quickStartButton(minutes: 25, suffix: "Focus")
+                quickStartButton(minutes: 45)
+                Spacer()
+            }
+        }
+        .dsCard()
+    }
+
+    private var statusChips: some View {
+        HStack(spacing: DSSpacing.xs) {
+            statusChip(label: "Work", isSelected: viewModel.sessionKind == .work, tint: DSColor.focus)
+            statusChip(label: "Short", isSelected: viewModel.sessionKind == .shortBreak, tint: DSColor.shortBreak)
+            statusChip(label: "Long", isSelected: viewModel.sessionKind == .longBreak, tint: DSColor.longBreak)
+        }
+    }
+
+    private func statusChip(label: String, isSelected: Bool, tint: Color) -> some View {
+        Text(label)
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, DSSpacing.sm)
+            .padding(.vertical, DSSpacing.xs)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(isSelected ? tint.opacity(0.18) : Color.primary.opacity(0.06))
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(isSelected ? tint.opacity(0.45) : Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .foregroundStyle(isSelected ? tint : Color.primary)
+    }
+
+    private func quickStartButton(minutes: Int, suffix: String = "") -> some View {
+        Button {
+            viewModel.startQuickTimer(minutes: minutes)
+        } label: {
+            Text(suffix.isEmpty ? "\(minutes)m" : "\(minutes)m \(suffix)")
+        }
+        .buttonStyle(DSSecondaryButtonStyle())
     }
 
     private var sessionTitle: String {
@@ -321,9 +502,25 @@ public struct TimerView: View {
         return isResume ? "Resume" : "Start"
     }
 
+    private var sessionTint: Color {
+        switch viewModel.sessionKind {
+        case .work:
+            return DSColor.focus
+        case .shortBreak:
+            return DSColor.shortBreak
+        case .longBreak:
+            return DSColor.longBreak
+        }
+    }
+
+    private var progress: Double {
+        let total = max(viewModel.fullSessionDurationSeconds, 1)
+        return Double(max(viewModel.secondsRemaining, 0)) / Double(total)
+    }
+
     private var timeString: String {
-        let minutes = viewModel.secondsRemaining / 60
-        let seconds = viewModel.secondsRemaining % 60
+        let minutes = max(viewModel.secondsRemaining, 0) / 60
+        let seconds = max(viewModel.secondsRemaining, 0) % 60
         return String(format: "%02d:%02d", minutes, seconds)
     }
 }

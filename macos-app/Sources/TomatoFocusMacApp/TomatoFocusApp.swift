@@ -11,6 +11,7 @@ import TimerFeature
 struct TomatoFocusApp: App {
     private let container: AppContainer
     @StateObject private var timerViewModel: TimerViewModel
+    private let mainWindowID = "main"
 
     init() {
         let container = AppContainer(
@@ -33,12 +34,29 @@ struct TomatoFocusApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup("Tomato Focus", id: mainWindowID) {
             RootNavigationView(container: container, timerViewModel: timerViewModel)
         }
         .commands {
             TimerQuickActionsCommands(timerViewModel: timerViewModel)
         }
+
+        MenuBarExtra {
+            MenuBarContentView(timerViewModel: timerViewModel, mainWindowID: mainWindowID)
+        } label: {
+            Label(menuBarTitle, systemImage: timerViewModel.isRunning ? "timer.circle.fill" : "timer")
+        }
+        .menuBarExtraStyle(.menu)
+    }
+
+    private var menuBarTitle: String {
+        timerViewModel.isRunning ? formatSeconds(timerViewModel.secondsRemaining) : "Tomato"
+    }
+
+    private func formatSeconds(_ seconds: Int) -> String {
+        let minutes = max(seconds, 0) / 60
+        let remainder = max(seconds, 0) % 60
+        return String(format: "%02d:%02d", minutes, remainder)
     }
 }
 

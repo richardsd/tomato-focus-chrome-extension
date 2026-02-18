@@ -1,4 +1,5 @@
 import CoreInterfaces
+import DesignSystem
 import SwiftUI
 
 public enum TaskListFilter: String, CaseIterable {
@@ -25,11 +26,10 @@ public final class TasksViewModel: ObservableObject {
     @Published public var draftTitle = ""
     @Published public var draftDetails = ""
     @Published public var draftEstimate = "1"
-    @Published public var activeFilter: TaskListFilter = .all
     @Published public private(set) var editingTaskID: UUID?
 
-    public var filteredTasks: [TaskItem] {
-        tasks.filter { activeFilter.matches($0) }
+    public func filteredTasks(for filter: TaskListFilter) -> [TaskItem] {
+        tasks.filter { filter.matches($0) }
     }
 
     public var allCount: Int {
@@ -177,7 +177,9 @@ public final class TasksViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.reloadFromStorage()
+            Task { @MainActor [weak self] in
+                self?.reloadFromStorage()
+            }
         }
 
         let currentTaskObserver = NotificationCenter.default.addObserver(
@@ -185,7 +187,9 @@ public final class TasksViewModel: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.reloadFromStorage()
+            Task { @MainActor [weak self] in
+                self?.reloadFromStorage()
+            }
         }
 
         observers = [tasksObserver, currentTaskObserver]
@@ -205,125 +209,197 @@ public final class TasksViewModel: ObservableObject {
 
 public struct TasksView: View {
     @ObservedObject private var viewModel: TasksViewModel
+    @State private var activeFilter: TaskListFilter = .all
 
     public init(viewModel: TasksViewModel) {
         self.viewModel = viewModel
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 8) {
-                TextField("Task title", text: $viewModel.draftTitle)
-                TextField("Description (optional)", text: $viewModel.draftDetails)
+        ScrollView {
+            VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                taskCaptureCard
+                filterCard
 
-                HStack {
-                    TextField("Estimate", text: $viewModel.draftEstimate)
-                        .frame(width: 80)
-                    Text("focus sessions")
-                        .foregroundStyle(.secondary)
-
-                    Spacer()
-
-                    Button(viewModel.editingTaskID == nil ? "Add" : "Update") {
-                        viewModel.saveDraft()
-                    }
-                    .disabled(viewModel.draftTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    if viewModel.editingTaskID != nil {
-                        Button("Cancel") {
-                            viewModel.cancelEditing()
+                if viewModel.filteredTasks(for: activeFilter).isEmpty {
+                    emptyState
+                } else {
+                    LazyVStack(alignment: .leading, spacing: DSSpacing.sm) {
+                        ForEach(viewModel.filteredTasks(for: activeFilter)) { task in
+                            taskRow(task)
                         }
-                    }
-
-                    Button("Import Jira") {
-                        Task { await viewModel.importFromJira() }
                     }
                 }
             }
-
-            HStack {
-                ForEach(TaskListFilter.allCases, id: \.self) { filter in
-                    Button {
-                        viewModel.activeFilter = filter
-                    } label: {
-                        Text(filterLabel(for: filter))
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(viewModel.activeFilter == filter ? .accentColor : .clear)
-                }
-
-                Spacer()
-
-                if viewModel.activeFilter == .completed, viewModel.completedCount > 0 {
-                    Button("Clear completed") {
-                        viewModel.clearCompletedTasks()
-                    }
-                }
-            }
-
-            List(viewModel.filteredTasks) { task in
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Button {
-                            viewModel.toggleTaskCompletion(task)
-                        } label: {
-                            Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
-                        }
-                        .buttonStyle(.plain)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(task.title)
-                                .strikethrough(task.isCompleted)
-
-                            if !task.details.isEmpty {
-                                Text(task.details)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
-                        Spacer()
-
-                        Text("🍅 \(task.completedPomodoros)/\(task.estimatedPomodoros)")
-                            .foregroundStyle(task.isCompleted ? .secondary : .primary)
-                    }
-
-                    HStack {
-                        Button(viewModel.currentTaskID == task.id ? "Unset Current" : "Set Current") {
-                            viewModel.toggleCurrentTask(task)
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button("Edit") {
-                            viewModel.beginEdit(task)
-                        }
-                        .buttonStyle(.bordered)
-
-                        Button("Delete", role: .destructive) {
-                            viewModel.deleteTask(task)
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                    .font(.caption)
-                }
-                .padding(.vertical, 4)
-                .listRowBackground(viewModel.currentTaskID == task.id ? Color.accentColor.opacity(0.12) : Color.clear)
-            }
+            .padding(DSSpacing.xl)
+            .frame(maxWidth: 980, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
-        .padding()
+        .background(DSColor.pageBackground.ignoresSafeArea())
         .onAppear {
             viewModel.beginCreate()
         }
     }
 
-    private func filterLabel(for filter: TaskListFilter) -> String {
-        switch filter {
-        case .all:
-            return "All (\(viewModel.allCount))"
-        case .inProgress:
-            return "In Progress (\(viewModel.inProgressCount))"
-        case .completed:
-            return "Completed (\(viewModel.completedCount))"
+    private var taskCaptureCard: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            HStack {
+                VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                    Text(viewModel.editingTaskID == nil ? "Quick Capture" : "Edit Task")
+                        .font(DSTypography.subtitle)
+                    Text("Keep sessions focused by defining your next outcomes.")
+                        .font(.subheadline)
+                        .foregroundStyle(DSColor.secondaryText)
+                }
+
+                Spacer()
+
+                Button("Import Jira") {
+                    Task { await viewModel.importFromJira() }
+                }
+                .buttonStyle(DSSecondaryButtonStyle())
+            }
+
+            TextField("Task title", text: $viewModel.draftTitle)
+                .textFieldStyle(.roundedBorder)
+
+            TextField("Description (optional)", text: $viewModel.draftDetails)
+                .textFieldStyle(.roundedBorder)
+
+            HStack(spacing: DSSpacing.sm) {
+                VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                    Text("Estimate")
+                        .font(.caption)
+                        .foregroundStyle(DSColor.secondaryText)
+                    TextField("1", text: $viewModel.draftEstimate)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 80)
+                }
+
+                Text("focus sessions")
+                    .font(.subheadline)
+                    .foregroundStyle(DSColor.secondaryText)
+
+                Spacer()
+
+                if viewModel.editingTaskID != nil {
+                    Button("Cancel") {
+                        viewModel.cancelEditing()
+                    }
+                    .buttonStyle(DSSecondaryButtonStyle())
+                }
+
+                Button(viewModel.editingTaskID == nil ? "Add Task" : "Update Task") {
+                    viewModel.saveDraft()
+                }
+                .buttonStyle(DSPrimaryButtonStyle())
+                .disabled(viewModel.draftTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
         }
+        .dsCard()
+    }
+
+    private var filterCard: some View {
+        HStack(spacing: DSSpacing.md) {
+            Picker("Filter", selection: $activeFilter) {
+                Text("All (\(viewModel.allCount))").tag(TaskListFilter.all)
+                Text("In Progress (\(viewModel.inProgressCount))").tag(TaskListFilter.inProgress)
+                Text("Completed (\(viewModel.completedCount))").tag(TaskListFilter.completed)
+            }
+            .pickerStyle(.segmented)
+
+            Spacer()
+
+            if activeFilter == .completed, viewModel.completedCount > 0 {
+                Button("Clear Completed") {
+                    viewModel.clearCompletedTasks()
+                }
+                .buttonStyle(DSDestructiveButtonStyle())
+            }
+        }
+        .dsCard()
+    }
+
+    private var emptyState: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+            Text("No tasks in this filter")
+                .font(DSTypography.subtitle)
+            Text("Create a new task or switch filters to see existing work items.")
+                .foregroundStyle(DSColor.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsCard()
+    }
+
+    private func taskRow(_ task: TaskItem) -> some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            HStack(alignment: .top, spacing: DSSpacing.sm) {
+                Button {
+                    viewModel.toggleTaskCompletion(task)
+                } label: {
+                    Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .font(.title3)
+                        .foregroundStyle(task.isCompleted ? DSColor.focus : DSColor.secondaryText)
+                }
+                .buttonStyle(.plain)
+
+                VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                    Text(task.title)
+                        .font(.headline)
+                        .strikethrough(task.isCompleted)
+
+                    if !task.details.isEmpty {
+                        Text(task.details)
+                            .font(.subheadline)
+                            .foregroundStyle(DSColor.secondaryText)
+                    }
+
+                    HStack(spacing: DSSpacing.xs) {
+                        Label("\(task.completedPomodoros)/\(task.estimatedPomodoros)", systemImage: "timer")
+                            .font(.caption)
+                            .foregroundStyle(task.isCompleted ? DSColor.secondaryText : DSColor.focus)
+
+                        if viewModel.currentTaskID == task.id {
+                            Label("Current", systemImage: "scope")
+                                .font(.caption)
+                                .padding(.horizontal, DSSpacing.xs)
+                                .padding(.vertical, DSSpacing.xxs)
+                                .background(DSColor.focus.opacity(0.16), in: Capsule(style: .continuous))
+                                .foregroundStyle(DSColor.focus)
+                        }
+                    }
+                }
+
+                Spacer()
+            }
+
+            HStack(spacing: DSSpacing.xs) {
+                Button(viewModel.currentTaskID == task.id ? "Unset Current" : "Set Current") {
+                    viewModel.toggleCurrentTask(task)
+                }
+                .buttonStyle(DSSecondaryButtonStyle())
+
+                Button("Edit") {
+                    viewModel.beginEdit(task)
+                }
+                .buttonStyle(DSSecondaryButtonStyle())
+
+                Button("Delete") {
+                    viewModel.deleteTask(task)
+                }
+                .buttonStyle(DSDestructiveButtonStyle())
+            }
+            .font(.caption)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(DSSpacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: DSRadius.medium, style: .continuous)
+                .fill(viewModel.currentTaskID == task.id ? DSColor.focus.opacity(0.10) : DSColor.cardBackground.opacity(0.72))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: DSRadius.medium, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        )
     }
 }

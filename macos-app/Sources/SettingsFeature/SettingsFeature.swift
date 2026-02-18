@@ -1,4 +1,5 @@
 import CoreInterfaces
+import DesignSystem
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
@@ -105,79 +106,28 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        Form {
-            Section("Durations") {
-                Stepper("Work: \(viewModel.settings.focusDurationMinutes) min", value: $viewModel.settings.focusDurationMinutes, in: 1...180)
-                Stepper("Short break: \(viewModel.settings.shortBreakMinutes) min", value: $viewModel.settings.shortBreakMinutes, in: 1...60)
-                Stepper("Long break: \(viewModel.settings.longBreakMinutes) min", value: $viewModel.settings.longBreakMinutes, in: 1...120)
-                Stepper("Sessions before long break: \(viewModel.settings.longBreakInterval)", value: $viewModel.settings.longBreakInterval, in: 1...12)
-            }
+        ScrollView {
+            VStack(alignment: .leading, spacing: DSSpacing.lg) {
+                Text("Settings")
+                    .font(DSTypography.title)
 
-            Section("Behavior") {
-                Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
-                Toggle("Pause and resume timer based on idle activity", isOn: $viewModel.settings.pauseOnIdle)
+                timerSettings
+                behaviorSettings
+                soundSettings
+                jiraSettings
+                dataExchangeSettings
 
-                Picker("Theme", selection: $viewModel.settings.theme) {
-                    ForEach(AppTheme.allCases, id: \.self) { theme in
-                        Text(theme.displayName).tag(theme)
-                    }
+                if !viewModel.validationErrors.isEmpty {
+                    validationErrorsCard
                 }
-            }
 
-            Section("Sound") {
-                Toggle("Enable timer sound", isOn: $viewModel.settings.playSound)
-                HStack {
-                    Text("Volume")
-                    Slider(value: $viewModel.settings.volume, in: 0...1)
-                    Text("\(Int(viewModel.settings.volume * 100))%")
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
+                saveCard
             }
-
-            Section("Jira") {
-                TextField("Jira URL", text: $viewModel.settings.jiraURL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                TextField("Jira username", text: $viewModel.settings.jiraUsername)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled(true)
-                SecureField("Jira API token", text: $viewModel.settings.jiraToken)
-                Toggle("Auto-sync Jira tasks", isOn: $viewModel.settings.autoSyncJira)
-                Stepper(
-                    "Sync interval: \(viewModel.settings.jiraSyncIntervalMinutes) min",
-                    value: $viewModel.settings.jiraSyncIntervalMinutes,
-                    in: 5...720,
-                    step: 5
-                )
-            }
-
-            Section("Data exchange") {
-                Text("Conflict policy: source file replaces all local settings, tasks, statistics, current task, and timer state.")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Button("Import extension data JSON…") {
-                    isImportingExchangeFile = true
-                }
-            }
-
-            if !viewModel.validationErrors.isEmpty {
-                Section {
-                    ForEach(viewModel.validationErrors, id: \.self) { error in
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
-                }
-            }
-
-            Section {
-                Button("Save", action: viewModel.save)
-                if !viewModel.saveStatusMessage.isEmpty {
-                    Text(viewModel.saveStatusMessage)
-                        .foregroundStyle(.green)
-                }
-            }
+            .padding(DSSpacing.xl)
+            .frame(maxWidth: 980, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
+        .background(DSColor.pageBackground.ignoresSafeArea())
         .fileImporter(
             isPresented: $isImportingExchangeFile,
             allowedContentTypes: [.json],
@@ -191,6 +141,120 @@ public struct SettingsView: View {
                 viewModel.handleImportError(error)
             }
         }
-        .padding()
+    }
+
+    private var timerSettings: some View {
+        SettingsCard(title: "Durations", subtitle: "Define your default focus and break cadence.") {
+            Stepper("Work: \(viewModel.settings.focusDurationMinutes) min", value: $viewModel.settings.focusDurationMinutes, in: 1...180)
+            Stepper("Short break: \(viewModel.settings.shortBreakMinutes) min", value: $viewModel.settings.shortBreakMinutes, in: 1...60)
+            Stepper("Long break: \(viewModel.settings.longBreakMinutes) min", value: $viewModel.settings.longBreakMinutes, in: 1...120)
+            Stepper("Sessions before long break: \(viewModel.settings.longBreakInterval)", value: $viewModel.settings.longBreakInterval, in: 1...12)
+        }
+    }
+
+    private var behaviorSettings: some View {
+        SettingsCard(title: "Behavior", subtitle: "Choose how sessions transition and how appearance follows your preferences.") {
+            Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
+            Toggle("Pause and resume timer based on idle activity", isOn: $viewModel.settings.pauseOnIdle)
+
+            Picker("Theme", selection: $viewModel.settings.theme) {
+                ForEach(AppTheme.allCases, id: \.self) { theme in
+                    Text(theme.displayName).tag(theme)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+    }
+
+    private var soundSettings: some View {
+        SettingsCard(title: "Sound", subtitle: "Customize audible feedback at session boundaries.") {
+            Toggle("Enable timer sound", isOn: $viewModel.settings.playSound)
+            HStack {
+                Text("Volume")
+                Slider(value: $viewModel.settings.volume, in: 0...1)
+                Text("\(Int(viewModel.settings.volume * 100))%")
+                    .monospacedDigit()
+                    .foregroundStyle(DSColor.secondaryText)
+            }
+        }
+    }
+
+    private var jiraSettings: some View {
+        SettingsCard(title: "Jira Integration", subtitle: "Connect Jira to import assigned unresolved issues into your task list.") {
+            TextField("Jira URL", text: $viewModel.settings.jiraURL)
+                .textFieldStyle(.roundedBorder)
+            TextField("Jira username", text: $viewModel.settings.jiraUsername)
+                .textFieldStyle(.roundedBorder)
+            SecureField("Jira API token", text: $viewModel.settings.jiraToken)
+                .textFieldStyle(.roundedBorder)
+            Toggle("Auto-sync Jira tasks", isOn: $viewModel.settings.autoSyncJira)
+            Stepper(
+                "Sync interval: \(viewModel.settings.jiraSyncIntervalMinutes) min",
+                value: $viewModel.settings.jiraSyncIntervalMinutes,
+                in: 5...720,
+                step: 5
+            )
+        }
+    }
+
+    private var dataExchangeSettings: some View {
+        SettingsCard(title: "Data Exchange", subtitle: "Import extension data using the replace-local conflict policy.") {
+            Text("Conflict policy: source file replaces all local settings, tasks, statistics, current task, and timer state.")
+                .font(.footnote)
+                .foregroundStyle(DSColor.secondaryText)
+
+            Button("Import extension data JSON…") {
+                isImportingExchangeFile = true
+            }
+            .buttonStyle(DSSecondaryButtonStyle())
+        }
+    }
+
+    private var validationErrorsCard: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xs) {
+            Label("Validation Errors", systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(DSColor.warning)
+
+            ForEach(viewModel.validationErrors, id: \.self) { error in
+                Text(error)
+                    .font(.subheadline)
+                    .foregroundStyle(.red)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsCard()
+    }
+
+    private var saveCard: some View {
+        HStack {
+            Button("Save Settings", action: viewModel.save)
+                .buttonStyle(DSPrimaryButtonStyle())
+
+            if !viewModel.saveStatusMessage.isEmpty {
+                Text(viewModel.saveStatusMessage)
+                    .foregroundStyle(DSColor.focus)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsCard()
+    }
+}
+
+private struct SettingsCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text(title)
+                .font(DSTypography.subtitle)
+            Text(subtitle)
+                .font(.subheadline)
+                .foregroundStyle(DSColor.secondaryText)
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .dsCard()
     }
 }

@@ -9,16 +9,17 @@ This repository includes a reusable macOS build pipeline for Xcode or Swift Pack
   - `pull_request` targeting those same branches
   - `workflow_dispatch` (manual run, optional notarization)
   - version tags like `v*`
-- Uses `macos-latest` with a pinned Xcode version (`15.4`) via `maxim-lobanov/setup-xcode`.
+- Uses `macos-latest` with a pinned Xcode version (`16.0`) via `maxim-lobanov/setup-xcode`.
 - Auto-detects build type:
   - `.xcworkspace`
   - `.xcodeproj`
-  - `Package.swift` (SPM)
+  - `Package.swift` (SPM, including nested packages such as `macos-app/Package.swift`)
 - Runs:
   - dependency resolution
   - clean build
   - test execution (scheme or SwiftPM tests)
 - Packages and uploads build outputs as a GitHub Actions artifact.
+- For SwiftPM macOS builds, also creates and uploads an app bundle artifact at `dist/macos/Tomato Focus.app`.
 - Supports an optional sign + notarize job for tags and manual dispatches.
 
 ## Optional repository variables
@@ -31,6 +32,8 @@ Set these as **Actions variables** when auto-detection needs to be overridden:
 - `XCODE_TEST_SCHEME` – test scheme (defaults to `XCODE_SCHEME`)
 - `XCODE_DESTINATION` – build destination (default `platform=macOS`)
 - `XCODE_TEST_DESTINATION` – test destination (default `platform=macOS`)
+
+For this repository, the committed macOS project is `macos-app/TomatoFocusMacApp.xcodeproj` and the preferred scheme is `TomatoFocusMacAppApp`.
 
 ## Secrets for signing and notarization (required only for release/notarization)
 

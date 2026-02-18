@@ -7,9 +7,20 @@ let package = Package(
         .macOS(.v13)
     ],
     products: [
-        .executable(name: "TomatoFocusMacApp", targets: ["TomatoFocusMacApp"])
+        .library(name: "DesignSystem", targets: ["DesignSystem"]),
+        .library(name: "CoreInterfaces", targets: ["CoreInterfaces"]),
+        .library(name: "CoreDI", targets: ["CoreDI"]),
+        .library(name: "PlatformServices", targets: ["PlatformServices"]),
+        .library(name: "JiraIntegration", targets: ["JiraIntegration"]),
+        .library(name: "TimerFeature", targets: ["TimerFeature"]),
+        .library(name: "TasksFeature", targets: ["TasksFeature"]),
+        .library(name: "StatisticsFeature", targets: ["StatisticsFeature"]),
+        .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
+        .library(name: "AppShell", targets: ["AppShell"]),
+        .executable(name: "TomatoFocus", targets: ["TomatoFocus"])
     ],
     targets: [
+        .target(name: "DesignSystem"),
         .target(name: "CoreInterfaces"),
         .target(name: "CoreDI", dependencies: ["CoreInterfaces"]),
         .target(
@@ -18,13 +29,14 @@ let package = Package(
             resources: [.process("Resources")]
         ),
         .target(name: "JiraIntegration", dependencies: ["CoreInterfaces"]),
-        .target(name: "TimerFeature", dependencies: ["CoreInterfaces"]),
-        .target(name: "TasksFeature", dependencies: ["CoreInterfaces"]),
-        .target(name: "StatisticsFeature", dependencies: ["CoreInterfaces"]),
-        .target(name: "SettingsFeature", dependencies: ["CoreInterfaces"]),
+        .target(name: "TimerFeature", dependencies: ["CoreInterfaces", "DesignSystem"]),
+        .target(name: "TasksFeature", dependencies: ["CoreInterfaces", "DesignSystem"]),
+        .target(name: "StatisticsFeature", dependencies: ["CoreInterfaces", "DesignSystem"]),
+        .target(name: "SettingsFeature", dependencies: ["CoreInterfaces", "DesignSystem"]),
         .target(
             name: "AppShell",
             dependencies: [
+                "DesignSystem",
                 "CoreDI",
                 "CoreInterfaces",
                 "TimerFeature",
@@ -34,9 +46,10 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "TomatoFocusMacApp",
+            name: "TomatoFocus",
             dependencies: [
                 "AppShell",
+                "DesignSystem",
                 "CoreDI",
                 "CoreInterfaces",
                 "PlatformServices",
@@ -45,7 +58,8 @@ let package = Package(
                 "TasksFeature",
                 "StatisticsFeature",
                 "SettingsFeature"
-            ]
+            ],
+            path: "Sources/TomatoFocusMacApp"
         )
     ]
 )

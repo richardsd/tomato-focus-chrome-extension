@@ -1,0 +1,521 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		17C0BBCCE42A6AB647823A8C /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9B0D9FB75F817C29520AE1 /* SmokeTests.swift */; };
+		1C0A5C3CCF4BAE41705A51F4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B96B05D90A801546EB4A513E /* Cocoa.framework */; };
+		4A7C9E11B2D34F5601A2B3C4 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */; };
+		519E4B21A4E01152C63BA519 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 60109E9969D184FD0F046FD5 /* AppShell */; };
+		80F9E0ABD45121AFC804C340 /* PlatformServices in Frameworks */ = {isa = PBXBuildFile; productRef = 672009407F6E161B4784383E /* PlatformServices */; };
+		9CD8A8E7C104E32AE8FB8604 /* StatisticsFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 1D5EC2F31D66C705D4E53DED /* StatisticsFeature */; };
+		AC0BD5FC023DEF7F49781D05 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B96B05D90A801546EB4A513E /* Cocoa.framework */; };
+		B181739249A5DF76B9B4DEE5 /* CoreInterfaces in Frameworks */ = {isa = PBXBuildFile; productRef = AC3F08B8E008ADBBCED81D2F /* CoreInterfaces */; };
+		BBE34388E6C2F8A4AD89DBC4 /* TimerFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 666E4D86794F8DB1F73FADA8 /* TimerFeature */; };
+		C26F56A17F2AC51AC2494ED2 /* TasksFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 609832227A2B5A9F57C4D3F3 /* TasksFeature */; };
+		CA2A651F62EB697BEC97C866 /* TomatoFocusApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D9C1E7EF658F84EEBC7F395 /* TomatoFocusApp.swift */; };
+		CE2294D328C89BB37A1A21D9 /* SettingsFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 91DC060B94151510CC55951B /* SettingsFeature */; };
+		F1E5B21C5AC1775D8E84ACF7 /* JiraIntegration in Frameworks */ = {isa = PBXBuildFile; productRef = FE5F1DF11E0B4022545FB57E /* JiraIntegration */; };
+		FD563A96C8E1E28CB6519150 /* CoreDI in Frameworks */ = {isa = PBXBuildFile; productRef = 70FADFF47A4EA78D3A44E665 /* CoreDI */; };
+		FF97444F4F8F1824267D0A86 /* notification.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 700467092486D512A3A6221C /* notification.mp3 */; };
+		C8A1E3A70BB64E809B2E0D17 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2FAED932D58D4DAAA5C9731C /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A4E1ECAC8CA2DE41B06382EA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D089C65D7746788102852E0B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0B84CDAFFDD40E5B956A9FD9;
+			remoteInfo = TomatoFocusMacApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		2E457959F80CC6023B951FB7 /* TomatoFocusMacAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TomatoFocusMacAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6351711AE5EC04FCECB6BFE9 /* TomatoFocus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TomatoFocus.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2FAED932D58D4DAAA5C9731C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		700467092486D512A3A6221C /* notification.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = notification.mp3; path = Sources/PlatformServices/Resources/notification.mp3; sourceTree = "<group>"; };
+		5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MenuBarContentView.swift; path = Sources/TomatoFocusMacApp/MenuBarContentView.swift; sourceTree = "<group>"; };
+		8F9B0D9FB75F817C29520AE1 /* SmokeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SmokeTests.swift; path = Tests/TomatoFocusMacAppTests/SmokeTests.swift; sourceTree = "<group>"; };
+		9D9C1E7EF658F84EEBC7F395 /* TomatoFocusApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TomatoFocusApp.swift; path = Sources/TomatoFocusMacApp/TomatoFocusApp.swift; sourceTree = "<group>"; };
+		B96B05D90A801546EB4A513E /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3E2BA2B35AB198CEA9A75E98 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1C0A5C3CCF4BAE41705A51F4 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		57D14A4293DEC2F1AECF308B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC0BD5FC023DEF7F49781D05 /* Cocoa.framework in Frameworks */,
+				519E4B21A4E01152C63BA519 /* AppShell in Frameworks */,
+				FD563A96C8E1E28CB6519150 /* CoreDI in Frameworks */,
+				B181739249A5DF76B9B4DEE5 /* CoreInterfaces in Frameworks */,
+				F1E5B21C5AC1775D8E84ACF7 /* JiraIntegration in Frameworks */,
+				80F9E0ABD45121AFC804C340 /* PlatformServices in Frameworks */,
+				CE2294D328C89BB37A1A21D9 /* SettingsFeature in Frameworks */,
+				9CD8A8E7C104E32AE8FB8604 /* StatisticsFeature in Frameworks */,
+				C26F56A17F2AC51AC2494ED2 /* TasksFeature in Frameworks */,
+				BBE34388E6C2F8A4AD89DBC4 /* TimerFeature in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2A46C83BAC88FD179A138598 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A0627E448545F587DF3DD912 /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A0627E448545F587DF3DD912 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				B96B05D90A801546EB4A513E /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		A8341903EA3424CA51F6D2B1 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6351711AE5EC04FCECB6BFE9 /* TomatoFocus.app */,
+				2E457959F80CC6023B951FB7 /* TomatoFocusMacAppTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D4FBFD0EEFB878D3AE33A95A = {
+			isa = PBXGroup;
+			children = (
+				A8341903EA3424CA51F6D2B1 /* Products */,
+				2A46C83BAC88FD179A138598 /* Frameworks */,
+				9D9C1E7EF658F84EEBC7F395 /* TomatoFocusApp.swift */,
+				5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */,
+				2FAED932D58D4DAAA5C9731C /* Assets.xcassets */,
+				700467092486D512A3A6221C /* notification.mp3 */,
+				8F9B0D9FB75F817C29520AE1 /* SmokeTests.swift */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0B84CDAFFDD40E5B956A9FD9 /* TomatoFocusMacApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AED63E4E56F1D94D4801E8F1 /* Build configuration list for PBXNativeTarget "TomatoFocusMacApp" */;
+			buildPhases = (
+				9FD8F3A6540DD4457106C212 /* Sources */,
+				57D14A4293DEC2F1AECF308B /* Frameworks */,
+				3D677F161A85F0B6C65FBBAD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TomatoFocusMacApp;
+			packageProductDependencies = (
+				60109E9969D184FD0F046FD5 /* AppShell */,
+				70FADFF47A4EA78D3A44E665 /* CoreDI */,
+				AC3F08B8E008ADBBCED81D2F /* CoreInterfaces */,
+				FE5F1DF11E0B4022545FB57E /* JiraIntegration */,
+				672009407F6E161B4784383E /* PlatformServices */,
+				91DC060B94151510CC55951B /* SettingsFeature */,
+				1D5EC2F31D66C705D4E53DED /* StatisticsFeature */,
+				609832227A2B5A9F57C4D3F3 /* TasksFeature */,
+				666E4D86794F8DB1F73FADA8 /* TimerFeature */,
+			);
+			productName = TomatoFocus;
+			productReference = 6351711AE5EC04FCECB6BFE9 /* TomatoFocus.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E5BB330CC6169FB6AAE3D5D6 /* TomatoFocusMacAppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6EEB62E99E004844CA2D0677 /* Build configuration list for PBXNativeTarget "TomatoFocusMacAppTests" */;
+			buildPhases = (
+				60061D508A9118E362909AE0 /* Sources */,
+				3E2BA2B35AB198CEA9A75E98 /* Frameworks */,
+				83AECB1236BB5068EB95E9DE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				289724A69DB8B08D44478BB1 /* PBXTargetDependency */,
+			);
+			name = TomatoFocusMacAppTests;
+			productName = TomatoFocusMacAppTests;
+			productReference = 2E457959F80CC6023B951FB7 /* TomatoFocusMacAppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D089C65D7746788102852E0B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+			};
+			buildConfigurationList = 5EF9BA6962B5701C8B0BF4FB /* Build configuration list for PBXProject "TomatoFocusMacApp" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = D4FBFD0EEFB878D3AE33A95A;
+			minimizedProjectReferenceProxies = 0;
+			packageReferences = (
+				FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = A8341903EA3424CA51F6D2B1 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0B84CDAFFDD40E5B956A9FD9 /* TomatoFocusMacApp */,
+				E5BB330CC6169FB6AAE3D5D6 /* TomatoFocusMacAppTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3D677F161A85F0B6C65FBBAD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A1E3A70BB64E809B2E0D17 /* Assets.xcassets in Resources */,
+				FF97444F4F8F1824267D0A86 /* notification.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		83AECB1236BB5068EB95E9DE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		60061D508A9118E362909AE0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				17C0BBCCE42A6AB647823A8C /* SmokeTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9FD8F3A6540DD4457106C212 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA2A651F62EB697BEC97C866 /* TomatoFocusApp.swift in Sources */,
+				4A7C9E11B2D34F5601A2B3C4 /* MenuBarContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		289724A69DB8B08D44478BB1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = TomatoFocusMacApp;
+			target = 0B84CDAFFDD40E5B956A9FD9 /* TomatoFocusMacApp */;
+			targetProxy = A4E1ECAC8CA2DE41B06382EA /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A5E6A304CFD62DF2F89A56E7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		ADDD5D4A19A4F9EA1CEB4E50 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomatofocus.mac.tests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		BE8788EBAFA0F9461AD153BD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BF4046A3B73E685FCA1A72D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/TomatoFocus.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomatofocus.mac;
+				PRODUCT_NAME = TomatoFocus;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		C03D23ECEF6C2225428BE75A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomatofocus.mac.tests;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		E4C8A7685BE1707DCCB44AED /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Config/TomatoFocus.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Config/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tomatofocus.mac;
+				PRODUCT_NAME = TomatoFocus;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		5EF9BA6962B5701C8B0BF4FB /* Build configuration list for PBXProject "TomatoFocusMacApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A5E6A304CFD62DF2F89A56E7 /* Debug */,
+				BE8788EBAFA0F9461AD153BD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6EEB62E99E004844CA2D0677 /* Build configuration list for PBXNativeTarget "TomatoFocusMacAppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C03D23ECEF6C2225428BE75A /* Release */,
+				ADDD5D4A19A4F9EA1CEB4E50 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AED63E4E56F1D94D4801E8F1 /* Build configuration list for PBXNativeTarget "TomatoFocusMacApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BF4046A3B73E685FCA1A72D4 /* Release */,
+				E4C8A7685BE1707DCCB44AED /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			path = .;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1D5EC2F31D66C705D4E53DED /* StatisticsFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = StatisticsFeature;
+		};
+		60109E9969D184FD0F046FD5 /* AppShell */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = AppShell;
+		};
+		609832227A2B5A9F57C4D3F3 /* TasksFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = TasksFeature;
+		};
+		666E4D86794F8DB1F73FADA8 /* TimerFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = TimerFeature;
+		};
+		672009407F6E161B4784383E /* PlatformServices */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = PlatformServices;
+		};
+		70FADFF47A4EA78D3A44E665 /* CoreDI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = CoreDI;
+		};
+		91DC060B94151510CC55951B /* SettingsFeature */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = SettingsFeature;
+		};
+		AC3F08B8E008ADBBCED81D2F /* CoreInterfaces */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = CoreInterfaces;
+		};
+		FE5F1DF11E0B4022545FB57E /* JiraIntegration */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC2302027A363B52D51F04C8 /* XCLocalSwiftPackageReference "." */;
+			productName = JiraIntegration;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D089C65D7746788102852E0B /* Project object */;
+}

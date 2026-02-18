@@ -45,6 +45,7 @@ jobs:
       has_project: ${{ steps.detect.outputs.has_project }}
       project_type: ${{ steps.detect.outputs.project_type }}
       project_path: ${{ steps.detect.outputs.project_path }}
+      package_dir: ${{ steps.detect.outputs.package_dir }}
       scheme: ${{ steps.detect.outputs.scheme }}
 
     steps:
@@ -66,13 +67,15 @@ jobs:
           project="${XCODE_PROJECT:-}"
           scheme="${XCODE_SCHEME:-}"
 
-          if [[ -z "$workspace" ]]; then
-            workspace=$(find . -maxdepth 3 -name '*.xcworkspace' -print -quit || true)
+          if [[ -z "$project" ]]; then
+            project=$(find . -maxdepth 3 -name '*.xcodeproj' -print -quit || true)
           fi
 
           if [[ -z "$workspace" && -z "$project" ]]; then
-            project=$(find . -maxdepth 3 -name '*.xcodeproj' -print -quit || true)
+            workspace=$(find . -maxdepth 4 -name '*.xcworkspace' ! -path '*/.swiftpm/*' -print -quit || true)
           fi
+
+          package_dir=""
 
           if [[ -n "$workspace" ]]; then
             project_type="workspace"
@@ -80,19 +83,31 @@ jobs:
           elif [[ -n "$project" ]]; then
             project_type="project"
             project_path="$project"
-          elif [[ -f Package.swift ]]; then
-            project_type="spm"
-            project_path="Package.swift"
           else
-            project_type="none"
-            project_path=""
+            package_file=$(find . -maxdepth 4 -name 'Package.swift' -print -quit || true)
+            if [[ -n "$package_file" ]]; then
+              project_type="spm"
+              project_path="$package_file"
+              package_dir="$(dirname "$package_file")"
+            else
+              project_type="none"
+              project_path=""
+            fi
           fi
 
-          if [[ "$project_type" != "none" && -z "$scheme" ]]; then
+          if [[ "$project_type" == "spm" && -z "$package_dir" ]]; then
+            package_dir="$(dirname "$project_path")"
+          fi
+
+          if [[ "$project_type" == "none" ]]; then
+            :
+          elif [[ "$project_type" == "spm" ]]; then
+            :
+          elif [[ -z "$scheme" ]]; then
             if [[ "$project_type" == "workspace" ]]; then
-              scheme=$(xcodebuild -workspace "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('workspace',{}).get('schemes') or [''])[0])")
+              scheme=$(xcodebuild -workspace "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); schemes=d.get('workspace',{}).get('schemes') or []; preferred=['TomatoFocusMacAppApp','TomatoFocusMacApp']; print(next((s for s in preferred if s in schemes), (schemes[0] if schemes else '')))")
             elif [[ "$project_type" == "project" ]]; then
-              scheme=$(xcodebuild -project "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); print((d.get('project',{}).get('schemes') or [''])[0])")
+              scheme=$(xcodebuild -project "$project_path" -list -json | python3 -c "import json,sys; d=json.load(sys.stdin); schemes=d.get('project',{}).get('schemes') or []; preferred=['TomatoFocusMacAppApp','TomatoFocusMacApp']; print(next((s for s in preferred if s in schemes), (schemes[0] if schemes else '')))")
             fi
           fi
 
@@ -100,6 +115,7 @@ jobs:
             echo "has_project=false" >> "$GITHUB_OUTPUT"
             echo "project_type=$project_type" >> "$GITHUB_OUTPUT"
             echo "project_path=$project_path" >> "$GITHUB_OUTPUT"
+            echo "package_dir=$package_dir" >> "$GITHUB_OUTPUT"
             echo "scheme=$scheme" >> "$GITHUB_OUTPUT"
             echo "No macOS project/workspace/SPM package found. Build/test steps will be skipped."
             exit 0
@@ -108,10 +124,12 @@ jobs:
           echo "has_project=true" >> "$GITHUB_OUTPUT"
           echo "project_type=$project_type" >> "$GITHUB_OUTPUT"
           echo "project_path=$project_path" >> "$GITHUB_OUTPUT"
+          echo "package_dir=$package_dir" >> "$GITHUB_OUTPUT"
           echo "scheme=$scheme" >> "$GITHUB_OUTPUT"
 
           echo "Detected project_type=$project_type"
           echo "Detected project_path=$project_path"
+          echo "Detected package_dir=$package_dir"
           echo "Detected scheme=$scheme"
 
       - name: Cache SwiftPM and DerivedData
@@ -144,7 +162,7 @@ jobs:
               -scheme "${{ steps.detect.outputs.scheme }}" \
               -derivedDataPath "$DERIVED_DATA_PATH"
           else
-            swift package resolve
+            swift package resolve --package-path "${{ steps.detect.outputs.package_dir }}"
           fi
 
       - name: Clean build (simulator-compatible destination)
@@ -171,7 +189,7 @@ jobs:
               -derivedDataPath "$DERIVED_DATA_PATH" \
               CODE_SIGNING_ALLOWED=NO
           else
-            swift build --configuration release
+            swift build --configuration release --package-path "${{ steps.detect.outputs.package_dir }}"
           fi
 
       - name: Run tests (if available)
@@ -196,7 +214,7 @@ jobs:
               -destination "$DESTINATION" \
               -derivedDataPath "$DERIVED_DATA_PATH"
           else
-            swift test
+            swift test --package-path "${{ steps.detect.outputs.package_dir }}"
           fi
 
       - name: Package build artifacts
@@ -213,6 +231,15 @@ jobs:
 
           if [[ -d .build ]]; then
             cp -R .build artifacts/swift-build
+          fi
+
+          if [[ "${{ steps.detect.outputs.project_type }}" == "spm" ]]; then
+            PACKAGE_DIR="${{ steps.detect.outputs.package_dir }}"
+            PACKAGE_DIR="${PACKAGE_DIR#./}"
+            PACKAGE_PATH="${PACKAGE_DIR:-macos-app}" tools/macos-build-app.sh
+            if [[ -d dist/macos ]]; then
+              cp -R dist/macos artifacts/spm-app
+            fi
           fi
 
           if [[ ! -d artifacts/products && ! -d artifacts/swift-build && -z "$(find artifacts -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
@@ -300,7 +327,7 @@ jobs:
               -archivePath "$ARCHIVE_PATH" \
               DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
               CODE_SIGN_IDENTITY="$APPLE_SIGNING_IDENTITY"
-          else
+          elif [[ "${{ needs.macos-build-test.outputs.project_type }}" == "project" ]]; then
             xcodebuild clean archive \
               -project "${{ needs.macos-build-test.outputs.project_path }}" \
               -scheme "${{ needs.macos-build-test.outputs.scheme }}" \
@@ -308,10 +335,19 @@ jobs:
               -archivePath "$ARCHIVE_PATH" \
               DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
               CODE_SIGN_IDENTITY="$APPLE_SIGNING_IDENTITY"
+          else
+            PACKAGE_DIR="${{ needs.macos-build-test.outputs.package_dir }}"
+            PACKAGE_DIR="${PACKAGE_DIR#./}"
+            PACKAGE_PATH="${PACKAGE_DIR:-macos-app}" tools/macos-build-app.sh
+            APP_PATH="$(find dist/macos -maxdepth 2 -name '*.app' -print -quit)"
+            mkdir -p "$EXPORT_PATH/Applications"
+            cp -R "$APP_PATH" "$EXPORT_PATH/Applications/"
           fi
 
-          mkdir -p "$EXPORT_PATH"
-          cp -R "$ARCHIVE_PATH/Products/Applications" "$EXPORT_PATH/"
+          if [[ -d "$ARCHIVE_PATH/Products/Applications" ]]; then
+            mkdir -p "$EXPORT_PATH"
+            cp -R "$ARCHIVE_PATH/Products/Applications" "$EXPORT_PATH/"
+          fi
 
       - name: Notarize and staple
         shell: bash
@@ -321,6 +357,7 @@ jobs:
           APPLE_NOTARY_API_PRIVATE_KEY_BASE64: ${{ secrets.APPLE_NOTARY_API_PRIVATE_KEY_BASE64 }}
           APPLE_NOTARY_KEYCHAIN_PROFILE: ${{ secrets.APPLE_NOTARY_KEYCHAIN_PROFILE }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           set -euo pipefail
 
@@ -332,6 +369,11 @@ jobs:
             echo "No .app produced for notarization"
             exit 1
           fi
+
+          codesign --force --deep --options runtime --timestamp \
+            --entitlements "${MACOS_ENTITLEMENTS_PATH:-macos-app/Config/TomatoFocus.entitlements}" \
+            --sign "$APPLE_SIGNING_IDENTITY" \
+            "$APP_PATH"
 
           echo -n "$APPLE_NOTARY_API_PRIVATE_KEY_BASE64" | base64 --decode -o "$KEY_PATH"
 
@@ -348,6 +390,9 @@ jobs:
             --wait
 
           xcrun stapler staple "$APP_PATH"
+
+          APP_DIR="$(dirname "$APP_PATH")"
+          MACOS_APP_VERSION="${GITHUB_REF_NAME#v}" tools/macos-release.sh package-dmg "$APP_PATH" "$APP_DIR"
 
       - name: Upload notarized app
         uses: actions/upload-artifact@v4

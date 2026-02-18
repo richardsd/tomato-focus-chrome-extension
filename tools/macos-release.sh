@@ -12,8 +12,9 @@ Usage:
   tools/macos-release.sh update-channel <app-store|direct>
   tools/macos-release.sh sign <app-path>
   tools/macos-release.sh notarize <app-path>
+  tools/macos-release.sh package-dmg <app-path> [output-dir]
 
-Required environment variables:
+Required environment variables (depending on subcommand):
   APPLE_TEAM_ID
   APPLE_SIGNING_IDENTITY      (for sign)
   APPLE_ID                    (for notarize)
@@ -170,6 +171,35 @@ notarize_app() {
   echo "Notarization + stapling completed successfully."
 }
 
+package_dmg() {
+  local app_path="$1"
+  local output_dir="${2:-dist}"
+  [[ -d "$app_path" ]] || {
+    echo "App bundle not found: $app_path" >&2
+    exit 1
+  }
+
+  require_command hdiutil
+
+  local app_name
+  app_name="$(basename "$app_path" .app)"
+  local version
+  version="${MACOS_APP_VERSION:-$(node -p "require('./package.json').version" 2>/dev/null || echo "0.0.0")}"
+  local dmg_path="${output_dir}/${app_name}-${version}.dmg"
+  local volume_name="${MACOS_DMG_VOLUME_NAME:-$app_name}"
+  local staging_dir
+  staging_dir="$(mktemp -d)"
+
+  mkdir -p "$output_dir"
+  cp -R "$app_path" "$staging_dir/"
+  ln -s /Applications "$staging_dir/Applications"
+
+  hdiutil create -volname "$volume_name" -srcfolder "$staging_dir" -ov -format UDZO "$dmg_path"
+  rm -rf "$staging_dir"
+
+  echo "DMG created at: $dmg_path"
+}
+
 if [[ $# -lt 1 ]]; then
   usage
   exit 1
@@ -200,6 +230,10 @@ case "$subcommand" in
   notarize)
     [[ $# -eq 1 ]] || { usage; exit 1; }
     notarize_app "$1"
+    ;;
+  package-dmg)
+    [[ $# -ge 1 && $# -le 2 ]] || { usage; exit 1; }
+    package_dmg "$@"
     ;;
   *)
     usage
