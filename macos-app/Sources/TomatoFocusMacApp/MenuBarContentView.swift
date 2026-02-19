@@ -45,18 +45,16 @@ struct MenuBarContentView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: DSSpacing.xs) {
-                Button("Open Main Window") {
+                HoverMenuRowButton(title: "Open Main Window") {
                     openOrFocusMainWindow()
                 }
-                .buttonStyle(.automatic)
-                .controlSize(.small)
 
-                Button("Quit Tomato Focus") {
+                HoverMenuRowButton(
+                    title: "Quit Tomato Focus",
+                    isDestructive: true
+                ) {
                     NSApp.terminate(nil)
                 }
-                .buttonStyle(.automatic)
-                .controlSize(.small)
-                .foregroundStyle(.secondary)
             }
         }
         .frame(minWidth: 304, idealWidth: 320)
@@ -140,5 +138,42 @@ struct MenuBarContentView: View {
         let minutes = remaining / 60
         let seconds = remaining % 60
         return String(format: "%02d:%02d", minutes, seconds)
+    }
+}
+
+private struct HoverMenuRowButton: View {
+    let title: String
+    let isDestructive: Bool
+    let action: () -> Void
+    @State private var isHovering = false
+
+    init(title: String, isDestructive: Bool = false, action: @escaping () -> Void) {
+        self.title = title
+        self.isDestructive = isDestructive
+        self.action = action
+    }
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.body)
+                .foregroundStyle(isDestructive ? Color.red : Color.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, DSSpacing.xs)
+                .padding(.vertical, DSSpacing.xxs)
+                .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .background(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(
+                    Color(nsColor: .selectedContentBackgroundColor)
+                        .opacity(isHovering ? 0.22 : 0.0)
+                )
+        )
+        .onHover { hovering in
+            isHovering = hovering
+        }
+        .animation(.easeOut(duration: 0.08), value: isHovering)
     }
 }
