@@ -162,10 +162,34 @@ public struct SettingsView: View {
 
     private var timerSettings: some View {
         SettingsCard(title: "Durations", subtitle: "Define your default focus and break cadence.") {
-            Stepper("Work: \(viewModel.settings.focusDurationMinutes) min", value: $viewModel.settings.focusDurationMinutes, in: 1...180)
-            Stepper("Short break: \(viewModel.settings.shortBreakMinutes) min", value: $viewModel.settings.shortBreakMinutes, in: 1...60)
-            Stepper("Long break: \(viewModel.settings.longBreakMinutes) min", value: $viewModel.settings.longBreakMinutes, in: 1...120)
-            Stepper("Sessions before long break: \(viewModel.settings.longBreakInterval)", value: $viewModel.settings.longBreakInterval, in: 1...12)
+            NumberStepperInputRow(
+                label: "Work",
+                suffix: "min",
+                value: $viewModel.settings.focusDurationMinutes,
+                range: 1...180,
+                labelWidth: nil
+            )
+            NumberStepperInputRow(
+                label: "Short break",
+                suffix: "min",
+                value: $viewModel.settings.shortBreakMinutes,
+                range: 1...60,
+                labelWidth: nil
+            )
+            NumberStepperInputRow(
+                label: "Long break",
+                suffix: "min",
+                value: $viewModel.settings.longBreakMinutes,
+                range: 1...120,
+                labelWidth: nil
+            )
+            NumberStepperInputRow(
+                label: "Sessions before long break",
+                suffix: "",
+                value: $viewModel.settings.longBreakInterval,
+                range: 1...12,
+                labelWidth: nil
+            )
         }
     }
 
@@ -228,11 +252,13 @@ public struct SettingsView: View {
             SecureField("Jira API token", text: $viewModel.settings.jiraToken)
                 .textFieldStyle(.roundedBorder)
             Toggle("Auto-sync Jira tasks", isOn: $viewModel.settings.autoSyncJira)
-            Stepper(
-                "Sync interval: \(viewModel.settings.jiraSyncIntervalMinutes) min",
+            NumberStepperInputRow(
+                label: "Sync interval",
+                suffix: "min",
                 value: $viewModel.settings.jiraSyncIntervalMinutes,
-                in: 5...720,
-                step: 5
+                range: 5...720,
+                step: 5,
+                labelWidth: nil
             )
         }
     }
@@ -296,5 +322,62 @@ private struct SettingsCard<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .dsCard()
+    }
+}
+
+private struct NumberStepperInputRow: View {
+    let label: String
+    let suffix: String
+    @Binding var value: Int
+    let range: ClosedRange<Int>
+    let step: Int
+    let labelWidth: CGFloat?
+
+    init(
+        label: String,
+        suffix: String,
+        value: Binding<Int>,
+        range: ClosedRange<Int>,
+        step: Int = 1,
+        labelWidth: CGFloat? = nil
+    ) {
+        self.label = label
+        self.suffix = suffix
+        _value = value
+        self.range = range
+        self.step = step
+        self.labelWidth = labelWidth
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: DSSpacing.md) {
+            if let labelWidth {
+                Text(label)
+                    .frame(width: labelWidth, alignment: .leading)
+            } else {
+                Text(label)
+            }
+            HStack(spacing: DSSpacing.xs) {
+                TextField("", value: clampedValue, format: .number)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 72)
+                Stepper("", value: clampedValue, in: range, step: step)
+                    .labelsHidden()
+                if !suffix.isEmpty {
+                    Text(suffix)
+                        .foregroundStyle(DSColor.secondaryText)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var clampedValue: Binding<Int> {
+        Binding(
+            get: { min(max(value, range.lowerBound), range.upperBound) },
+            set: { newValue in
+                value = min(max(newValue, range.lowerBound), range.upperBound)
+            }
+        )
     }
 }

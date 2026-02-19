@@ -29,6 +29,7 @@ public final class TasksViewModel: ObservableObject {
     @Published public private(set) var editingTaskID: UUID?
     @Published public private(set) var jiraImportStatusMessage = ""
     @Published public private(set) var jiraImportErrorMessage = ""
+    @Published public private(set) var isJiraConfigured = false
 
     public func filteredTasks(for filter: TaskListFilter) -> [TaskItem] {
         tasks.filter { filter.matches($0) }
@@ -44,6 +45,10 @@ public final class TasksViewModel: ObservableObject {
 
     public var completedCount: Int {
         tasks.filter(\.isCompleted).count
+    }
+
+    public var jiraImportDisabledReason: String {
+        "Import Jira is disabled. Configure Jira URL, username, and API token in Settings > Jira Integration."
     }
 
     private let storage: StorageServicing
@@ -204,18 +209,36 @@ public final class TasksViewModel: ObservableObject {
             }
         }
 
-        observers = [tasksObserver, currentTaskObserver]
+        let settingsObserver = NotificationCenter.default.addObserver(
+            forName: .settingsDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.reloadFromStorage()
+            }
+        }
+
+        observers = [tasksObserver, currentTaskObserver, settingsObserver]
     }
 
     private func reloadFromStorage() {
         tasks = storage.loadTasks()
         currentTaskID = storage.loadCurrentTaskID()
+        refreshJiraConfigurationState()
 
         if let currentTaskID,
            !tasks.contains(where: { $0.id == currentTaskID }) {
             self.currentTaskID = nil
             storage.saveCurrentTaskID(nil)
         }
+    }
+
+    private func refreshJiraConfigurationState() {
+        let settings = storage.loadSettings()
+        isJiraConfigured = !settings.jiraURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !settings.jiraUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !settings.jiraToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 
@@ -253,6 +276,15 @@ public struct TasksView: View {
         }
     }
 
+    private var estimateValueBinding: Binding<Int> {
+        Binding(
+            get: { max(Int(viewModel.draftEstimate) ?? 1, 1) },
+            set: { newValue in
+                viewModel.draftEstimate = String(max(newValue, 1))
+            }
+        )
+    }
+
     private var taskCaptureCard: some View {
         VStack(alignment: .leading, spacing: DSSpacing.md) {
             HStack {
@@ -270,6 +302,8 @@ public struct TasksView: View {
                     Task { await viewModel.importFromJira() }
                 }
                 .buttonStyle(DSSecondaryButtonStyle())
+                .disabled(!viewModel.isJiraConfigured)
+                .help(viewModel.isJiraConfigured ? "Import assigned unresolved Jira issues." : viewModel.jiraImportDisabledReason)
             }
 
             if !viewModel.jiraImportErrorMessage.isEmpty {
@@ -288,19 +322,22 @@ public struct TasksView: View {
             TextField("Description (optional)", text: $viewModel.draftDetails)
                 .textFieldStyle(.roundedBorder)
 
-            HStack(spacing: DSSpacing.sm) {
+            HStack(alignment: .bottom, spacing: DSSpacing.sm) {
                 VStack(alignment: .leading, spacing: DSSpacing.xxs) {
                     Text("Estimate")
                         .font(.caption)
                         .foregroundStyle(DSColor.secondaryText)
-                    TextField("1", text: $viewModel.draftEstimate)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 80)
+                    HStack(alignment: .center, spacing: DSSpacing.xs) {
+                        TextField("1", text: $viewModel.draftEstimate)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 90)
+                        Stepper("", value: estimateValueBinding, in: 1...999)
+                            .labelsHidden()
+                        Text("focus sessions")
+                            .font(.subheadline)
+                            .foregroundStyle(DSColor.secondaryText)
+                    }
                 }
-
-                Text("focus sessions")
-                    .font(.subheadline)
-                    .foregroundStyle(DSColor.secondaryText)
 
                 Spacer()
 
