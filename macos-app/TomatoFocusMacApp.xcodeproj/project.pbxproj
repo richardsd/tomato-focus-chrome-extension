@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		17C0BBCCE42A6AB647823A8C /* SmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F9B0D9FB75F817C29520AE1 /* SmokeTests.swift */; };
 		1C0A5C3CCF4BAE41705A51F4 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B96B05D90A801546EB4A513E /* Cocoa.framework */; };
-		4A7C9E11B2D34F5601A2B3C4 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */; };
 		D11AA22BB33CC44DD55EE66F /* JiraAutoSyncCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11AA22BB33CC44DD55EE66F /* JiraAutoSyncCoordinator.swift */; };
 		519E4B21A4E01152C63BA519 /* AppShell in Frameworks */ = {isa = PBXBuildFile; productRef = 60109E9969D184FD0F046FD5 /* AppShell */; };
 		80F9E0ABD45121AFC804C340 /* PlatformServices in Frameworks */ = {isa = PBXBuildFile; productRef = 672009407F6E161B4784383E /* PlatformServices */; };
@@ -41,7 +40,6 @@
 		6351711AE5EC04FCECB6BFE9 /* TomatoFocus.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TomatoFocus.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2FAED932D58D4DAAA5C9731C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		700467092486D512A3A6221C /* notification.mp3 */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.mp3; name = notification.mp3; path = Sources/PlatformServices/Resources/notification.mp3; sourceTree = "<group>"; };
-		5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MenuBarContentView.swift; path = Sources/TomatoFocusMacApp/MenuBarContentView.swift; sourceTree = "<group>"; };
 		8F9B0D9FB75F817C29520AE1 /* SmokeTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SmokeTests.swift; path = Tests/TomatoFocusMacAppTests/SmokeTests.swift; sourceTree = "<group>"; };
 		9D9C1E7EF658F84EEBC7F395 /* TomatoFocusApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TomatoFocusApp.swift; path = Sources/TomatoFocusMacApp/TomatoFocusApp.swift; sourceTree = "<group>"; };
 		B96B05D90A801546EB4A513E /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
@@ -108,7 +106,6 @@
 				A8341903EA3424CA51F6D2B1 /* Products */,
 				2A46C83BAC88FD179A138598 /* Frameworks */,
 				9D9C1E7EF658F84EEBC7F395 /* TomatoFocusApp.swift */,
-				5B8D0F22C3E45A6702B3C4D5 /* MenuBarContentView.swift */,
 				E11AA22BB33CC44DD55EE66F /* JiraAutoSyncCoordinator.swift */,
 				2FAED932D58D4DAAA5C9731C /* Assets.xcassets */,
 				700467092486D512A3A6221C /* notification.mp3 */,
@@ -231,7 +228,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				CA2A651F62EB697BEC97C866 /* TomatoFocusApp.swift in Sources */,
-				4A7C9E11B2D34F5601A2B3C4 /* MenuBarContentView.swift in Sources */,
 				D11AA22BB33CC44DD55EE66F /* JiraAutoSyncCoordinator.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
