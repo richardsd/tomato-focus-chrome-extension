@@ -8,6 +8,7 @@ macos-release.sh - Release automation helpers for Tomato Focus macOS builds.
 Usage:
   tools/macos-release.sh entitlements <entitlements.plist>
   tools/macos-release.sh migrations
+  tools/macos-release.sh parity-gate [parity-matrix.md] [parity-exceptions.md]
   tools/macos-release.sh crash-logging
   tools/macos-release.sh update-channel <app-store|direct>
   tools/macos-release.sh sign <app-path>
@@ -89,6 +90,74 @@ check_migrations() {
   fi
 
   echo "Schema/migration compatibility check passed."
+}
+
+normalize_markdown_cell() {
+  local value="$1"
+  value="$(echo "$value" | sed -E 's/\*\*//g; s/`//g' | xargs)"
+  echo "$value"
+}
+
+check_parity_gate() {
+  local matrix_path="${1:-docs/parity-test-matrix.md}"
+  local exceptions_path="${2:-docs/parity-exceptions.md}"
+  local rows_file
+  local exception_ids_file
+  local failures=0
+
+  [[ -f "$matrix_path" ]] || {
+    echo "Parity matrix not found: $matrix_path" >&2
+    exit 1
+  }
+
+  rows_file="$(mktemp)"
+  exception_ids_file="$(mktemp)"
+  trap 'rm -f "$rows_file" "$exception_ids_file"' RETURN
+
+  while IFS='|' read -r _ id _ _ _ _ ga_critical parity_status _; do
+    id="$(normalize_markdown_cell "$id")"
+    [[ "$id" =~ ^[A-Z][A-Z0-9]*[0-9]+$ ]] || continue
+    ga_critical="$(normalize_markdown_cell "$ga_critical")"
+    parity_status="$(normalize_markdown_cell "$parity_status")"
+    echo "$id|$ga_critical|$parity_status" >> "$rows_file"
+  done < <(grep -E '^\|' "$matrix_path")
+
+  if [[ ! -s "$rows_file" ]]; then
+    echo "No scenario rows parsed from parity matrix: $matrix_path" >&2
+    exit 1
+  fi
+
+  if [[ -f "$exceptions_path" ]]; then
+    while IFS='|' read -r _ id _ _ _ _ _; do
+      id="$(normalize_markdown_cell "$id")"
+      [[ "$id" =~ ^[A-Z][A-Z0-9]*[0-9]+$ ]] || continue
+      echo "$id" >> "$exception_ids_file"
+    done < <(grep -E '^\|' "$exceptions_path")
+  fi
+
+  while IFS='|' read -r id ga_critical parity_status; do
+    if [[ "$ga_critical" == "Yes" && "$parity_status" != "Parity Achieved" ]]; then
+      echo "GA-critical parity gate failed for $id: status is '$parity_status' (must be 'Parity Achieved')." >&2
+      failures=$((failures + 1))
+    fi
+
+    if [[ "$parity_status" != "Parity Achieved" ]]; then
+      if [[ "$parity_status" != "Documented Exception" ]]; then
+        echo "Parity status for $id is '$parity_status'. Allowed values for unreconciled rows: 'Documented Exception'." >&2
+        failures=$((failures + 1))
+      elif ! grep -Fxq "$id" "$exception_ids_file"; then
+        echo "Documented exception missing for $id in $exceptions_path." >&2
+        failures=$((failures + 1))
+      fi
+    fi
+  done < "$rows_file"
+
+  if (( failures > 0 )); then
+    echo "Parity gate failed with $failures issue(s)." >&2
+    exit 1
+  fi
+
+  echo "Parity gate passed: all GA-critical rows are Parity Achieved, and all open gaps are documented exceptions."
 }
 
 check_crash_logging() {
@@ -215,6 +284,10 @@ case "$subcommand" in
     ;;
   migrations)
     check_migrations
+    ;;
+  parity-gate)
+    [[ $# -le 2 ]] || { usage; exit 1; }
+    check_parity_gate "$@"
     ;;
   crash-logging)
     check_crash_logging

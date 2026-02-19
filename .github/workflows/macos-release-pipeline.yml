@@ -50,6 +50,9 @@ jobs:
       - name: Validate versioned migrations
         run: tools/macos-release.sh migrations
 
+      - name: Enforce parity gate
+        run: tools/macos-release.sh parity-gate docs/parity-test-matrix.md docs/parity-exceptions.md
+
       - name: Validate crash/error logging configuration
         run: tools/macos-release.sh crash-logging
         env:
