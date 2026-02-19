@@ -9,33 +9,29 @@ struct MenuBarContentView: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.sm) {
-            HStack {
-                Text(sessionSummary)
-                    .font(.headline)
-                Spacer()
-                Text(timeString)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(sessionTint)
-            }
+        VStack(alignment: .leading, spacing: DSSpacing.md) {
+            header
 
             HStack(spacing: DSSpacing.xs) {
                 Button(timerViewModel.isRunning ? "Pause" : startButtonTitle) {
                     timerViewModel.toggle()
                 }
-                .buttonStyle(DSPrimaryButtonStyle())
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
 
                 Button("Reset") {
                     timerViewModel.reset()
                 }
-                .buttonStyle(DSSecondaryButtonStyle())
+                .buttonStyle(.bordered)
+                .controlSize(.small)
 
                 Button("Skip") {
                     timerViewModel.skipBreak()
                 }
-                .buttonStyle(DSSecondaryButtonStyle())
+                .buttonStyle(.bordered)
+                .controlSize(.small)
                 .disabled(timerViewModel.isWorkSession)
+                .help(skipButtonHelpText)
             }
 
             Menu("Quick Start") {
@@ -44,20 +40,46 @@ struct MenuBarContentView: View {
                 Button("25 minutes (Focus)") { timerViewModel.startQuickTimer(minutes: 25) }
                 Button("45 minutes") { timerViewModel.startQuickTimer(minutes: 45) }
             }
+            .controlSize(.small)
 
             Divider()
 
-            Button("Open Main Window") {
-                NSApp.activate(ignoringOtherApps: true)
-                openWindow(id: mainWindowID)
-            }
+            VStack(alignment: .leading, spacing: DSSpacing.xs) {
+                Button("Open Main Window") {
+                    openOrFocusMainWindow()
+                }
+                .buttonStyle(.automatic)
+                .controlSize(.small)
 
-            Button("Quit Tomato Focus") {
-                NSApp.terminate(nil)
+                Button("Quit Tomato Focus") {
+                    NSApp.terminate(nil)
+                }
+                .buttonStyle(.automatic)
+                .controlSize(.small)
+                .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, DSSpacing.xs)
-        .padding(.horizontal, DSSpacing.xxs)
+        .frame(minWidth: 304, idealWidth: 320)
+        .padding(DSSpacing.sm)
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(sessionSummary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Text(timeString)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(sessionTint)
+            }
+
+            Text(timerViewModel.isRunning ? "Running" : pausedStateMessage)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var sessionSummary: String {
@@ -87,6 +109,30 @@ struct MenuBarContentView: View {
         let remaining = timerViewModel.secondsRemaining
         let isResume = remaining > 0 && remaining < full
         return isResume ? "Resume" : "Start"
+    }
+
+    private var pausedStateMessage: String {
+        if let autoPauseStatusMessage = timerViewModel.autoPauseStatusMessage {
+            return autoPauseStatusMessage
+        }
+        return "Paused"
+    }
+
+    private var skipButtonHelpText: String {
+        timerViewModel.isWorkSession ? "Skip is available only during break sessions." : "Skip current break and return to work."
+    }
+
+    private func openOrFocusMainWindow() {
+        let presentingWindow = NSApp.keyWindow
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let existing = NSApp.windows.first(where: { $0.title == "Tomato Focus" }) {
+            existing.makeKeyAndOrderFront(nil)
+        } else {
+            openWindow(id: mainWindowID)
+        }
+
+        presentingWindow?.orderOut(nil)
     }
 
     private var timeString: String {

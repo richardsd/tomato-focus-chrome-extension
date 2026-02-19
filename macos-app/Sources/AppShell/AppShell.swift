@@ -119,6 +119,7 @@ public struct RootNavigationView: View {
             }
             .listStyle(.sidebar)
             .navigationTitle("Tomato Focus")
+            .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 340)
         } detail: {
             Group {
                 switch selectedSection ?? .timer {

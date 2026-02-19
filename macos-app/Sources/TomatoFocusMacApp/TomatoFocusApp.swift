@@ -42,7 +42,7 @@ struct TomatoFocusApp: App {
     }
 
     var body: some Scene {
-        WindowGroup("Tomato Focus", id: mainWindowID) {
+        Window("Tomato Focus", id: mainWindowID) {
             RootNavigationView(container: container, timerViewModel: timerViewModel)
         }
         .commands {
@@ -54,7 +54,7 @@ struct TomatoFocusApp: App {
         } label: {
             Label(menuBarTitle, systemImage: timerViewModel.isRunning ? "timer.circle.fill" : "timer")
         }
-        .menuBarExtraStyle(.menu)
+        .menuBarExtraStyle(.window)
     }
 
     private var menuBarTitle: String {
