@@ -10,25 +10,33 @@ import TimerFeature
 @main
 struct TomatoFocusApp: App {
     private let container: AppContainer
+    private let jiraAutoSyncCoordinator: JiraAutoSyncCoordinator
     @StateObject private var timerViewModel: TimerViewModel
     private let mainWindowID = "main"
 
     init() {
+        let storage = UserDefaultsStorageService()
         let container = AppContainer(
             dependencies: AppDependencies(
                 notifications: NotificationService(),
-                storage: UserDefaultsStorageService(),
+                storage: storage,
                 scheduler: TimerSchedulerService(),
                 idleMonitor: IdleMonitorService(),
-                jira: JiraService()
+                jira: JiraService(storage: storage)
             )
         )
         self.container = container
+        self.jiraAutoSyncCoordinator = JiraAutoSyncCoordinator(
+            storage: container.dependencies.storage,
+            jira: container.dependencies.jira,
+            scheduler: container.dependencies.scheduler
+        )
         _timerViewModel = StateObject(
             wrappedValue: TimerViewModel(
                 notifications: container.dependencies.notifications,
                 scheduler: container.dependencies.scheduler,
-                storage: container.dependencies.storage
+                storage: container.dependencies.storage,
+                idleMonitor: container.dependencies.idleMonitor
             )
         )
     }

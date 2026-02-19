@@ -100,6 +100,7 @@ public final class SettingsViewModel: ObservableObject {
 public struct SettingsView: View {
     @ObservedObject private var viewModel: SettingsViewModel
     @State private var isImportingExchangeFile = false
+    @State private var pauseDetectionModeSelection: PauseDetectionMode = .both
 
     public init(viewModel: SettingsViewModel) {
         self.viewModel = viewModel
@@ -128,6 +129,22 @@ public struct SettingsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(DSColor.pageBackground.ignoresSafeArea())
+        .onAppear {
+            pauseDetectionModeSelection = viewModel.settings.pauseDetectionMode
+        }
+        .onChange(of: viewModel.settings.pauseDetectionMode) { mode in
+            if pauseDetectionModeSelection != mode {
+                pauseDetectionModeSelection = mode
+            }
+        }
+        .onChange(of: pauseDetectionModeSelection) { mode in
+            if viewModel.settings.pauseDetectionMode != mode {
+                // Defer model publication to the next runloop tick to avoid publish-during-update warnings.
+                DispatchQueue.main.async {
+                    viewModel.settings.pauseDetectionMode = mode
+                }
+            }
+        }
         .fileImporter(
             isPresented: $isImportingExchangeFile,
             allowedContentTypes: [.json],
@@ -157,6 +174,18 @@ public struct SettingsView: View {
             Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
             Toggle("Pause and resume timer based on idle activity", isOn: $viewModel.settings.pauseOnIdle)
 
+            Picker("Pause Detection", selection: $pauseDetectionModeSelection) {
+                ForEach(PauseDetectionMode.allCases, id: \.self) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .disabled(!viewModel.settings.pauseOnIdle)
+
+            Text(pauseDetectionHelpText)
+                .font(.footnote)
+                .foregroundStyle(DSColor.secondaryText)
+
             Picker("Theme", selection: $viewModel.settings.theme) {
                 ForEach(AppTheme.allCases, id: \.self) { theme in
                     Text(theme.displayName).tag(theme)
@@ -176,6 +205,17 @@ public struct SettingsView: View {
                     .monospacedDigit()
                     .foregroundStyle(DSColor.secondaryText)
             }
+        }
+    }
+
+    private var pauseDetectionHelpText: String {
+        switch viewModel.settings.pauseDetectionMode {
+        case .idleOnly:
+            return "Idle only pauses on inactivity threshold."
+        case .lockOnly:
+            return "Lock screen only pauses on lock and auto-resumes on unlock if lock caused the pause."
+        case .both:
+            return "Both uses inactivity and lock events; unlock resumes only lock-triggered pauses."
         }
     }
 

@@ -10,6 +10,7 @@ public final class TimerViewModel: ObservableObject {
     @Published public private(set) var currentSession = 1
     @Published public private(set) var sessionKind: SessionKind = .work
     @Published public private(set) var currentTaskTitle: String?
+    @Published public private(set) var autoPauseStatusMessage: String?
 
     public var isWorkSession: Bool {
         sessionKind.isWorkSession
@@ -30,15 +31,30 @@ public final class TimerViewModel: ObservableObject {
     private let notifications: NotificationServicing
     private let scheduler: SchedulingServicing
     private let storage: StorageServicing
+    private let idleMonitor: IdleMonitoring
     private let timerIdentifier = "pomodoro.timer"
+    private let idlePauseThresholdSeconds: TimeInterval = 60
     private var endTimestamp: Date?
     private var isCompletingSession = false
     private var observers: [NSObjectProtocol] = []
+    private var screenStateObservers: [NSObjectProtocol] = []
+    private var lastAutoPauseReason: AutoPauseReason?
 
-    public init(notifications: NotificationServicing, scheduler: SchedulingServicing, storage: StorageServicing) {
+    private enum AutoPauseReason {
+        case idle
+        case lock
+    }
+
+    public init(
+        notifications: NotificationServicing,
+        scheduler: SchedulingServicing,
+        storage: StorageServicing,
+        idleMonitor: IdleMonitoring
+    ) {
         self.notifications = notifications
         self.scheduler = scheduler
         self.storage = storage
+        self.idleMonitor = idleMonitor
 
         let recovered = storage.loadTimerState()
         self.secondsRemaining = recovered.secondsRemaining
@@ -47,10 +63,12 @@ public final class TimerViewModel: ObservableObject {
         self.sessionKind = recovered.sessionKind
         self.endTimestamp = recovered.endTimestamp
         self.currentTaskTitle = nil
+        self.autoPauseStatusMessage = nil
 
         recoverStateAfterLaunch(from: recovered)
         refreshCurrentTaskContext()
         setupObservers()
+        setupScreenStateObservers()
 
         Task {
             await notifications.requestAuthorization()
@@ -60,6 +78,9 @@ public final class TimerViewModel: ObservableObject {
     deinit {
         for observer in observers {
             NotificationCenter.default.removeObserver(observer)
+        }
+        for observer in screenStateObservers {
+            DistributedNotificationCenter.default().removeObserver(observer)
         }
     }
 
@@ -71,6 +92,7 @@ public final class TimerViewModel: ObservableObject {
             return
         }
 
+        clearAutoPauseState()
         isRunning = true
         persistAndSchedule(withSecondsRemaining: secondsRemaining)
     }
@@ -82,6 +104,7 @@ public final class TimerViewModel: ObservableObject {
         isRunning = false
         scheduler.cancelTask(identifier: timerIdentifier)
         endTimestamp = nil
+        clearAutoPauseState()
         persist()
     }
 
@@ -93,6 +116,7 @@ public final class TimerViewModel: ObservableObject {
         secondsRemaining = settings.focusDurationMinutes * 60
         endTimestamp = nil
         scheduler.cancelTask(identifier: timerIdentifier)
+        clearAutoPauseState()
         persist()
     }
 
@@ -108,6 +132,7 @@ public final class TimerViewModel: ObservableObject {
 
         let shouldRun = settings.autoStart || isRunning
         isRunning = shouldRun
+        clearAutoPauseState()
 
         if shouldRun {
             persistAndSchedule(withSecondsRemaining: secondsRemaining)
@@ -127,6 +152,7 @@ public final class TimerViewModel: ObservableObject {
         sessionKind = .work
         secondsRemaining = minutes * 60
         isRunning = true
+        clearAutoPauseState()
 
         persistAndSchedule(withSecondsRemaining: secondsRemaining)
     }
@@ -157,6 +183,47 @@ public final class TimerViewModel: ObservableObject {
         }
 
         observers = [tasksObserver, currentTaskObserver]
+    }
+
+    private func setupScreenStateObservers() {
+        let distributedCenter = DistributedNotificationCenter.default()
+        let lockedObserver = distributedCenter.addObserver(
+            forName: Notification.Name("com.apple.screenIsLocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.handleScreenLocked()
+            }
+        }
+
+        let unlockedObserver = distributedCenter.addObserver(
+            forName: Notification.Name("com.apple.screenIsUnlocked"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.handleScreenUnlocked()
+            }
+        }
+
+        screenStateObservers = [lockedObserver, unlockedObserver]
+    }
+
+    private func handleScreenLocked() {
+        guard currentSettings.pauseOnIdle else { return }
+        guard shouldHandleScreenLock else { return }
+        guard isRunning else { return }
+        pauseForAutoReason(.lock)
+    }
+
+    private func handleScreenUnlocked() {
+        guard currentSettings.pauseOnIdle else { return }
+        guard shouldHandleScreenLock else { return }
+        guard lastAutoPauseReason == .lock else { return }
+        guard !isRunning else { return }
+        clearAutoPauseState()
+        start()
     }
 
     private func refreshCurrentTaskContext() {
@@ -225,12 +292,53 @@ public final class TimerViewModel: ObservableObject {
 
     private func tick() {
         guard isRunning else { return }
+        maybePauseForIdle()
+        guard isRunning else { return }
 
         updateSecondsFromWallClock()
 
         if secondsRemaining <= 0 {
             completeCurrentSession()
         }
+    }
+
+    private var shouldHandleIdle: Bool {
+        let mode = currentSettings.pauseDetectionMode
+        return mode == .idleOnly || mode == .both
+    }
+
+    private var shouldHandleScreenLock: Bool {
+        let mode = currentSettings.pauseDetectionMode
+        return mode == .lockOnly || mode == .both
+    }
+
+    private func maybePauseForIdle() {
+        guard currentSettings.pauseOnIdle else { return }
+        guard shouldHandleIdle else { return }
+        guard idleMonitor.idleTimeSeconds >= idlePauseThresholdSeconds else { return }
+        guard isRunning else { return }
+        pauseForAutoReason(.idle)
+    }
+
+    private func pauseForAutoReason(_ reason: AutoPauseReason) {
+        guard isRunning else { return }
+        updateSecondsFromWallClock()
+        isRunning = false
+        scheduler.cancelTask(identifier: timerIdentifier)
+        endTimestamp = nil
+        lastAutoPauseReason = reason
+        switch reason {
+        case .idle:
+            autoPauseStatusMessage = "Paused due to inactivity"
+        case .lock:
+            autoPauseStatusMessage = "Paused due to screen lock"
+        }
+        persist()
+    }
+
+    private func clearAutoPauseState() {
+        lastAutoPauseReason = nil
+        autoPauseStatusMessage = nil
     }
 
     private func updateSecondsFromWallClock() {
@@ -242,6 +350,7 @@ public final class TimerViewModel: ObservableObject {
         guard !isCompletingSession else { return }
         isCompletingSession = true
         defer { isCompletingSession = false }
+        clearAutoPauseState()
 
         scheduler.cancelTask(identifier: timerIdentifier)
 
@@ -396,6 +505,12 @@ public struct TimerView: View {
                         .font(.subheadline)
                         .foregroundStyle(DSColor.secondaryText)
                 }
+            }
+
+            if !viewModel.isRunning, let autoPauseStatusMessage = viewModel.autoPauseStatusMessage {
+                Text(autoPauseStatusMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(DSColor.warning)
             }
 
             if let currentTaskTitle = viewModel.currentTaskTitle, !currentTaskTitle.isEmpty {

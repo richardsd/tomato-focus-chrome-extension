@@ -2,6 +2,7 @@ import AVFoundation
 import AppKit
 import CoreInterfaces
 import Foundation
+import CoreGraphics
 import UserNotifications
 
 public final class NotificationService: NSObject, NotificationServicing, UNUserNotificationCenterDelegate {
@@ -201,6 +202,7 @@ public final class UserDefaultsStorageService: StorageServicing {
 
     public func saveSettings(_ settings: AppSettings) {
         encode(settings, forKey: Keys.settings)
+        NotificationCenter.default.post(name: .settingsDidChange, object: nil)
     }
 
     public func loadStats() -> PomodoroStats {
@@ -288,7 +290,9 @@ public struct IdleMonitorService: IdleMonitoring {
     public init() {}
 
     public var idleTimeSeconds: TimeInterval {
-        // Placeholder implementation for initial scaffold.
-        0
+        CGEventSource.secondsSinceLastEventType(
+            .combinedSessionState,
+            eventType: .null
+        )
     }
 }

@@ -154,6 +154,9 @@ public struct UserDataImportPayload: Equatable {
         settings.autoStart = bool(from: raw["autoStart"])
         settings.theme = AppTheme(rawValue: string(from: raw["theme"], fallback: "system")) ?? .system
         settings.pauseOnIdle = bool(from: raw["pauseOnIdle"], fallback: true)
+        settings.pauseDetectionMode = PauseDetectionMode(
+            rawValue: string(from: raw["pauseDetectionMode"], fallback: PauseDetectionMode.both.rawValue)
+        ) ?? .both
         settings.playSound = bool(from: raw["playSound"], fallback: true)
         settings.volume = min(1, max(0, double(from: raw["volume"], fallback: 0.7)))
         settings.jiraURL = string(from: raw["jiraUrl"], fallback: "")

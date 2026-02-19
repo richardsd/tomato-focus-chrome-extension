@@ -27,6 +27,8 @@ public final class TasksViewModel: ObservableObject {
     @Published public var draftDetails = ""
     @Published public var draftEstimate = "1"
     @Published public private(set) var editingTaskID: UUID?
+    @Published public private(set) var jiraImportStatusMessage = ""
+    @Published public private(set) var jiraImportErrorMessage = ""
 
     public func filteredTasks(for filter: TaskListFilter) -> [TaskItem] {
         tasks.filter { filter.matches($0) }
@@ -157,18 +159,28 @@ public final class TasksViewModel: ObservableObject {
     }
 
     public func importFromJira() async {
-        guard let imported = try? await jira.fetchAssignedIssues() else { return }
+        jiraImportStatusMessage = ""
+        jiraImportErrorMessage = ""
 
-        let existingTitles = Set(tasks.map { $0.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) })
-        let unique = imported.filter {
-            !existingTitles.contains($0.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))
+        do {
+            let imported = try await jira.fetchAssignedIssues()
+            let existingTitles = Set(tasks.map { $0.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) })
+            let unique = imported.filter {
+                !existingTitles.contains($0.title.lowercased().trimmingCharacters(in: .whitespacesAndNewlines))
+            }
+
+            guard !unique.isEmpty else {
+                jiraImportStatusMessage = "No new Jira issues to import."
+                return
+            }
+
+            tasks.append(contentsOf: unique)
+            storage.saveTasks(tasks)
+            reloadFromStorage()
+            jiraImportStatusMessage = "Imported \(unique.count) Jira issue\(unique.count == 1 ? "" : "s")."
+        } catch {
+            jiraImportErrorMessage = error.localizedDescription
         }
-
-        guard !unique.isEmpty else { return }
-
-        tasks.append(contentsOf: unique)
-        storage.saveTasks(tasks)
-        reloadFromStorage()
     }
 
     private func setupObservers() {
@@ -258,6 +270,16 @@ public struct TasksView: View {
                     Task { await viewModel.importFromJira() }
                 }
                 .buttonStyle(DSSecondaryButtonStyle())
+            }
+
+            if !viewModel.jiraImportErrorMessage.isEmpty {
+                Text(viewModel.jiraImportErrorMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(.red)
+            } else if !viewModel.jiraImportStatusMessage.isEmpty {
+                Text(viewModel.jiraImportStatusMessage)
+                    .font(.subheadline)
+                    .foregroundStyle(DSColor.focus)
             }
 
             TextField("Task title", text: $viewModel.draftTitle)

@@ -194,6 +194,7 @@ public struct AppSettings: Codable, Equatable {
     public var autoStart: Bool
     public var theme: AppTheme
     public var pauseOnIdle: Bool
+    public var pauseDetectionMode: PauseDetectionMode
     public var playSound: Bool
     public var volume: Double
     public var jiraURL: String
@@ -210,6 +211,7 @@ public struct AppSettings: Codable, Equatable {
         case autoStart
         case theme
         case pauseOnIdle
+        case pauseDetectionMode
         case playSound
         case volume
         case jiraURL
@@ -227,6 +229,7 @@ public struct AppSettings: Codable, Equatable {
         autoStart: Bool = false,
         theme: AppTheme = .system,
         pauseOnIdle: Bool = true,
+        pauseDetectionMode: PauseDetectionMode = .both,
         playSound: Bool = true,
         volume: Double = 0.7,
         jiraURL: String = "",
@@ -242,6 +245,7 @@ public struct AppSettings: Codable, Equatable {
         self.autoStart = autoStart
         self.theme = theme
         self.pauseOnIdle = pauseOnIdle
+        self.pauseDetectionMode = pauseDetectionMode
         self.playSound = playSound
         self.volume = volume
         self.jiraURL = jiraURL
@@ -260,6 +264,7 @@ public struct AppSettings: Codable, Equatable {
         autoStart = try container.decodeIfPresent(Bool.self, forKey: .autoStart) ?? false
         theme = try container.decodeIfPresent(AppTheme.self, forKey: .theme) ?? .system
         pauseOnIdle = try container.decodeIfPresent(Bool.self, forKey: .pauseOnIdle) ?? true
+        pauseDetectionMode = try container.decodeIfPresent(PauseDetectionMode.self, forKey: .pauseDetectionMode) ?? .both
         playSound = try container.decodeIfPresent(Bool.self, forKey: .playSound) ?? true
         volume = try container.decodeIfPresent(Double.self, forKey: .volume) ?? 0.7
         jiraURL = try container.decodeIfPresent(String.self, forKey: .jiraURL) ?? ""
@@ -267,6 +272,23 @@ public struct AppSettings: Codable, Equatable {
         jiraToken = try container.decodeIfPresent(String.self, forKey: .jiraToken) ?? ""
         autoSyncJira = try container.decodeIfPresent(Bool.self, forKey: .autoSyncJira) ?? false
         jiraSyncIntervalMinutes = try container.decodeIfPresent(Int.self, forKey: .jiraSyncIntervalMinutes) ?? 30
+    }
+}
+
+public enum PauseDetectionMode: String, Codable, Equatable, CaseIterable {
+    case idleOnly
+    case lockOnly
+    case both
+
+    public var displayName: String {
+        switch self {
+        case .idleOnly:
+            "Idle only"
+        case .lockOnly:
+            "Lock screen only"
+        case .both:
+            "Both"
+        }
     }
 }
 
@@ -359,4 +381,5 @@ public extension Notification.Name {
     static let tasksDidChange = Notification.Name("tomatoFocus.tasksDidChange")
     static let currentTaskDidChange = Notification.Name("tomatoFocus.currentTaskDidChange")
     static let statsDidChange = Notification.Name("tomatoFocus.statsDidChange")
+    static let settingsDidChange = Notification.Name("tomatoFocus.settingsDidChange")
 }
