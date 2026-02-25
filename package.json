@@ -1,7 +1,7 @@
 {
   "name": "tomato-focus-chrome-extension",
   "version": "1.0.0",
-  "description": "A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.",
+  "description": "A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro\u00ae Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.",
   "main": "background.js",
   "type": "module",
   "directories": {
@@ -41,9 +41,9 @@
     "eslint-plugin-html": "^7.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "prettier": "^3.4.2",
-    "jsdom": "^26.1.0",
+    "happy-dom": "^13.10.1",
     "stylelint": "^16.10.0",
     "stylelint-config-standard": "^36.0.0",
-    "vitest": "^3.2.4"
+    "vitest": "^2.1.9"
   }
 }
