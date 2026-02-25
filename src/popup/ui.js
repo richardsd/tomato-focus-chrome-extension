@@ -8,6 +8,9 @@ import {
 } from '../shared/runtimeMessaging.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
 import { requestJiraPermission } from '../shared/jiraPermissions.js';
+import { createLogger } from '../shared/logger.js';
+
+const logger = createLogger('PopupUI');
 
 function isElementNode(value) {
     return (
@@ -373,18 +376,18 @@ class UIManager {
      * Update button states and visibility
      */
     updateButtons(state) {
-        console.log('updateButtons called with state:', {
+        logger.debug('updateButtons called with state:', {
             isRunning: state.isRunning,
             autoStart: state.settings.autoStart,
         });
 
         // Update start/pause buttons
         if (state.isRunning) {
-            console.log('Timer is running - hiding start, showing pause');
+            logger.debug('Timer is running - hiding start, showing pause');
             this.hideElement(this.elements.startBtn);
             this.showElement(this.elements.pauseBtn);
         } else {
-            console.log('Timer is not running - hiding pause, showing start');
+            logger.debug('Timer is not running - hiding pause, showing start');
             this.hideElement(this.elements.pauseBtn);
             this.showElement(this.elements.startBtn);
 
@@ -401,7 +404,7 @@ class UIManager {
                 } else {
                     this.elements.startBtn.textContent = buttonText;
                 }
-                console.log('Updated start button text to:', buttonText);
+                logger.debug('Updated start button text to:', buttonText);
             }
         }
 
@@ -409,7 +412,7 @@ class UIManager {
         const isBreakSession = !state.isWorkSession && state.timeLeft > 0;
         if (this.elements.skipBreakBtn) {
             this.elements.skipBreakBtn.disabled = !isBreakSession;
-            console.log('Skip break button disabled:', !isBreakSession);
+            logger.debug('Skip break button disabled:', !isBreakSession);
         }
     }
 
@@ -689,7 +692,7 @@ class NavigationManager {
      * Show tasks panel
      */
     showTasksPanel() {
-        console.log('NavigationManager: Showing tasks panel');
+        logger.debug('NavigationManager: Showing tasks panel');
         if (this.panels.timer) {
             this.panels.timer.classList.add('hidden');
         }
@@ -698,7 +701,7 @@ class NavigationManager {
         }
         if (this.panels.tasks) {
             this.panels.tasks.classList.remove('hidden');
-            console.log('Tasks panel is now visible');
+            logger.debug('Tasks panel is now visible');
         } else {
             console.warn('Tasks panel element not found!');
         }
@@ -755,7 +758,7 @@ class PopupController {
         // Bind layout sync for height management
         this.syncCurrentTaskLayout = this.syncCurrentTaskLayout.bind(this);
 
-        console.log('PopupController initialized');
+        logger.debug('PopupController initialized');
         this.init();
     }
 
@@ -764,7 +767,7 @@ class PopupController {
      */
     async init() {
         try {
-            console.log('Initializing popup...');
+            logger.debug('Initializing popup...');
 
             // Ensure we start with the timer panel visible and modal hidden
             this.navigationManager.showTimerPanel();
@@ -785,7 +788,7 @@ class PopupController {
                 );
             }
 
-            console.log('Popup initialization complete');
+            logger.debug('Popup initialization complete');
         } catch (error) {
             console.error('Failed to initialize popup:', error);
             // Load with default state if initialization fails
@@ -805,11 +808,11 @@ class PopupController {
      */
     async loadInitialState() {
         try {
-            console.log('Loading initial state...');
+            logger.debug('Loading initial state...');
             const state = await this.messageHandler.sendMessage(
                 ACTIONS.GET_STATE
             );
-            console.log('Received state:', state);
+            logger.debug('Received state:', state);
             this.updateState(state);
         } catch (error) {
             console.error('Failed to load initial state:', error);
@@ -1119,7 +1122,7 @@ class PopupController {
 
         if (tasksBtn) {
             tasksBtn.addEventListener('click', async () => {
-                console.log('Tasks button clicked');
+                logger.debug('Tasks button clicked');
                 this.navigationManager.showTasksPanel();
 
                 // Refresh the task list when showing the tasks panel
@@ -1127,7 +1130,7 @@ class PopupController {
                     const state = await this.messageHandler.sendMessage(
                         ACTIONS.GET_STATE
                     );
-                    console.log('Refreshed state for tasks panel:', state);
+                    logger.debug('Refreshed state for tasks panel:', state);
                     if (state.tasks && this.taskUIManager) {
                         this.taskUIManager.renderTasksList(
                             state.tasks,
@@ -1693,7 +1696,7 @@ class PopupController {
 
 export function initializePopup() {
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOM Content Loaded - initializing popup');
+        logger.debug('DOM Content Loaded - initializing popup');
         try {
             const controller = new PopupController();
             // Expose for layout sync calls from task UI operations

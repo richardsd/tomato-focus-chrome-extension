@@ -86,18 +86,29 @@ describe('ContextMenuManager.update', () => {
         );
     });
 
-    it('logs update errors reported by chrome.runtime.lastError', () => {
+    it('logs update errors through debug logger when enabled', () => {
         const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        vi.stubGlobal('localStorage', {
+            getItem: vi.fn((key) =>
+                key === 'tomatoFocusDebug' ? 'true' : null
+            ),
+        });
 
-        ContextMenuManager.update(false, false, 5);
+        try {
+            ContextMenuManager.update(false, false, 5);
 
-        chrome.runtime.lastError = { message: 'menu not found' };
-        const firstUpdateCallback = chrome.contextMenus.update.mock.calls[0][2];
-        firstUpdateCallback();
+            chrome.runtime.lastError = { message: 'menu not found' };
+            const firstUpdateCallback =
+                chrome.contextMenus.update.mock.calls[0][2];
+            firstUpdateCallback();
 
-        expect(logSpy).toHaveBeenCalledWith(
-            'Context menu not ready yet:',
-            'menu not found'
-        );
+            expect(logSpy).toHaveBeenCalledWith(
+                '[ContextMenuManager]',
+                'Context menu not ready yet:',
+                'menu not found'
+            );
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 });
