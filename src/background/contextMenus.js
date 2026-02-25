@@ -1,3 +1,7 @@
+import { createLogger } from '../shared/logger.js';
+
+const logger = createLogger('ContextMenuManager');
+
 export class ContextMenuManager {
     static create() {
         chrome.contextMenus.removeAll(() => {
@@ -75,7 +79,7 @@ export class ContextMenuManager {
             { title: startPauseTitle },
             () => {
                 if (chrome.runtime.lastError) {
-                    console.log(
+                    logger.debug(
                         'Context menu not ready yet:',
                         chrome.runtime.lastError.message
                     );
@@ -90,7 +94,7 @@ export class ContextMenuManager {
             },
             () => {
                 if (chrome.runtime.lastError) {
-                    console.log(
+                    logger.debug(
                         'Context menu not ready yet:',
                         chrome.runtime.lastError.message
                     );

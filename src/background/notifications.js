@@ -1,5 +1,8 @@
 import { CONSTANTS, chromePromise } from './constants.js';
 import { ACTIONS } from '../shared/runtimeActions.js';
+import { createLogger } from '../shared/logger.js';
+
+const logger = createLogger('NotificationManager');
 
 export class NotificationManager {
     static offscreenCreated = false;
@@ -29,7 +32,7 @@ export class NotificationManager {
                 CONSTANTS.NOTIFICATION_ID,
                 options
             );
-            console.log('Notification created successfully');
+            logger.debug('Notification created successfully');
 
             // Play custom sound if enabled
             if (settings.playSound) {

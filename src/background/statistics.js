@@ -1,4 +1,7 @@
 import { CONSTANTS, chromePromise } from './constants.js';
+import { createLogger } from '../shared/logger.js';
+
+const logger = createLogger('StatisticsManager');
 
 export class StatisticsManager {
     static getTodayKey() {
@@ -78,7 +81,7 @@ export class StatisticsManager {
             await chromePromise.storage.local.set({
                 [CONSTANTS.STATISTICS_KEY]: {},
             });
-            console.log('All statistics data cleared');
+            logger.debug('All statistics data cleared');
         } catch (error) {
             console.error('Failed to clear statistics data:', error);
             throw error;
