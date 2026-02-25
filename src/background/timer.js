@@ -3,12 +3,12 @@ import { StatisticsManager } from './statistics.js';
 import { TaskManager } from './tasks.js';
 import { NotificationManager } from './notifications.js';
 import { ContextMenuManager } from './contextMenus.js';
-import { ACTIONS } from '../shared/runtimeActions.js';
 import { createDefaultState } from '../shared/stateDefaults.js';
 import { JiraSyncManager } from './jiraSync.js';
 import { StorageManager } from './storageManager.js';
 import { UiNotifier } from './uiNotifier.js';
 import { createLogger } from '../shared/logger.js';
+import { createActionHandlers } from './actionHandlers/index.js';
 
 const logger = createLogger('TimerController');
 
@@ -77,7 +77,7 @@ export class TimerController {
         this.uiNotifier = new UiNotifier({
             saveState: () => this.saveState(),
         });
-        this.messageHandlers = this.createMessageHandlers();
+        this.messageHandlers = createActionHandlers(this);
         this.isInitialized = false;
 
         this.init();
@@ -381,244 +381,6 @@ export class TimerController {
             clearInterval(this.badgeInterval);
             this.badgeInterval = null;
         }
-    }
-
-    createMessageHandlers() {
-        return {
-            [ACTIONS.GET_STATE]: () => this.getStateResponse(),
-            [ACTIONS.START]: async () => {
-                await this.start();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.PAUSE]: async () => {
-                await this.pause();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.RESET]: async () => {
-                await this.reset();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.RESET_TIMER]: async () => {
-                await this.reset();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.SKIP_BREAK]: async () => {
-                await this.skipBreak();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.TOGGLE_TIMER]: async () => {
-                await this.toggle();
-                return this.getSuccessStateResponse();
-            },
-            [ACTIONS.SAVE_SETTINGS]: (request) =>
-                this.handleSaveSettingsAction(request),
-            [ACTIONS.CREATE_TASK]: (request) =>
-                this.handleCreateTaskAction(request),
-            [ACTIONS.UPDATE_TASK]: (request) =>
-                this.handleUpdateTaskAction(request),
-            [ACTIONS.DELETE_TASK]: (request) =>
-                this.handleDeleteTaskAction(request),
-            [ACTIONS.COMPLETE_TASKS]: (request) =>
-                this.handleCompleteTasksAction(request),
-            [ACTIONS.DELETE_TASKS]: (request) =>
-                this.handleDeleteTasksAction(request),
-            [ACTIONS.GET_TASKS]: () => this.handleGetTasksAction(),
-            [ACTIONS.RECONFIGURE_JIRA_SYNC]: () =>
-                this.handleReconfigureJiraSyncAction(),
-            [ACTIONS.IMPORT_JIRA_TASKS]: () =>
-                this.handleImportJiraTasksAction(),
-            [ACTIONS.SET_CURRENT_TASK]: (request) =>
-                this.handleSetCurrentTaskAction(request),
-            [ACTIONS.UPDATE_UI_PREFERENCES]: (request) =>
-                this.handleUpdateUiPreferencesAction(request),
-            [ACTIONS.CLEAR_COMPLETED_TASKS]: () =>
-                this.handleClearCompletedTasksAction(),
-            [ACTIONS.CLEAR_STATISTICS]: () =>
-                this.handleClearStatisticsAction(),
-            [ACTIONS.GET_STATISTICS_HISTORY]: () =>
-                this.handleGetStatisticsHistoryAction(),
-            [ACTIONS.CHECK_NOTIFICATIONS]: () =>
-                this.handleCheckNotificationsAction(),
-        };
-    }
-
-    getStateResponse() {
-        return { state: this.state.getState() };
-    }
-
-    getSuccessStateResponse(extra = {}) {
-        return {
-            success: true,
-            state: this.state.getState(),
-            ...extra,
-        };
-    }
-
-    normalizeTaskIds(taskIds) {
-        return Array.isArray(taskIds) ? taskIds : [];
-    }
-
-    async handleSaveSettingsAction(request) {
-        this.state.updateSettings(request.settings);
-
-        const isLongBreakIntervalReached =
-            this.state.currentSession %
-                this.state.settings.longBreakInterval ===
-            0;
-        let newDuration;
-        if (this.state.isWorkSession) {
-            newDuration = this.state.settings.workDuration * 60;
-        } else if (isLongBreakIntervalReached) {
-            newDuration = this.state.settings.longBreak * 60;
-        } else {
-            newDuration = this.state.settings.shortBreak * 60;
-        }
-
-        // Reset remaining time to the newly selected duration rather than
-        // adjusting by the previously elapsed amount which was causing the
-        // timer to grow instead of updating to the expected value.
-        this.state.timeLeft = newDuration;
-
-        if (this.state.isRunning) {
-            await chrome.alarms.clear(this.alarmName);
-            await this.scheduleAlarm();
-        } else {
-            this.state.endTime = null;
-        }
-
-        await this.configureJiraSyncAlarm();
-        this.updateUI();
-
-        return this.getSuccessStateResponse();
-    }
-
-    async handleCreateTaskAction(request) {
-        await TaskManager.createTask(request.task);
-        this.state.tasks = await TaskManager.getTasks();
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleUpdateTaskAction(request) {
-        await TaskManager.updateTask(request.taskId, request.updates);
-        this.state.tasks = await TaskManager.getTasks();
-        if (
-            this.state.currentTaskId === request.taskId &&
-            request.updates?.isCompleted
-        ) {
-            this.state.currentTaskId = null;
-        }
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleDeleteTaskAction(request) {
-        await TaskManager.deleteTask(request.taskId);
-        if (this.state.currentTaskId === request.taskId) {
-            this.state.currentTaskId = null;
-        }
-        this.state.tasks = await TaskManager.getTasks();
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleCompleteTasksAction(request) {
-        const taskIds = this.normalizeTaskIds(request.taskIds);
-        const completedIds = new Set(taskIds.map((id) => String(id)));
-        const updatedTasks = await TaskManager.completeTasks(taskIds);
-        if (
-            this.state.currentTaskId &&
-            completedIds.has(String(this.state.currentTaskId))
-        ) {
-            this.state.currentTaskId = null;
-        }
-        this.state.tasks = updatedTasks;
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleDeleteTasksAction(request) {
-        const taskIds = this.normalizeTaskIds(request.taskIds);
-        const deletedIds = new Set(taskIds.map((id) => String(id)));
-        const updatedTasks = await TaskManager.deleteTasks(taskIds);
-        if (
-            this.state.currentTaskId &&
-            deletedIds.has(String(this.state.currentTaskId))
-        ) {
-            this.state.currentTaskId = null;
-        }
-        this.state.tasks = updatedTasks;
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleGetTasksAction() {
-        const tasks = await TaskManager.getTasks();
-        return { success: true, tasks };
-    }
-
-    async handleReconfigureJiraSyncAction() {
-        await this.configureJiraSyncAlarm();
-        return { success: true };
-    }
-
-    async handleImportJiraTasksAction() {
-        try {
-            const result = await this.performJiraSync();
-            return this.getSuccessStateResponse({
-                importedCount: result.importedCount,
-                totalIssues: result.totalIssues,
-            });
-        } catch (err) {
-            console.error('Failed to import Jira tasks:', err);
-            return { error: err.message };
-        }
-    }
-
-    async handleSetCurrentTaskAction(request) {
-        this.state.currentTaskId = request.taskId;
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleUpdateUiPreferencesAction(request) {
-        this.state.uiPreferences = {
-            ...this.state.uiPreferences,
-            ...(request.uiPreferences || request.updates || {}),
-        };
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleClearCompletedTasksAction() {
-        await TaskManager.clearCompletedTasks();
-        this.state.tasks = await TaskManager.getTasks();
-        if (this.state.currentTaskId) {
-            const exists = this.state.tasks.some(
-                (task) => task.id === this.state.currentTaskId
-            );
-            if (!exists) {
-                this.state.currentTaskId = null;
-            }
-        }
-        await this.saveState();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleClearStatisticsAction() {
-        await StatisticsManager.clearAll();
-        await this.loadStatistics();
-        return this.getSuccessStateResponse();
-    }
-
-    async handleGetStatisticsHistoryAction() {
-        const history = await StatisticsManager.getAllStatistics();
-        return { success: true, history };
-    }
-
-    async handleCheckNotificationsAction() {
-        const permissionLevel = await NotificationManager.checkPermissions();
-        return { success: true, permissionLevel };
     }
 
     async handleMessage(request, sender, sendResponse) {
