@@ -3,11 +3,14 @@ import { StatisticsManager } from './statistics.js';
 import { TaskManager } from './tasks.js';
 import { NotificationManager } from './notifications.js';
 import { ContextMenuManager } from './contextMenus.js';
-import { ACTIONS } from '../shared/runtimeActions.js';
 import { createDefaultState } from '../shared/stateDefaults.js';
 import { JiraSyncManager } from './jiraSync.js';
 import { StorageManager } from './storageManager.js';
 import { UiNotifier } from './uiNotifier.js';
+import { createLogger } from '../shared/logger.js';
+import { createActionHandlers } from './actionHandlers/index.js';
+
+const logger = createLogger('TimerController');
 
 class TimerState {
     constructor() {
@@ -74,6 +77,7 @@ export class TimerController {
         this.uiNotifier = new UiNotifier({
             saveState: () => this.saveState(),
         });
+        this.messageHandlers = createActionHandlers(this);
         this.isInitialized = false;
 
         this.init();
@@ -188,7 +192,7 @@ export class TimerController {
                 this.state.isRunning &&
                 this.state.settings.pauseOnIdle
             ) {
-                console.log('Auto-pausing due to idle state');
+                logger.debug('Auto-pausing due to idle state');
                 this.pause();
                 this.state.wasPausedForIdle = true;
                 await this.saveState();
@@ -200,7 +204,7 @@ export class TimerController {
         if (this.state.wasPausedForIdle && this.state.settings.pauseOnIdle) {
             chrome.idle.queryState(60, async (state) => {
                 if (state === 'active') {
-                    console.log('Resuming after idle');
+                    logger.debug('Resuming after idle');
                     this.state.wasPausedForIdle = false;
                     await this.saveState();
                     this.updateUI();
@@ -260,7 +264,7 @@ export class TimerController {
 
     async onTimerComplete() {
         const sessionType = this.state.isWorkSession ? 'Work' : 'Break';
-        console.log(`${sessionType} session complete`);
+        logger.debug(`${sessionType} session complete`);
 
         if (this.state.isWorkSession) {
             await StatisticsManager.incrementCompleted();
@@ -381,242 +385,16 @@ export class TimerController {
 
     async handleMessage(request, sender, sendResponse) {
         try {
-            switch (request.action) {
-                case ACTIONS.GET_STATE:
-                    sendResponse({ state: this.state.getState() });
-                    break;
-                case ACTIONS.START:
-                    await this.start();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.PAUSE:
-                    await this.pause();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.RESET:
-                case ACTIONS.RESET_TIMER:
-                    await this.reset();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.SKIP_BREAK:
-                    await this.skipBreak();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.TOGGLE_TIMER:
-                    await this.toggle();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.SAVE_SETTINGS: {
-                    this.state.updateSettings(request.settings);
+            const action = request?.action;
+            const handler = this.messageHandlers[action];
 
-                    const newDuration = this.state.isWorkSession
-                        ? this.state.settings.workDuration * 60
-                        : this.state.currentSession %
-                                this.state.settings.longBreakInterval ===
-                            0
-                          ? this.state.settings.longBreak * 60
-                          : this.state.settings.shortBreak * 60;
-
-                    // Reset remaining time to the newly selected duration rather than
-                    // adjusting by the previously elapsed amount which was causing the
-                    // timer to grow instead of updating to the expected value.
-                    this.state.timeLeft = newDuration;
-
-                    if (this.state.isRunning) {
-                        await chrome.alarms.clear(this.alarmName);
-                        await this.scheduleAlarm();
-                    } else {
-                        this.state.endTime = null;
-                    }
-
-                    await this.configureJiraSyncAlarm();
-                    this.updateUI();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                }
-                case ACTIONS.CREATE_TASK:
-                    await TaskManager.createTask(request.task);
-                    this.state.tasks = await TaskManager.getTasks();
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.UPDATE_TASK:
-                    await TaskManager.updateTask(
-                        request.taskId,
-                        request.updates
-                    );
-                    this.state.tasks = await TaskManager.getTasks();
-                    if (
-                        this.state.currentTaskId === request.taskId &&
-                        request.updates?.isCompleted
-                    ) {
-                        this.state.currentTaskId = null;
-                    }
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.DELETE_TASK:
-                    await TaskManager.deleteTask(request.taskId);
-                    if (this.state.currentTaskId === request.taskId) {
-                        this.state.currentTaskId = null;
-                    }
-                    this.state.tasks = await TaskManager.getTasks();
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.COMPLETE_TASKS: {
-                    const taskIds = Array.isArray(request.taskIds)
-                        ? request.taskIds
-                        : [];
-                    const completedIds = new Set(
-                        taskIds.map((id) => String(id))
-                    );
-                    const updatedTasks =
-                        await TaskManager.completeTasks(taskIds);
-                    if (
-                        this.state.currentTaskId &&
-                        completedIds.has(String(this.state.currentTaskId))
-                    ) {
-                        this.state.currentTaskId = null;
-                    }
-                    this.state.tasks = updatedTasks;
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                }
-                case ACTIONS.DELETE_TASKS: {
-                    const taskIds = Array.isArray(request.taskIds)
-                        ? request.taskIds
-                        : [];
-                    const deletedIds = new Set(taskIds.map((id) => String(id)));
-                    const updatedTasks = await TaskManager.deleteTasks(taskIds);
-                    if (
-                        this.state.currentTaskId &&
-                        deletedIds.has(String(this.state.currentTaskId))
-                    ) {
-                        this.state.currentTaskId = null;
-                    }
-                    this.state.tasks = updatedTasks;
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                }
-                case ACTIONS.GET_TASKS: {
-                    const tasks = await TaskManager.getTasks();
-                    sendResponse({ success: true, tasks });
-                    break;
-                }
-                case ACTIONS.RECONFIGURE_JIRA_SYNC: {
-                    await this.configureJiraSyncAlarm();
-                    sendResponse({ success: true });
-                    break;
-                }
-                case ACTIONS.IMPORT_JIRA_TASKS: {
-                    try {
-                        const result = await this.performJiraSync();
-                        sendResponse({
-                            success: true,
-                            state: this.state.getState(),
-                            importedCount: result.importedCount,
-                            totalIssues: result.totalIssues,
-                        });
-                    } catch (err) {
-                        console.error('Failed to import Jira tasks:', err);
-                        sendResponse({ error: err.message });
-                    }
-                    break;
-                }
-                case ACTIONS.SET_CURRENT_TASK:
-                    this.state.currentTaskId = request.taskId;
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.UPDATE_UI_PREFERENCES:
-                    this.state.uiPreferences = {
-                        ...this.state.uiPreferences,
-                        ...(request.uiPreferences || request.updates || {}),
-                    };
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.CLEAR_COMPLETED_TASKS:
-                    await TaskManager.clearCompletedTasks();
-                    this.state.tasks = await TaskManager.getTasks();
-                    if (this.state.currentTaskId) {
-                        const exists = this.state.tasks.some(
-                            (t) => t.id === this.state.currentTaskId
-                        );
-                        if (!exists) {
-                            this.state.currentTaskId = null;
-                        }
-                    }
-                    await this.saveState();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.CLEAR_STATISTICS:
-                    await StatisticsManager.clearAll();
-                    await this.loadStatistics();
-                    sendResponse({
-                        success: true,
-                        state: this.state.getState(),
-                    });
-                    break;
-                case ACTIONS.GET_STATISTICS_HISTORY: {
-                    const all = await StatisticsManager.getAllStatistics();
-                    sendResponse({ success: true, history: all });
-                    break;
-                }
-                case ACTIONS.CHECK_NOTIFICATIONS: {
-                    const permissionLevel =
-                        await NotificationManager.checkPermissions();
-                    sendResponse({ success: true, permissionLevel });
-                    break;
-                }
-                default:
-                    sendResponse({ error: 'Unknown action' });
+            if (!handler) {
+                sendResponse({ error: 'Unknown action' });
+                return;
             }
+
+            const response = await handler(request, sender);
+            sendResponse(response);
         } catch (error) {
             console.error('Error handling message:', error);
             sendResponse({ error: error.message });
@@ -657,14 +435,14 @@ export function initializeBackground() {
     });
 
     chrome.runtime.onStartup.addListener(() => {
-        console.log('Extension started');
+        logger.debug('Extension started');
     });
 
     chrome.runtime.onInstalled.addListener((details) => {
-        console.log('Extension installed/updated:', details.reason);
+        logger.debug('Extension installed/updated:', details.reason);
         ContextMenuManager.create();
         NotificationManager.checkPermissions().then((level) => {
-            console.log('Notification permission level:', level);
+            logger.debug('Notification permission level:', level);
             if (level !== 'granted') {
                 console.warn('Notifications may not work properly');
             }
@@ -672,7 +450,7 @@ export function initializeBackground() {
     });
 
     chrome.runtime.onSuspend.addListener(() => {
-        console.log('Service worker suspending - saving state');
+        logger.debug('Service worker suspending - saving state');
         timerController.saveState();
     });
 
