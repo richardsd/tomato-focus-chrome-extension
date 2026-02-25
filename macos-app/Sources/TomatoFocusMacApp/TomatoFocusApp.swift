@@ -192,7 +192,8 @@ private final class MenuBarStatusItemController: NSObject {
 
     private func configureStatusItem() {
         guard let button = statusItem.button else { return }
-        button.imagePosition = .imageOnly
+        button.imagePosition = .imageLeading
+        button.imageHugsTitle = true
         button.font = .monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .medium)
         button.lineBreakMode = .byClipping
         button.setAccessibilityLabel("Tomato Focus Timer")
@@ -257,24 +258,13 @@ private final class MenuBarStatusItemController: NSObject {
 
     private func updateStatusButton(secondsRemaining: Int, isRunning: Bool) {
         guard let button = statusItem.button else { return }
-        let font = NSFont.monospacedDigitSystemFont(ofSize: NSFont.systemFontSize, weight: .medium)
-        let symbolConfiguration = NSImage.SymbolConfiguration(scale: .medium)
+        // Tune size between `.medium` and `.large` for menu bar parity with other apps.
+        let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14.5, weight: .medium)
         let icon = NSImage(systemSymbolName: isRunning ? "timer.circle.fill" : "timer", accessibilityDescription: nil)?
             .withSymbolConfiguration(symbolConfiguration)
-
-        let attachment = NSTextAttachment()
-        attachment.image = icon
-        let iconSize = NSStatusBar.system.thickness - 6
-        attachment.bounds = NSRect(x: 0, y: -1, width: iconSize, height: iconSize)
-
         let text = isRunning ? formatSeconds(secondsRemaining) : "Tomato"
-        let status = NSMutableAttributedString(attachment: attachment)
-        status.append(NSAttributedString(string: " "))
-        status.append(NSAttributedString(string: text, attributes: [.font: font]))
-
-        button.image = nil
-        button.title = ""
-        button.attributedTitle = status
+        button.image = icon
+        button.title = text
         button.setAccessibilityValue(text)
     }
 
