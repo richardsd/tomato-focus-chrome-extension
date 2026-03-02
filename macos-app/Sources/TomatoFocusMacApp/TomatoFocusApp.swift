@@ -69,6 +69,12 @@ struct TomatoFocusApp: App {
 }
 
 private final class AppLifecycleDelegate: NSObject, NSApplicationDelegate {
+    static var hasFinishedLaunching = false
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        Self.hasFinishedLaunching = true
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
@@ -166,7 +172,7 @@ private struct MainWindowOpenActionBridge: View {
 private final class MenuBarStatusItemController: NSObject {
     private let timerViewModel: TimerViewModel
     private let mainWindowCoordinator: MainWindowCoordinator
-    private let statusItem: NSStatusItem
+    private var statusItem: NSStatusItem?
     private let menu = NSMenu()
     private let sessionInfoItem = NSMenuItem()
     private let startPauseItem = NSMenuItem(title: "Start", action: nil, keyEquivalent: "")
@@ -177,20 +183,61 @@ private final class MenuBarStatusItemController: NSObject {
     private let openMainWindowItem = NSMenuItem(title: "Open Main Window", action: nil, keyEquivalent: "")
     private let quitItem = NSMenuItem(title: "Quit Tomato Focus", action: nil, keyEquivalent: "")
     private var cancellables: Set<AnyCancellable> = []
+    private var didFinishLaunchingObserver: NSObjectProtocol?
 
     init(timerViewModel: TimerViewModel, mainWindowCoordinator: MainWindowCoordinator) {
         self.timerViewModel = timerViewModel
         self.mainWindowCoordinator = mainWindowCoordinator
-        self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
         super.init()
-        configureStatusItem()
         configureMenu()
         bindTimerState()
         refreshMenuState()
+        installStatusItemWhenAppIsReady()
     }
 
-    private func configureStatusItem() {
+    deinit {
+        if let didFinishLaunchingObserver {
+            NotificationCenter.default.removeObserver(didFinishLaunchingObserver)
+        }
+        if let statusItem {
+            NSStatusBar.system.removeStatusItem(statusItem)
+        }
+    }
+
+    private func installStatusItemWhenAppIsReady() {
+        if AppLifecycleDelegate.hasFinishedLaunching {
+            installStatusItemIfNeeded()
+            return
+        }
+
+        didFinishLaunchingObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didFinishLaunchingNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.installStatusItemIfNeeded()
+        }
+    }
+
+    private func installStatusItemIfNeeded() {
+        guard statusItem == nil else { return }
+
+        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        self.statusItem = statusItem
+        configureStatusItem(statusItem)
+        updateStatusButton(
+            secondsRemaining: timerViewModel.secondsRemaining,
+            isRunning: timerViewModel.isRunning
+        )
+
+        if let didFinishLaunchingObserver {
+            NotificationCenter.default.removeObserver(didFinishLaunchingObserver)
+            self.didFinishLaunchingObserver = nil
+        }
+    }
+
+    private func configureStatusItem(_ statusItem: NSStatusItem) {
         guard let button = statusItem.button else { return }
         button.imagePosition = .imageLeading
         button.imageHugsTitle = true
@@ -257,6 +304,7 @@ private final class MenuBarStatusItemController: NSObject {
     }
 
     private func updateStatusButton(secondsRemaining: Int, isRunning: Bool) {
+        guard let statusItem else { return }
         guard let button = statusItem.button else { return }
         // Tune size between `.medium` and `.large` for menu bar parity with other apps.
         let symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 14.5, weight: .medium)
