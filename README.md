@@ -1,6 +1,11 @@
-# 🍅 Tomato Focus – A Chrome Extension for Productivity
+# 🍅 Tomato Focus – Productivity Tools for Chrome + macOS
 
-A configurable **time-management Chrome extension** that helps boost productivity by using a method inspired by the Pomodoro® Technique. This extension provides a beautiful, intuitive interface with customizable timing, notifications, task management, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
+A configurable **time-management toolkit** inspired by the Pomodoro® Technique. This repository currently includes:
+
+- a **Chrome extension** (primary shipped experience), and
+- a **native macOS app** (SwiftUI modular app scaffold in `macos-app/`).
+
+Both experiences focus on customizable timing, notifications, task management, and visual feedback to help you maintain focus during work sessions and ensure you take proper breaks.
 
 <p align="center">
   <img src="docs/timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
@@ -22,6 +27,7 @@ Stay focused and take healthy breaks! 🍅⏰
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Projects in this Repository](#projects-in-this-repository)
 - [What's New](#whats-new)
 - [Features](#features)
 - [Installation](#installation)
@@ -32,6 +38,25 @@ Stay focused and take healthy breaks! 🍅⏰
 - [Acknowledgments](#acknowledgments)
 - [Support](#support)
 - [License](#license)
+
+## Projects in this Repository
+
+### 1) Chrome Extension
+- Main browser-based experience.
+- Source and assets live in the repository root (`manifest.json`, `src/`, `popup.html`, etc.).
+
+### 2) macOS App
+- Native SwiftUI app scaffold located at [`macos-app/`](macos-app/).
+- Includes modular targets for timer, tasks, statistics, settings, Jira integration, and platform services.
+- Open in Xcode with:
+  ```bash
+  open macos-app/TomatoFocusMacApp.xcodeproj
+  ```
+- For more details, see [`macos-app/README.md`](macos-app/README.md).
+
+> Screenshot placeholder: `docs/macos-app-timer.png` (add a timer view capture)
+>
+> Screenshot placeholder: `docs/macos-app-settings.png` (add a settings view capture)
 
 ## Features
 
@@ -102,6 +127,19 @@ Stay focused and take healthy breaks! 🍅⏰
 
 ## Installation
 
+### macOS App (Native)
+1. Ensure Xcode is installed
+2. Open the project:
+   ```bash
+   open macos-app/TomatoFocusMacApp.xcodeproj
+   ```
+3. Build and run the `TomatoFocusMacAppApp` scheme in Xcode
+4. (Optional) Build from terminal:
+   ```bash
+   swift build --package-path macos-app
+   swift run --package-path macos-app TomatoFocus
+   ```
+
 ### From Chrome Web Store (coming soon)
 _Not yet published. A link will be added once the listing is live._
 
@@ -149,6 +187,10 @@ Right-click the extension icon to:
 
 ## Technical Details
 
+### Product Targets
+- **Chrome Extension**: Chromium browser extension (Manifest V3)
+- **macOS App**: SwiftUI app scaffold (Swift Package Manager + Xcode project)
+
 - **Browser Compatibility**: Chrome, Edge, and other Chromium-based browsers
 - **Permissions (with rationale)**:
   - `notifications`: Show timer and break alerts.
@@ -164,6 +206,10 @@ Right-click the extension icon to:
   - Popup UI
   - Chrome Storage API
 
+### macOS App Architecture (high level)
+- Modular packages under `macos-app/Sources` (for example: `AppShell`, `TimerFeature`, `TasksFeature`, `StatisticsFeature`, `SettingsFeature`, `JiraIntegration`, `PlatformServices`, and `CoreInterfaces`)
+- Dependency injection is handled by `CoreDI/AppContainer.swift`
+
 ## Development
 
 ### Setup
@@ -171,6 +217,12 @@ Right-click the extension icon to:
 2. Install dependencies: `npm install`
 3. Enable developer mode in Chrome at `chrome://extensions/`
 4. Load the unpacked extension
+
+### macOS Development
+- Open `macos-app/TomatoFocusMacApp.xcodeproj` in Xcode for app-level development.
+- Or use SwiftPM commands from repo root:
+  - `swift build --package-path macos-app`
+  - `swift run --package-path macos-app TomatoFocus`
 
 ### Code Quality
 This project uses a combination of ESLint, Stylelint, and Prettier for code quality and consistency:
