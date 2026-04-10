@@ -1,4 +1,11 @@
-# Tomato Focus macOS app scaffold
+# Tomato Focus macOS app
+
+<p align="center">
+  <img src="../docs/macos_timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
+  <img src="../docs/macos_settings_screen.png" alt="Settings" width="45%" style="display:inline-block; margin-right:10px;"/>
+  <img src="../docs/macos_tasks_screen.png" alt="Tasks" width="45%" style="display:inline-block; margin-right:10px; margin-top:10px;"/>
+  <img src="../docs/macos_statistics_screen.png" alt="Statistics" width="45%" style="display:inline-block; margin-top:10px;"/>
+</p>
 
 This directory contains a Swift Package Manager-based macOS SwiftUI app scaffold with modular targets:
 
