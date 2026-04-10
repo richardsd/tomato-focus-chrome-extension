@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TomatoFocus – Productivity Tools for Chrome + macOS</title>
+  <meta name="description" content="A configurable time-management toolkit for Chrome and macOS, inspired by the Pomodoro® Technique. Tasks, statistics, Jira sync, and smart notifications.">
+  <meta property="og:title" content="TomatoFocus – Productivity Tools for Chrome + macOS">
+  <meta property="og:description" content="Focus in 25-minute bursts. Chrome extension and native macOS app.">
+  <meta property="og:image" content="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/timer_screen.png">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --tomato: #e63946;
+      --tomato-dark: #c1121f;
+      --tomato-glow: rgba(230,57,70,0.12);
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --surface3: #242424;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f0ebe4;
+      --muted: #807b76;
+      --serif: 'DM Serif Display', Georgia, serif;
+      --sans: 'DM Sans', system-ui, sans-serif;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.7; }
+    a { color: var(--tomato); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ── nav ── */
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem; border-bottom: 1px solid var(--border);
+      position: sticky; top: 0;
+      background: rgba(13,13,13,0.93); backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 8px; font-family: var(--serif); font-size: 18px; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; font-size: 13px; }
+    .nav-links a { color: var(--muted); transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); text-decoration: none; }
+    .btn-nav {
+      background: var(--tomato); color: #fff; border: none; border-radius: 6px;
+      padding: 7px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+      font-family: var(--sans); transition: background 0.2s;
+      text-decoration: none; display: inline-block;
+    }
+    .btn-nav:hover { background: var(--tomato-dark); text-decoration: none; }
+
+    /* ── hero ── */
+    .hero {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: center;
+      max-width: 1020px; margin: 0 auto; padding: 5rem 2rem 4rem;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--tomato-glow); color: var(--tomato);
+      border: 1px solid rgba(230,57,70,0.25); border-radius: 20px;
+      font-size: 12px; padding: 4px 12px; margin-bottom: 1rem; letter-spacing: 0.04em;
+    }
+    .hero h1 { font-family: var(--serif); font-size: clamp(2.2rem, 4.5vw, 3.2rem); line-height: 1.1; color: var(--text); margin-bottom: 1rem; }
+    .hero h1 em { font-style: italic; color: var(--tomato); }
+    .hero p { color: var(--muted); font-size: 15px; line-height: 1.8; margin-bottom: 2rem; }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--tomato); color: #fff; border: none; border-radius: 8px;
+      padding: 10px 18px; font-size: 13px; font-weight: 500; cursor: pointer;
+      font-family: var(--sans); transition: background 0.2s; text-decoration: none;
+    }
+    .btn-primary:hover { background: var(--tomato-dark); text-decoration: none; }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent; color: var(--muted); border: 1px solid var(--border2);
+      border-radius: 8px; padding: 10px 18px; font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: var(--sans); transition: all 0.2s; text-decoration: none;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.22); color: var(--text); text-decoration: none; }
+
+    /* ── mock popup ── */
+    .hero-visual { display: flex; justify-content: center; align-items: center; }
+    .mock-popup {
+      width: 272px; background: #191919; border-radius: 14px;
+      border: 1px solid var(--border2); padding: 1.2rem;
+      box-shadow: 0 0 80px rgba(230,57,70,0.1);
+    }
+    .mock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .mock-title { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+    .mock-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--tomato); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .ring-track { fill: none; stroke: #242424; stroke-width: 8; }
+    .ring-fill {
+      fill: none; stroke: var(--tomato); stroke-width: 8; stroke-linecap: round;
+      stroke-dasharray: 188; stroke-dashoffset: 55;
+      transform: rotate(-90deg); transform-origin: 50% 50%;
+      animation: ring-anim 5s ease-in-out infinite alternate;
+    }
+    @keyframes ring-anim { from { stroke-dashoffset: 55; } to { stroke-dashoffset: 130; } }
+    .mock-task { background: var(--surface2); border-radius: 7px; padding: 7px 10px; font-size: 12px; color: var(--muted); margin-bottom: 0.75rem; }
+    .mock-task span { color: var(--text); font-weight: 500; }
+    .mock-btn { width: 100%; background: var(--tomato); border: none; border-radius: 8px; color: #fff; padding: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--sans); }
+
+    /* ── divider ── */
+    .section-divider { border: none; border-top: 1px solid var(--border); max-width: 1020px; margin: 0 auto; }
+
+    /* ── platforms ── */
+    .platform-section { max-width: 1020px; margin: 0 auto; padding: 4rem 2rem; }
+    .section-label { font-size: 11px; letter-spacing: 0.1em; color: var(--tomato); text-transform: uppercase; margin-bottom: 0.5rem; }
+    .section-title { font-family: var(--serif); font-size: clamp(1.6rem, 3vw, 2.1rem); color: var(--text); margin-bottom: 0.6rem; }
+    .section-sub { color: var(--muted); font-size: 14px; max-width: 500px; }
+    .platform-tabs { display: flex; gap: 8px; margin: 2rem 0; }
+    .ptab {
+      display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+      border-radius: 8px; border: 1px solid var(--border2); font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer; transition: all 0.2s;
+      background: transparent; font-family: var(--sans);
+    }
+    .ptab.active { background: var(--surface2); color: var(--text); }
+    .ptab:hover { color: var(--text); }
+    .platform-content { display: none; }
+    .platform-content.active { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+    .platform-desc { color: var(--muted); font-size: 14px; line-height: 1.8; margin-bottom: 1.5rem; }
+    .platform-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.5rem; }
+    .pill { background: var(--surface2); color: var(--muted); font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border); }
+    .platform-screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ps-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .ps-card img { width: 100%; display: block; }
+    .ps-label { font-size: 11px; color: var(--muted); padding: 6px 10px; text-align: center; }
+
+    /* ── features ── */
+    section { max-width: 1020px; margin: 0 auto; padding: 4rem 2rem; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 2.5rem; }
+    .feature-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.4rem; transition: border-color 0.2s; }
+    .feature-card:hover { border-color: rgba(230,57,70,0.28); }
+    .feature-icon { font-size: 15px; margin-bottom: 0.7rem; }
+    .feature-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 0.35rem; }
+    .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── install ── */
+    .install-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; margin-top: 2.5rem; align-items: start; }
+    .install-block-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .install-block-title .tag { font-size: 11px; background: var(--surface2); color: var(--muted); padding: 2px 8px; border-radius: 20px; font-weight: 400; border: 1px solid var(--border); }
+    .install-steps { list-style: none; counter-reset: steps; }
+    .install-steps li { counter-increment: steps; display: flex; gap: 10px; margin-bottom: 1.1rem; align-items: flex-start; }
+    .step-num {
+      min-width: 24px; height: 24px; border-radius: 50%;
+      background: var(--tomato-glow); border: 1px solid rgba(230,57,70,0.28);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 500; color: var(--tomato); flex-shrink: 0;
+    }
+    .step-text { font-size: 13px; color: var(--muted); padding-top: 2px; line-height: 1.6; }
+    .step-text strong { color: var(--text); font-weight: 500; }
+    .step-text code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-size: 11px; color: #999; font-family: monospace; }
+    .install-note { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem; font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 1rem; }
+    .install-note strong { color: var(--text); font-weight: 500; display: block; margin-bottom: 0.3rem; }
+
+    /* ── footer ── */
+    footer {
+      border-top: 1px solid var(--border); padding: 2rem;
+      max-width: 1020px; margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-logo { font-family: var(--serif); font-size: 16px; color: var(--muted); }
+    .footer-links { display: flex; gap: 1.5rem; font-size: 13px; }
+    .footer-links a { color: var(--muted); transition: color 0.2s; }
+    .footer-links a:hover { color: var(--text); text-decoration: none; }
+    .footer-disclaimer { font-size: 11px; color: #3e3c3a; max-width: 1020px; margin: 0 auto; padding: 0 2rem 2rem; line-height: 1.6; }
+
+    /* ── responsive ── */
+    @media (max-width: 680px) {
+      .hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 1.25rem 2.5rem; }
+      .hero-visual { order: -1; }
+      .platform-content.active { grid-template-columns: 1fr; }
+      .install-grid { grid-template-columns: 1fr; }
+      nav { padding: 0.75rem 1.25rem; }
+      .nav-links { display: none; }
+      section { padding: 3rem 1.25rem; }
+      .platform-section { padding: 3rem 1.25rem; }
+      footer { padding: 1.5rem 1.25rem; flex-direction: column; align-items: flex-start; }
+      .footer-disclaimer { padding: 0 1.25rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+      <circle cx="14" cy="16" r="10" fill="#e63946"/>
+      <path d="M14 6C14 6 12 2 8 3C10 4 11 6 11 8" stroke="#2d7a22" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M14 6C14 6 16 2 20 3C18 4 17 6 17 8" stroke="#2d7a22" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+      <path d="M14 6L14 8" stroke="#2d7a22" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    TomatoFocus
+  </a>
+  <div class="nav-links">
+    <a href="#platforms">Platforms</a>
+    <a href="#features">Features</a>
+    <a href="#install">Install</a>
+  </div>
+  <a href="https://github.com/richardsd/tomato-focus-chrome-extension" class="btn-nav" target="_blank" rel="noopener">View on GitHub</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div>
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <circle cx="6" cy="6" r="5" fill="#e63946" opacity="0.3"/>
+        <circle cx="6" cy="6" r="3" fill="#e63946"/>
+      </svg>
+      Open source · Chrome + macOS
+    </div>
+    <h1>Focus in<br><em>25-minute</em><br>bursts.</h1>
+    <p>A time-management toolkit for Chrome and macOS, inspired by the Pomodoro® Technique. Tasks, statistics, Jira sync, and smart notifications — wherever you work.</p>
+    <div class="hero-actions">
+      <a href="#install" class="btn-primary">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M7 1v8M3.5 6l3.5 3.5L10.5 6M2 11h10" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Get started
+      </a>
+      <a href="https://github.com/richardsd/tomato-focus-chrome-extension" class="btn-ghost" target="_blank" rel="noopener">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.164 6.839 9.49.5.09.682-.218.682-.484 0-.236-.009-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.157-1.11-1.465-1.11-1.465-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.741 0 .269.18.579.688.481C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="mock-popup" role="img" aria-label="TomatoFocus extension popup preview">
+      <div class="mock-header">
+        <span class="mock-title">Focus session</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--muted);">2 of 4</span>
+          <div class="mock-dot"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;margin:0.5rem 0 1rem;">
+        <svg width="136" height="136" viewBox="0 0 136 136" aria-hidden="true">
+          <circle class="ring-track" cx="68" cy="68" r="52"/>
+          <circle class="ring-fill" cx="68" cy="68" r="52"/>
+          <text font-family="DM Serif Display, Georgia, serif" font-size="28" fill="#f0ebe4" text-anchor="middle" dominant-baseline="middle" x="68" y="65">18:42</text>
+          <text font-size="10" fill="#807b76" text-anchor="middle" x="68" y="84">work session</text>
+        </svg>
+      </div>
+      <div class="mock-task">Current task: <span>Review PR #142</span></div>
+      <button class="mock-btn">Pause</button>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- PLATFORMS -->
+<div class="platform-section" id="platforms">
+  <div class="section-label">Two platforms</div>
+  <div class="section-title">Chrome extension &amp; macOS app.</div>
+  <p class="section-sub">One codebase philosophy, two native experiences.</p>
+
+  <div class="platform-tabs" role="tablist">
+    <button class="ptab active" role="tab" aria-selected="true" aria-controls="tab-chrome" onclick="switchTab('chrome', this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+      Chrome extension
+    </button>
+    <button class="ptab" role="tab" aria-selected="false" aria-controls="tab-macos" onclick="switchTab('macos', this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      macOS app
+    </button>
+  </div>
+
+  <div class="platform-content active" id="tab-chrome" role="tabpanel">
+    <div>
+      <p class="platform-desc">A Manifest V3 Chrome extension that lives in your browser toolbar. Start sessions, track tasks, and get notified — all without leaving the browser. Works on Chrome, Edge, and any Chromium-based browser.</p>
+      <div class="platform-pills">
+        <span class="pill">Manifest V3</span>
+        <span class="pill">Service Worker</span>
+        <span class="pill">Chrome Storage API</span>
+        <span class="pill">Offscreen audio</span>
+        <span class="pill">Context menu</span>
+        <span class="pill">Badge countdown</span>
+      </div>
+      <a href="#install-chrome" class="btn-primary" style="font-size:12px;padding:8px 14px;">Install extension</a>
+    </div>
+    <div class="platform-screenshots">
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/timer_screen.png" alt="Chrome extension timer screen" loading="lazy">
+        <div class="ps-label">Timer</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/tasks_screen.png" alt="Chrome extension tasks screen" loading="lazy">
+        <div class="ps-label">Tasks</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/statistics_screen.png" alt="Chrome extension statistics screen" loading="lazy">
+        <div class="ps-label">Statistics</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/settings_screen.png" alt="Chrome extension settings screen" loading="lazy">
+        <div class="ps-label">Settings</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="platform-content" id="tab-macos" role="tabpanel">
+    <div>
+      <p class="platform-desc">A native SwiftUI app built with a modular Swift Package Manager architecture. Feature modules — timer, tasks, statistics, settings, Jira integration — are fully decoupled via <code style="font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#999;">CoreInterfaces</code> protocols and wired together through a dependency container. Distributable as a <code style="font-size:12px;background:var(--surface2);padding:1px 5px;border-radius:4px;color:#999;">.app</code> bundle or DMG.</p>
+      <div class="platform-pills">
+        <span class="pill">SwiftUI</span>
+        <span class="pill">Swift Package Manager</span>
+        <span class="pill">Modular architecture</span>
+        <span class="pill">Dependency injection</span>
+        <span class="pill">DMG distribution</span>
+        <span class="pill">Xcode project</span>
+      </div>
+      <a href="#install-macos" class="btn-primary" style="font-size:12px;padding:8px 14px;">Build from source</a>
+    </div>
+    <div class="platform-screenshots">
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/macos_timer_screen.png" alt="macOS app timer screen" loading="lazy">
+        <div class="ps-label">Timer</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/macos_tasks_screen.png" alt="macOS app tasks screen" loading="lazy">
+        <div class="ps-label">Tasks</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/macos_statistics_screen.png" alt="macOS app statistics screen" loading="lazy">
+        <div class="ps-label">Statistics</div>
+      </div>
+      <div class="ps-card">
+        <img src="https://raw.githubusercontent.com/richardsd/tomato-focus-chrome-extension/main/docs/macos_settings_screen.png" alt="macOS app settings screen" loading="lazy">
+        <div class="ps-label">Settings</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">Shared features</div>
+  <div class="section-title">Everything you need to stay in flow.</div>
+  <p class="section-sub">Core capabilities available across both Chrome and macOS.</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⏱</div>
+      <div class="feature-title">Core timer</div>
+      <div class="feature-desc">25-min work sessions, 5-min short breaks, 15-min long breaks. Circular progress ring, session counter, auto-start, and skip break.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✓</div>
+      <div class="feature-title">Task management</div>
+      <div class="feature-desc">Create, edit, and delete tasks. Link each session to a task and track estimated vs consumed Pomodoros. Filter by All, In Progress, or Completed.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">◈</div>
+      <div class="feature-title">Jira sync</div>
+      <div class="feature-desc">Import Jira Cloud assignments on demand or on a schedule. Credentials stored securely in local storage — never leaves your device.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">◉</div>
+      <div class="feature-title">Statistics</div>
+      <div class="feature-desc">Daily summary of completed sessions and total focus time. Task-based productivity metrics. Clear stored data whenever you like.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚙</div>
+      <div class="feature-title">Flexible settings</div>
+      <div class="feature-desc">Adjust all durations (1–60 min), sessions before a long break, notification sounds and volume, idle detection, and light/dark theme.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">▸</div>
+      <div class="feature-title">Smart notifications</div>
+      <div class="feature-desc">System alerts when sessions end. Idle detection to pause and resume automatically. Quick timers (5/15/25/45 min) for ad-hoc focus blocks.</div>
+    </div>
+  </div>
+</section>
+
+<hr class="section-divider">
+
+<!-- INSTALL -->
+<section id="install">
+  <div class="section-label">Installation</div>
+  <div class="section-title">Pick your platform.</div>
+  <p class="section-sub">Both versions are built from the same repository.</p>
+
+  <div class="install-grid">
+    <!-- Chrome -->
+    <div id="install-chrome">
+      <div class="install-block-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+        Chrome extension
+        <span class="tag">coming to Web Store</span>
+      </div>
+      <ol class="install-steps">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Clone or download</strong> the <a href="https://github.com/richardsd/tomato-focus-chrome-extension" target="_blank" rel="noopener">repository</a>.</div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">Open <code>chrome://extensions/</code> in Chrome (or <code>edge://extensions/</code> in Edge).</div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text"><strong>Enable Developer Mode</strong> via the toggle in the top-right corner.</div>
+        </li>
+        <li>
+          <div class="step-num">4</div>
+          <div class="step-text">Click <strong>Load unpacked</strong> and select the extension folder.</div>
+        </li>
+      </ol>
+      <div class="install-note">
+        <strong>Chrome Web Store — coming soon</strong>
+        Once live, one-click installation will be available directly from the Store.
+      </div>
+    </div>
+
+    <!-- macOS -->
+    <div id="install-macos">
+      <div class="install-block-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        macOS app
+        <span class="tag">build from source</span>
+      </div>
+      <ol class="install-steps">
+        <li>
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Open in Xcode:</strong> <code>open macos-app/TomatoFocusMacApp.xcodeproj</code> and run the <code>TomatoFocusMacAppApp</code> scheme.
+          </div>
+        </li>
+        <li>
+          <div class="step-num">2</div>
+          <div class="step-text">
+            Or <strong>build a .app bundle</strong> via <code>tools/macos-build-app.sh</code> — output lands in <code>dist/macos/TomatoFocus.app</code>. Drag into <code>/Applications</code>.
+          </div>
+        </li>
+        <li>
+          <div class="step-num">3</div>
+          <div class="step-text">
+            Or <strong>build a DMG</strong> for distribution: <code>tools/macos-release.sh package-dmg "dist/macos/TomatoFocus.app" dist</code>
+          </div>
+        </li>
+      </ol>
+      <div class="install-note">
+        <strong>Requirements</strong>
+        Xcode installed. Swift Package Manager dependencies resolve automatically on first build.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🍅 TomatoFocus</div>
+  <div class="footer-links">
+    <a href="https://github.com/richardsd/tomato-focus-chrome-extension" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/richardsd/tomato-focus-chrome-extension/issues" target="_blank" rel="noopener">Issues</a>
+    <a href="https://github.com/richardsd/tomato-focus-chrome-extension/blob/main/PRIVACY_POLICY.md" target="_blank" rel="noopener">Privacy</a>
+    <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL v3</a>
+  </div>
+</footer>
+<p class="footer-disclaimer">
+  TomatoFocus is not affiliated with, endorsed by, or licensed by Francesco Cirillo or the official Pomodoro® Technique. "Pomodoro®" is a registered trademark of Francesco Cirillo. Learn more at <a href="https://www.pomodorotechnique.com" target="_blank" rel="noopener">pomodorotechnique.com</a>.
+</p>
+
+<script>
+  function switchTab(id, btn) {
+    document.querySelectorAll('.ptab').forEach(function(t) {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    document.querySelectorAll('.platform-content').forEach(function(c) {
+      c.classList.remove('active');
+    });
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+  }
+</script>
+
+</body>
+</html>
