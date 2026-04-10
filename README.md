@@ -54,9 +54,10 @@ Stay focused and take healthy breaks! 🍅⏰
   ```
 - For more details, see [`macos-app/README.md`](macos-app/README.md).
 
-> Screenshot placeholder: `docs/macos-app-timer.png` (add a timer view capture)
->
-> Screenshot placeholder: `docs/macos-app-settings.png` (add a settings view capture)
+<p align="center">
+  <img src="docs/macos_timer_screen.png" alt="Timer" width="45%" style="display:inline-block; margin-right:10px;"/>
+  <img src="docs/macos_settings_screen.png" alt="Settings" width="45%" style="display:inline-block; margin-right:10px;"/>
+</p>
 
 ## Features
 
