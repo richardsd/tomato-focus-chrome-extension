@@ -116,10 +116,10 @@ public struct StatisticsView: View {
 
                 metricsRow
 
-                if chartRows.isEmpty {
+                if viewModel.history.isEmpty {
                     emptyState
                 } else {
-                    chartCard
+                    chartsRow
                     historyCard
                 }
 
@@ -172,11 +172,15 @@ public struct StatisticsView: View {
         }
     }
 
-    private var chartCard: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.sm) {
-            Text("Last 30 days")
-                .font(DSTypography.subtitle)
+    private var chartsRow: some View {
+        HStack(alignment: .top, spacing: DSSpacing.sm) {
+            completedSessionsChart
+            focusMinutesChart
+        }
+    }
 
+    private var completedSessionsChart: some View {
+        chartContainer(title: "Completed sessions") {
             Chart(chartRows) { row in
                 BarMark(
                     x: .value("Day", row.date, unit: .day),
@@ -184,21 +188,49 @@ public struct StatisticsView: View {
                 )
                 .foregroundStyle(DSColor.focus.gradient)
                 .cornerRadius(4)
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading)
+            }
+        }
+    }
 
+    private var focusMinutesChart: some View {
+        chartContainer(title: "Focus minutes") {
+            Chart(chartRows) { row in
                 LineMark(
                     x: .value("Day", row.date, unit: .day),
-                    y: .value("Focus Minutes", row.focusMinutes)
+                    y: .value("Minutes", row.focusMinutes)
                 )
                 .interpolationMethod(.catmullRom)
                 .foregroundStyle(DSColor.shortBreak)
                 .lineStyle(StrokeStyle(lineWidth: 2))
+
+                PointMark(
+                    x: .value("Day", row.date, unit: .day),
+                    y: .value("Minutes", row.focusMinutes)
+                )
+                .foregroundStyle(DSColor.shortBreak)
+                .symbolSize(row.focusMinutes > 0 ? 24 : 0)
             }
-            .chartLegend(position: .top, alignment: .leading)
             .chartYAxis {
                 AxisMarks(position: .leading)
             }
-            .frame(height: 230)
         }
+    }
+
+    private func chartContainer<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: DSSpacing.sm) {
+            Text(title)
+                .font(DSTypography.subtitle)
+
+            content()
+                .frame(height: 220)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .dsCard()
     }
 
@@ -235,11 +267,22 @@ public struct StatisticsView: View {
     }
 
     private var chartRows: [ChartRow] {
-        viewModel.history.compactMap { row in
-            guard let date = dateFromISO(row.dateKey) else { return nil }
-            return ChartRow(date: date, completedSessions: row.completedSessions, focusMinutes: row.focusMinutes)
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: Date())
+
+        return (0..<30).reversed().compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: today) else {
+                return nil
+            }
+
+            let key = isoKey(from: date)
+            let stats = viewModel.stats.daily[key] ?? DailyPomodoroStats()
+            return ChartRow(
+                date: date,
+                completedSessions: stats.completedSessions,
+                focusMinutes: stats.focusMinutes
+            )
         }
-        .sorted { $0.date < $1.date }
     }
 
     private func formatMinutes(_ minutes: Int) -> String {
@@ -271,6 +314,15 @@ public struct StatisticsView: View {
         parser.timeZone = .current
         parser.dateFormat = "yyyy-MM-dd"
         return parser.date(from: key)
+    }
+
+    private func isoKey(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 }
 

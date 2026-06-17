@@ -12,10 +12,10 @@ Use this checklist when validating major macOS UI/UX updates.
 
 ## Navigation and shell
 
-- [ ] Sidebar sections are present for Timer, Tasks, Statistics, and Settings.
+- [ ] Sidebar sections are present for Timer, Tasks, and Statistics.
 - [ ] Active sidebar section is visually clear.
-- [ ] Sidebar quick actions work without opening additional windows.
 - [ ] Toolbar quick actions (start/pause, reset, quick start) work from every section.
+- [ ] Settings opens in the native macOS Settings scene and is not a workspace sidebar section.
 
 ## Timer-first UX
 
@@ -27,22 +27,25 @@ Use this checklist when validating major macOS UI/UX updates.
 
 ## Tasks UX
 
-- [ ] Quick capture card supports add and edit flows.
+- [ ] List/detail layout supports selection, add, edit, save, and cancel flows.
 - [ ] Filter controls expose All/In Progress/Completed with counts.
-- [ ] Current task is clearly indicated in task rows.
-- [ ] Task row actions (set/unset current, edit, delete, complete) are keyboard and mouse operable.
+- [ ] Current task is clearly indicated in the list and detail pane.
+- [ ] Completed tasks do not expose Set Current.
+- [ ] Task detail actions (set/unset current, edit, delete, complete/reopen) are keyboard and mouse operable.
 - [ ] Empty states provide clear next action language.
 
 ## Statistics UX
 
 - [ ] KPI cards show completed today, total focus time, and active days.
-- [ ] Trend chart renders daily sessions/focus metrics correctly.
+- [ ] Separate sessions and focus-minutes charts render daily metrics with independent scales.
+- [ ] Last-30-days charts include zero-value days.
 - [ ] History list values match persisted statistics.
 - [ ] Clear statistics action has destructive confirmation.
 
 ## Settings UX
 
-- [ ] Durations, behavior, sound, Jira, and data exchange are grouped into distinct cards.
+- [ ] General, Jira, and Data tabs are available in the native Settings window.
+- [ ] Durations, behavior, sound, Jira, and data exchange controls are grouped clearly.
 - [ ] Validation errors are shown inline and are actionable.
 - [ ] Save status is visible after successful settings save.
 - [ ] Jira settings validation still enforces complete credentials.
