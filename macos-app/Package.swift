@@ -60,6 +60,9 @@ let package = Package(
                 "SettingsFeature"
             ],
             path: "Sources/TomatoFocusMacApp"
+        ),
+        .testTarget(
+            name: "TomatoFocusMacAppTests"
         )
     ]
 )

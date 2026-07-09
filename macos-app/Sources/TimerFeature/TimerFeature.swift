@@ -443,15 +443,12 @@ public struct TimerView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: DSSpacing.lg) {
-                headerCard
-                timerCard
-                quickStartCard
+        ViewThatFits(in: .vertical) {
+            timerContent
+
+            ScrollView {
+                timerContent
             }
-            .padding(DSSpacing.xl)
-            .frame(maxWidth: 760)
-            .frame(maxWidth: .infinity)
         }
         .background(
             LinearGradient(
@@ -466,6 +463,19 @@ public struct TimerView: View {
             .ignoresSafeArea()
         )
         .animation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.86), value: viewModel.sessionKind)
+    }
+
+    private var timerContent: some View {
+        VStack(spacing: DSSpacing.md) {
+            headerCard
+            timerCard
+                .layoutPriority(1)
+            quickStartCard
+        }
+        .padding(.horizontal, DSSpacing.xl)
+        .padding(.vertical, DSSpacing.md)
+        .frame(maxWidth: 820)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private var headerCard: some View {
@@ -491,78 +501,95 @@ public struct TimerView: View {
     }
 
     private var timerCard: some View {
-        VStack(spacing: DSSpacing.lg) {
-            ZStack {
-                DSTimerRing(progress: progress, tint: sessionTint)
-                    .frame(width: 280, height: 280)
+        GeometryReader { proxy in
+            let ringDiameter = timerRingDiameter(for: proxy.size)
 
-                VStack(spacing: DSSpacing.xxs) {
-                    Text(timeString)
-                        .font(DSTypography.metric)
-                        .monospacedDigit()
+            VStack(spacing: DSSpacing.md) {
+                Spacer(minLength: 0)
 
-                    Text(viewModel.isRunning ? "Session in progress" : "Ready to focus")
+                ZStack {
+                    DSTimerRing(progress: progress, tint: sessionTint)
+                        .frame(width: ringDiameter, height: ringDiameter)
+
+                    VStack(spacing: DSSpacing.xxs) {
+                        Text(timeString)
+                            .font(DSTypography.metric)
+                            .monospacedDigit()
+
+                        Text(viewModel.isRunning ? "Session in progress" : "Ready to focus")
+                            .font(.subheadline)
+                            .foregroundStyle(DSColor.secondaryText)
+                    }
+                }
+
+                if !viewModel.isRunning, let autoPauseStatusMessage = viewModel.autoPauseStatusMessage {
+                    Text(autoPauseStatusMessage)
                         .font(.subheadline)
-                        .foregroundStyle(DSColor.secondaryText)
+                        .foregroundStyle(DSColor.warning)
                 }
+
+                if let currentTaskTitle = viewModel.currentTaskTitle, !currentTaskTitle.isEmpty {
+                    HStack(spacing: DSSpacing.xs) {
+                        Image(systemName: "scope")
+                            .foregroundStyle(sessionTint)
+                        Text("Current task: \(currentTaskTitle)")
+                            .font(.subheadline)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, DSSpacing.xs)
+                }
+
+                HStack(spacing: DSSpacing.sm) {
+                    Button(viewModel.isRunning ? "Pause" : startButtonTitle) {
+                        viewModel.toggle()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(DSColor.focus)
+                    .accessibilityLabel(viewModel.isRunning ? "Pause timer" : "Start timer")
+
+                    Button("Reset") {
+                        viewModel.reset()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+
+                    if !viewModel.isWorkSession {
+                        Button("Skip Break") {
+                            viewModel.skipBreak()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.large)
+                    }
+                }
+
+                Spacer(minLength: 0)
             }
-
-            if !viewModel.isRunning, let autoPauseStatusMessage = viewModel.autoPauseStatusMessage {
-                Text(autoPauseStatusMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(DSColor.warning)
-            }
-
-            if let currentTaskTitle = viewModel.currentTaskTitle, !currentTaskTitle.isEmpty {
-                HStack(spacing: DSSpacing.xs) {
-                    Image(systemName: "scope")
-                        .foregroundStyle(sessionTint)
-                    Text("Current task: \(currentTaskTitle)")
-                        .font(.subheadline)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, DSSpacing.xs)
-            }
-
-            HStack(spacing: DSSpacing.sm) {
-                Button(viewModel.isRunning ? "Pause" : startButtonTitle) {
-                    viewModel.toggle()
-                }
-                .buttonStyle(DSPrimaryButtonStyle())
-                .accessibilityLabel(viewModel.isRunning ? "Pause timer" : "Start timer")
-
-                Button("Reset") {
-                    viewModel.reset()
-                }
-                .buttonStyle(DSSecondaryButtonStyle())
-
-                Button("Skip Break") {
-                    viewModel.skipBreak()
-                }
-                .buttonStyle(DSSecondaryButtonStyle())
-                .disabled(viewModel.isWorkSession)
-            }
+            .padding(DSSpacing.lg)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(DSSpacing.xl)
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, minHeight: 320, maxHeight: .infinity)
         .dsCard(padded: false)
     }
 
     private var quickStartCard: some View {
-        VStack(alignment: .leading, spacing: DSSpacing.sm) {
-            Text("Quick Start")
-                .font(DSTypography.subtitle)
+        HStack(alignment: .center, spacing: DSSpacing.lg) {
+            VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                Text("Quick Start")
+                    .font(DSTypography.subtitle)
 
-            Text("Launch a focused work sprint instantly.")
-                .font(.subheadline)
-                .foregroundStyle(DSColor.secondaryText)
+                Text("Launch a focused work sprint instantly.")
+                    .font(.subheadline)
+                    .foregroundStyle(DSColor.secondaryText)
+            }
 
-            HStack(spacing: DSSpacing.sm) {
+            Spacer()
+
+            HStack(spacing: DSSpacing.xs) {
                 quickStartButton(minutes: 5)
                 quickStartButton(minutes: 15)
                 quickStartButton(minutes: 25, suffix: "Focus")
                 quickStartButton(minutes: 45)
-                Spacer()
             }
         }
         .dsCard()
@@ -598,7 +625,8 @@ public struct TimerView: View {
         } label: {
             Text(suffix.isEmpty ? "\(minutes)m" : "\(minutes)m \(suffix)")
         }
-        .buttonStyle(DSSecondaryButtonStyle())
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
     }
 
     private var sessionTitle: String {
@@ -631,6 +659,12 @@ public struct TimerView: View {
     private var progress: Double {
         let total = max(viewModel.fullSessionDurationSeconds, 1)
         return Double(max(viewModel.secondsRemaining, 0)) / Double(total)
+    }
+
+    private func timerRingDiameter(for size: CGSize) -> CGFloat {
+        let heightBased = size.height - 120
+        let widthBased = size.width * 0.46
+        return min(max(heightBased, 230), min(widthBased, 360))
     }
 
     private var timeString: String {

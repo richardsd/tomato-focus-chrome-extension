@@ -107,28 +107,31 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: DSSpacing.lg) {
-                Text("Settings")
-                    .font(DSTypography.title)
+        VStack(spacing: 0) {
+            TabView {
+                generalTab
+                    .tabItem {
+                        Label("General", systemImage: "gearshape")
+                    }
 
-                timerSettings
-                behaviorSettings
-                soundSettings
-                jiraSettings
-                dataExchangeSettings
+                jiraTab
+                    .tabItem {
+                        Label("Jira", systemImage: "link")
+                    }
 
-                if !viewModel.validationErrors.isEmpty {
-                    validationErrorsCard
-                }
-
-                saveCard
+                dataTab
+                    .tabItem {
+                        Label("Data", systemImage: "arrow.triangle.2.circlepath")
+                    }
             }
-            .padding(DSSpacing.xl)
-            .frame(maxWidth: 980, alignment: .leading)
-            .frame(maxWidth: .infinity)
+
+            Divider()
+
+            settingsFooter
         }
-        .background(DSColor.pageBackground.ignoresSafeArea())
+        .frame(width: 680, height: 560)
+        .background(DSColor.pageBackground)
+        .preferredColorScheme(colorScheme(for: viewModel.settings.theme))
         .onAppear {
             pauseDetectionModeSelection = viewModel.settings.pauseDetectionMode
         }
@@ -160,74 +163,79 @@ public struct SettingsView: View {
         }
     }
 
-    private var timerSettings: some View {
-        SettingsCard(title: "Durations", subtitle: "Define your default focus and break cadence.") {
-            NumberStepperInputRow(
-                label: "Work",
-                suffix: "min",
-                value: $viewModel.settings.focusDurationMinutes,
-                range: 1...180,
-                labelWidth: nil
-            )
-            NumberStepperInputRow(
-                label: "Short break",
-                suffix: "min",
-                value: $viewModel.settings.shortBreakMinutes,
-                range: 1...60,
-                labelWidth: nil
-            )
-            NumberStepperInputRow(
-                label: "Long break",
-                suffix: "min",
-                value: $viewModel.settings.longBreakMinutes,
-                range: 1...120,
-                labelWidth: nil
-            )
-            NumberStepperInputRow(
-                label: "Sessions before long break",
-                suffix: "",
-                value: $viewModel.settings.longBreakInterval,
-                range: 1...12,
-                labelWidth: nil
-            )
-        }
-    }
-
-    private var behaviorSettings: some View {
-        SettingsCard(title: "Behavior", subtitle: "Choose how sessions transition and how appearance follows your preferences.") {
-            Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
-            Toggle("Pause and resume timer based on idle activity", isOn: $viewModel.settings.pauseOnIdle)
-
-            Picker("Pause Detection", selection: $pauseDetectionModeSelection) {
-                ForEach(PauseDetectionMode.allCases, id: \.self) { mode in
-                    Text(mode.displayName).tag(mode)
-                }
+    private var generalTab: some View {
+        settingsTabContent {
+            SettingsPanel(title: "Durations") {
+                NumberStepperInputRow(
+                    label: "Work",
+                    suffix: "min",
+                    value: $viewModel.settings.focusDurationMinutes,
+                    range: 1...180,
+                    labelWidth: 220
+                )
+                NumberStepperInputRow(
+                    label: "Short break",
+                    suffix: "min",
+                    value: $viewModel.settings.shortBreakMinutes,
+                    range: 1...60,
+                    labelWidth: 220
+                )
+                NumberStepperInputRow(
+                    label: "Long break",
+                    suffix: "min",
+                    value: $viewModel.settings.longBreakMinutes,
+                    range: 1...120,
+                    labelWidth: 220
+                )
+                NumberStepperInputRow(
+                    label: "Sessions before long break",
+                    suffix: "",
+                    value: $viewModel.settings.longBreakInterval,
+                    range: 1...12,
+                    labelWidth: 220
+                )
             }
-            .pickerStyle(.segmented)
-            .disabled(!viewModel.settings.pauseOnIdle)
 
-            Text(pauseDetectionHelpText)
-                .font(.footnote)
-                .foregroundStyle(DSColor.secondaryText)
+            SettingsPanel(title: "Behavior") {
+                Toggle("Auto-start next session", isOn: $viewModel.settings.autoStart)
+                Toggle("Pause and resume timer based on idle activity", isOn: $viewModel.settings.pauseOnIdle)
 
-            Picker("Theme", selection: $viewModel.settings.theme) {
-                ForEach(AppTheme.allCases, id: \.self) { theme in
-                    Text(theme.displayName).tag(theme)
+                LabeledSettingsRow(label: "Pause detection") {
+                    Picker("Pause detection", selection: $pauseDetectionModeSelection) {
+                        ForEach(PauseDetectionMode.allCases, id: \.self) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                    .disabled(!viewModel.settings.pauseOnIdle)
                 }
-            }
-            .pickerStyle(.segmented)
-        }
-    }
 
-    private var soundSettings: some View {
-        SettingsCard(title: "Sound", subtitle: "Customize audible feedback at session boundaries.") {
-            Toggle("Enable timer sound", isOn: $viewModel.settings.playSound)
-            HStack {
-                Text("Volume")
-                Slider(value: $viewModel.settings.volume, in: 0...1)
-                Text("\(Int(viewModel.settings.volume * 100))%")
-                    .monospacedDigit()
+                Text(pauseDetectionHelpText)
+                    .font(.footnote)
                     .foregroundStyle(DSColor.secondaryText)
+
+                LabeledSettingsRow(label: "Theme") {
+                    Picker("Theme", selection: $viewModel.settings.theme) {
+                        ForEach(AppTheme.allCases, id: \.self) { theme in
+                            Text(theme.displayName).tag(theme)
+                        }
+                    }
+                    .labelsHidden()
+                    .pickerStyle(.segmented)
+                }
+            }
+
+            SettingsPanel(title: "Sound") {
+                Toggle("Enable timer sound", isOn: $viewModel.settings.playSound)
+
+                LabeledSettingsRow(label: "Volume") {
+                    Slider(value: $viewModel.settings.volume, in: 0...1)
+                    Text("\(Int(viewModel.settings.volume * 100))%")
+                        .frame(width: 44, alignment: .trailing)
+                        .monospacedDigit()
+                        .foregroundStyle(DSColor.secondaryText)
+                }
             }
         }
     }
@@ -243,85 +251,131 @@ public struct SettingsView: View {
         }
     }
 
-    private var jiraSettings: some View {
-        SettingsCard(title: "Jira Integration", subtitle: "Connect Jira to import assigned unresolved issues into your task list.") {
-            TextField("Jira URL", text: $viewModel.settings.jiraURL)
-                .textFieldStyle(.roundedBorder)
-            TextField("Jira username", text: $viewModel.settings.jiraUsername)
-                .textFieldStyle(.roundedBorder)
-            SecureField("Jira API token", text: $viewModel.settings.jiraToken)
-                .textFieldStyle(.roundedBorder)
-            Toggle("Auto-sync Jira tasks", isOn: $viewModel.settings.autoSyncJira)
-            NumberStepperInputRow(
-                label: "Sync interval",
-                suffix: "min",
-                value: $viewModel.settings.jiraSyncIntervalMinutes,
-                range: 5...720,
-                step: 5,
-                labelWidth: nil
-            )
-        }
-    }
-
-    private var dataExchangeSettings: some View {
-        SettingsCard(title: "Data Exchange", subtitle: "Import extension data using the replace-local conflict policy.") {
-            Text("Conflict policy: source file replaces all local settings, tasks, statistics, current task, and timer state.")
-                .font(.footnote)
-                .foregroundStyle(DSColor.secondaryText)
-
-            Button("Import extension data JSON…") {
-                isImportingExchangeFile = true
+    private var jiraTab: some View {
+        settingsTabContent {
+            SettingsPanel(title: "Connection") {
+                TextField("Jira URL", text: $viewModel.settings.jiraURL)
+                    .textFieldStyle(.roundedBorder)
+                TextField("Jira username", text: $viewModel.settings.jiraUsername)
+                    .textFieldStyle(.roundedBorder)
+                SecureField("Jira API token", text: $viewModel.settings.jiraToken)
+                    .textFieldStyle(.roundedBorder)
             }
-            .buttonStyle(DSSecondaryButtonStyle())
+
+            SettingsPanel(title: "Sync") {
+                Toggle("Auto-sync Jira tasks", isOn: $viewModel.settings.autoSyncJira)
+                NumberStepperInputRow(
+                    label: "Sync interval",
+                    suffix: "min",
+                    value: $viewModel.settings.jiraSyncIntervalMinutes,
+                    range: 5...720,
+                    step: 5,
+                    labelWidth: 160
+                )
+            }
         }
     }
 
-    private var validationErrorsCard: some View {
+    private var dataTab: some View {
+        settingsTabContent {
+            SettingsPanel(title: "Data Exchange") {
+                Text("Import extension data using the replace-local conflict policy.")
+                    .foregroundStyle(DSColor.secondaryText)
+                Text("Source files replace all local settings, tasks, statistics, current task, and timer state.")
+                    .font(.footnote)
+                    .foregroundStyle(DSColor.secondaryText)
+
+                Button("Import extension data JSON...") {
+                    isImportingExchangeFile = true
+                }
+                .buttonStyle(DSSecondaryButtonStyle())
+            }
+        }
+    }
+
+    private var settingsFooter: some View {
         VStack(alignment: .leading, spacing: DSSpacing.xs) {
-            Label("Validation Errors", systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(DSColor.warning)
+            if !viewModel.validationErrors.isEmpty {
+                VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                    Label("Validation Errors", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(DSColor.warning)
 
-            ForEach(viewModel.validationErrors, id: \.self) { error in
-                Text(error)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
+                    ForEach(viewModel.validationErrors, id: \.self) { error in
+                        Text(error)
+                            .font(.subheadline)
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+
+            HStack {
+                Button("Save Settings", action: viewModel.save)
+                    .buttonStyle(DSPrimaryButtonStyle())
+                    .keyboardShortcut("s", modifiers: .command)
+
+                if !viewModel.saveStatusMessage.isEmpty {
+                    Text(viewModel.saveStatusMessage)
+                        .foregroundStyle(DSColor.focus)
+                }
+
+                Spacer()
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dsCard()
+        .padding(DSSpacing.md)
     }
 
-    private var saveCard: some View {
-        HStack {
-            Button("Save Settings", action: viewModel.save)
-                .buttonStyle(DSPrimaryButtonStyle())
-
-            if !viewModel.saveStatusMessage.isEmpty {
-                Text(viewModel.saveStatusMessage)
-                    .foregroundStyle(DSColor.focus)
-            }
+    private func colorScheme(for theme: AppTheme) -> ColorScheme? {
+        switch theme {
+        case .system:
+            nil
+        case .light:
+            .light
+        case .dark:
+            .dark
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .dsCard()
+    }
+
+    private func settingsTabContent<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: DSSpacing.md) {
+                content()
+            }
+            .padding(DSSpacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 
-private struct SettingsCard<Content: View>: View {
+private struct SettingsPanel<Content: View>: View {
     let title: String
-    let subtitle: String
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: DSSpacing.sm) {
             Text(title)
                 .font(DSTypography.subtitle)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(DSColor.secondaryText)
+
             content
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .dsCard()
+    }
+}
+
+private struct LabeledSettingsRow<Content: View>: View {
+    let label: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        HStack(alignment: .center, spacing: DSSpacing.md) {
+            Text(label)
+                .frame(width: 150, alignment: .leading)
+
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

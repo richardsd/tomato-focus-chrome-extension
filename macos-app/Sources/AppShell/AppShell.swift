@@ -11,7 +11,6 @@ public enum AppSection: String, CaseIterable, Identifiable {
     case timer
     case tasks
     case statistics
-    case settings
 
     public var id: String { rawValue }
 
@@ -23,8 +22,6 @@ public enum AppSection: String, CaseIterable, Identifiable {
             "Tasks"
         case .statistics:
             "Statistics"
-        case .settings:
-            "Settings"
         }
     }
 
@@ -36,8 +33,6 @@ public enum AppSection: String, CaseIterable, Identifiable {
             "Capture and manage work items"
         case .statistics:
             "Track your focus momentum"
-        case .settings:
-            "Tune behavior and integrations"
         }
     }
 
@@ -49,21 +44,24 @@ public enum AppSection: String, CaseIterable, Identifiable {
             "checklist"
         case .statistics:
             "chart.bar.xaxis"
-        case .settings:
-            "gearshape"
         }
     }
 }
 
 public struct RootNavigationView: View {
     @ObservedObject private var timerViewModel: TimerViewModel
+    @ObservedObject private var settingsViewModel: SettingsViewModel
     @StateObject private var tasksViewModel: TasksViewModel
     @StateObject private var statisticsViewModel: StatisticsViewModel
-    @StateObject private var settingsViewModel: SettingsViewModel
     @State private var selectedSection: AppSection? = .timer
 
-    public init(container: AppContainer, timerViewModel: TimerViewModel) {
+    public init(
+        container: AppContainer,
+        timerViewModel: TimerViewModel,
+        settingsViewModel: SettingsViewModel
+    ) {
         self.timerViewModel = timerViewModel
+        self.settingsViewModel = settingsViewModel
         _tasksViewModel = StateObject(
             wrappedValue: TasksViewModel(
                 storage: container.dependencies.storage,
@@ -72,9 +70,6 @@ public struct RootNavigationView: View {
         )
         _statisticsViewModel = StateObject(
             wrappedValue: StatisticsViewModel(storage: container.dependencies.storage)
-        )
-        _settingsViewModel = StateObject(
-            wrappedValue: SettingsViewModel(storage: container.dependencies.storage)
         )
     }
 
@@ -94,28 +89,6 @@ public struct RootNavigationView: View {
                         }
                     }
                 }
-
-                Section("Quick Actions") {
-                    Button(timerViewModel.isRunning ? "Pause Session" : startButtonTitle) {
-                        timerViewModel.toggle()
-                    }
-
-                    Button("Reset Session") {
-                        timerViewModel.reset()
-                    }
-
-                    Button("Skip Break") {
-                        timerViewModel.skipBreak()
-                    }
-                    .disabled(timerViewModel.isWorkSession)
-
-                    Menu("Quick Start") {
-                        Button("5 minutes") { timerViewModel.startQuickTimer(minutes: 5) }
-                        Button("15 minutes") { timerViewModel.startQuickTimer(minutes: 15) }
-                        Button("25 minutes (Focus)") { timerViewModel.startQuickTimer(minutes: 25) }
-                        Button("45 minutes") { timerViewModel.startQuickTimer(minutes: 45) }
-                    }
-                }
             }
             .listStyle(.sidebar)
             .navigationTitle("Tomato Focus")
@@ -129,8 +102,6 @@ public struct RootNavigationView: View {
                     TasksView(viewModel: tasksViewModel)
                 case .statistics:
                     StatisticsView(viewModel: statisticsViewModel)
-                case .settings:
-                    SettingsView(viewModel: settingsViewModel)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -141,15 +112,21 @@ public struct RootNavigationView: View {
         .preferredColorScheme(colorScheme(for: settingsViewModel.settings.theme))
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
-                Button(timerViewModel.isRunning ? "Pause" : startButtonTitle) {
+                Button {
                     timerViewModel.toggle()
+                } label: {
+                    Label(startButtonTitle, systemImage: timerViewModel.isRunning ? "pause.fill" : "play.fill")
                 }
-                .buttonStyle(DSPrimaryButtonStyle())
+                .labelStyle(.iconOnly)
+                .help(startButtonTitle)
 
-                Button("Reset") {
+                Button {
                     timerViewModel.reset()
+                } label: {
+                    Label("Reset", systemImage: "arrow.counterclockwise")
                 }
-                .buttonStyle(DSSecondaryButtonStyle())
+                .labelStyle(.iconOnly)
+                .help("Reset Session")
 
                 Menu {
                     Button("5 minutes") { timerViewModel.startQuickTimer(minutes: 5) }
@@ -159,7 +136,9 @@ public struct RootNavigationView: View {
                 } label: {
                     Label("Quick Start", systemImage: "bolt.fill")
                 }
+                .labelStyle(.iconOnly)
                 .menuStyle(.borderlessButton)
+                .help("Quick Start")
             }
         }
     }

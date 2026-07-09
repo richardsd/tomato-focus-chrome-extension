@@ -5,6 +5,7 @@ import CoreDI
 import CoreInterfaces
 import JiraIntegration
 import PlatformServices
+import SettingsFeature
 import SwiftUI
 import TimerFeature
 
@@ -16,6 +17,7 @@ struct TomatoFocusApp: App {
     private let mainWindowCoordinator: MainWindowCoordinator
     private let statusBarController: MenuBarStatusItemController
     @StateObject private var timerViewModel: TimerViewModel
+    @StateObject private var settingsViewModel: SettingsViewModel
     private let mainWindowID = "main"
 
     init() {
@@ -46,6 +48,9 @@ struct TomatoFocusApp: App {
         _timerViewModel = StateObject(
             wrappedValue: timerViewModel
         )
+        _settingsViewModel = StateObject(
+            wrappedValue: SettingsViewModel(storage: storage)
+        )
         self.statusBarController = MenuBarStatusItemController(
             timerViewModel: timerViewModel,
             mainWindowCoordinator: mainWindowCoordinator
@@ -53,8 +58,12 @@ struct TomatoFocusApp: App {
     }
 
     var body: some Scene {
-        Window("Tomato Focus", id: mainWindowID) {
-            RootNavigationView(container: container, timerViewModel: timerViewModel)
+        WindowGroup("Tomato Focus", id: mainWindowID) {
+            RootNavigationView(
+                container: container,
+                timerViewModel: timerViewModel,
+                settingsViewModel: settingsViewModel
+            )
                 .background(
                     MainWindowOpenActionBridge(
                         mainWindowID: mainWindowID,
@@ -64,6 +73,10 @@ struct TomatoFocusApp: App {
         }
         .commands {
             TimerQuickActionsCommands(timerViewModel: timerViewModel)
+        }
+
+        Settings {
+            SettingsView(viewModel: settingsViewModel)
         }
     }
 }

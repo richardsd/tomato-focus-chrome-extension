@@ -51,9 +51,9 @@ public struct DSCardModifier: ViewModifier {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DSRadius.medium, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 1)
             )
-            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+            .shadow(color: Color.black.opacity(0.04), radius: 5, x: 0, y: 2)
     }
 }
 

@@ -10,8 +10,24 @@ final class SmokeTests: XCTestCase {
         let source = try loadSourceFile(at: "macos-app/Sources/AppShell/AppShell.swift")
         XCTAssertTrue(source.contains("NavigationSplitView"))
         XCTAssertTrue(source.contains("enum AppSection"))
-        XCTAssertTrue(source.contains("Quick Actions"))
-        XCTAssertTrue(source.contains("ToolbarItemGroup"))
+        XCTAssertFalse(source.contains("case settings"))
+        XCTAssertFalse(source.contains("Quick Actions"))
+        XCTAssertTrue(source.contains("ToolbarItemGroup(placement: .primaryAction)"))
+        XCTAssertFalse(source.contains("DSPrimaryButtonStyle()"))
+    }
+
+    func testNativeSettingsSceneSmokeAssertions() throws {
+        let source = try loadSourceFile(at: "macos-app/Sources/TomatoFocusMacApp/TomatoFocusApp.swift")
+        XCTAssertTrue(source.contains("WindowGroup(\"Tomato Focus\", id: mainWindowID)"))
+        XCTAssertTrue(source.contains("Settings {"))
+        XCTAssertTrue(source.contains("SettingsView(viewModel: settingsViewModel)"))
+    }
+
+    func testTasksListDetailSmokeAssertions() throws {
+        let source = try loadSourceFile(at: "macos-app/Sources/TasksFeature/TasksFeature.swift")
+        XCTAssertTrue(source.contains("List(selection: $selectedTaskID)"))
+        XCTAssertTrue(source.contains("saveDraft() -> UUID?"))
+        XCTAssertTrue(source.contains("canSetCurrent"))
     }
 
     func testTimerControlSmokeAssertions() throws {
