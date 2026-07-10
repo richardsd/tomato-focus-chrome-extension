@@ -1,3 +1,4 @@
+import AppKit
 import CoreDI
 import CoreInterfaces
 import DesignSystem
@@ -75,22 +76,28 @@ public struct RootNavigationView: View {
 
     public var body: some View {
         NavigationSplitView {
-            List(selection: $selectedSection) {
-                Section("Workspace") {
-                    ForEach(AppSection.allCases) { section in
-                        NavigationLink(value: section) {
-                            VStack(alignment: .leading, spacing: DSSpacing.xxs) {
-                                Label(section.title, systemImage: section.icon)
-                                Text(section.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(DSColor.secondaryText)
+            VStack(spacing: 0) {
+                List(selection: $selectedSection) {
+                    Section("Workspace") {
+                        ForEach(AppSection.allCases) { section in
+                            NavigationLink(value: section) {
+                                VStack(alignment: .leading, spacing: DSSpacing.xxs) {
+                                    Label(section.title, systemImage: section.icon)
+                                    Text(section.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(DSColor.secondaryText)
+                                }
+                                .padding(.vertical, DSSpacing.xxs)
                             }
-                            .padding(.vertical, DSSpacing.xxs)
                         }
                     }
                 }
+                .listStyle(.sidebar)
+
+                Divider()
+
+                settingsSidebarControl
             }
-            .listStyle(.sidebar)
             .navigationTitle("Tomato Focus")
             .navigationSplitViewColumnWidth(min: 200, ideal: 230, max: 340)
         } detail: {
@@ -159,5 +166,40 @@ public struct RootNavigationView: View {
         case .dark:
             .dark
         }
+    }
+
+    @ViewBuilder
+    private var settingsSidebarControl: some View {
+        if #available(macOS 14.0, *) {
+            SettingsLink {
+                settingsSidebarLabel
+            }
+            .buttonStyle(.plain)
+            .controlSize(.small)
+            .padding(.horizontal, DSSpacing.md)
+            .padding(.vertical, DSSpacing.sm)
+            .help("Settings")
+        } else {
+            Button {
+                openSettingsWindow()
+            } label: {
+                settingsSidebarLabel
+            }
+            .buttonStyle(.plain)
+            .controlSize(.small)
+            .padding(.horizontal, DSSpacing.md)
+            .padding(.vertical, DSSpacing.sm)
+            .help("Settings")
+        }
+    }
+
+    private var settingsSidebarLabel: some View {
+        Label("Settings", systemImage: "gearshape")
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func openSettingsWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 }
